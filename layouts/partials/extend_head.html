@@ -74,4 +74,30 @@
     .container { padding: 10px !important; }
   }
 </style>
+<script>
+(async function() {
+  try {
+    const res = await fetch('/api/auth/me');
+    const data = await res.json();
+    const nav = document.querySelector('.post-top-bar, #top-bar, .nav, .container nav') || document.querySelector('nav');
+    if (!nav) return;
+    const link = document.createElement('a');
+    link.style.marginLeft = '12px';
+    link.style.color = '#8ab4ff';
+    link.style.textDecoration = 'none';
+    if (data.user) {
+      link.textContent = data.user.username + ' · 退出';
+      link.href = 'javascript:void(0)';
+      link.onclick = async () => {
+        await fetch('/api/auth/logout', { method: 'POST' });
+        location.href = '/';
+      };
+    } else {
+      link.textContent = '登录';
+      link.href = '/login/';
+    }
+    nav.appendChild(link);
+  } catch(e) {}
+})();
+</script>
 {{ end }}
