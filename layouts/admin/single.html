@@ -72,6 +72,23 @@
 </div>
 
 <script>
+async function checkAdmin() {
+  const res = await fetch('/api/auth/me');
+  const data = await res.json();
+  if (!data.user || !data.user.is_admin) {
+    document.querySelector('.admin-scroll').innerHTML = '<div class="panel" style="flex:0 0 85vw;max-width:420px;text-align:center;justify-content:center;display:flex;flex-direction:column;"><h1 style="font-size:20px;">仅站长可访问</h1><p style="color:#aaa;font-size:14px;margin-top:12px;">你没有权限查看此页面。</p></div>';
+    return false;
+  }
+  return true;
+}
+
+(async () => {
+  if (await checkAdmin()) {
+    loadReports();
+    loadTickets();
+  }
+})();
+
 async function loadReports() {
   const res = await fetch('/api/report/moderate');
   const data = await res.json();
@@ -121,8 +138,5 @@ async function replyTicket(id, close) {
   await fetch('/api/ticket/reply', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id, reply, close }) });
   loadTickets();
 }
-
-loadReports();
-loadTickets();
 </script>
 {{ end }}

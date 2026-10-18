@@ -84,20 +84,22 @@
   try {
     const res = await fetch('/api/auth/me');
     const data = await res.json();
-    const a = document.createElement('a');
-    a.id = 'auth-status';
+    const wrap = document.createElement('div');
+    wrap.id = 'auth-status';
     if (data.user) {
-      a.textContent = data.user.username;
-      a.href = 'javascript:void(0)';
-      a.onclick = async () => {
+      if (data.user.is_admin) {
+        wrap.innerHTML = '<a href="/admin/" style="color:#8ab4ff;text-decoration:none;margin-right:10px;">站长后台</a><a href="javascript:void(0)" id="logout-link" style="color:#fff;text-decoration:none;">' + data.user.username + '</a>';
+      } else {
+        wrap.innerHTML = '<a href="javascript:void(0)" id="logout-link" style="color:#fff;text-decoration:none;">' + data.user.username + '</a>';
+      }
+      wrap.querySelector('#logout-link').onclick = async () => {
         await fetch('/api/auth/logout', { method: 'POST' });
         location.href = '/';
       };
     } else {
-      a.textContent = '登录';
-      a.href = '/login/';
+      wrap.innerHTML = '<a href="/login/" style="color:#fff;text-decoration:none;">登录</a>';
     }
-    document.body.appendChild(a);
+    document.body.appendChild(wrap);
   } catch(e) {}
 })();
 </script>
