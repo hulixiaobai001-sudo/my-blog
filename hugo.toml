@@ -4,6 +4,7 @@ title = '狐狸的个人站'
 theme = 'PaperMod'
 
 enableRobotsTXT = true
+buildFuture = true
 
 [taxonomies]
   category = 'categories'
@@ -38,3 +39,13 @@ enableRobotsTXT = true
     name = '工单'
     pageRef = '/tickets'
     weight = 50
+  [[menu.footer]]
+    identifier = 'terms'
+    name = '服务条款'
+    pageRef = '/terms'
+    weight = 10
+  [[menu.footer]]
+    identifier = 'privacy'
+    name = '隐私政策'
+    pageRef = '/privacy'
+    weight = 20
