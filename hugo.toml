@@ -35,15 +35,15 @@ buildFuture = true
     pageRef = '/announcements'
     weight = 40
   [[menu.main]]
+    identifier = 'report'
+    name = '返图'
+    pageRef = '/report'
+    weight = 45
+  [[menu.main]]
     identifier = 'tickets'
     name = '工单'
     pageRef = '/tickets'
     weight = 50
-  [[menu.main]]
-    identifier = 'report'
-    name = '返图'
-    pageRef = '/report'
-    weight = 60
   [[menu.footer]]
     identifier = 'terms'
     name = '服务条款'
