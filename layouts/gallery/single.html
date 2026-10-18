@@ -49,8 +49,13 @@
 <script>
 let slides = [];
 let current = 0;
+let isAdmin = false;
 
 async function loadGallery() {
+  const me = await fetch('/api/auth/me');
+  const meData = await me.json();
+  isAdmin = !!(meData.user && meData.user.is_admin);
+
   const res = await fetch('/api/report/gallery');
   const data = await res.json();
   slides = data.reports || [];
@@ -63,6 +68,7 @@ async function loadGallery() {
   slider.innerHTML = slides.map((s, i) => `
     <div class="slide ${i === 0 ? 'active' : ''}">
       <img src="/api/report/view?key=${s.image_key}" />
+      ${isAdmin ? `<button onclick="delReport(${s.id})" style="position:absolute;top:12px;right:12px;padding:6px 14px;background:rgba(217,83,79,.8);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:12px;">删除</button>` : ''}
       <div class="caption">
         <div class="who">@${s.username}</div>
         <div class="what">${s.caption || ''}</div>
@@ -73,6 +79,12 @@ async function loadGallery() {
   dots.innerHTML = slides.map((_, i) => `<div class="dot ${i === 0 ? 'active' : ''}" data-i="${i}"></div>`).join('');
   dots.querySelectorAll('.dot').forEach(d => d.onclick = () => goTo(parseInt(d.dataset.i)));
   setInterval(next, 4000);
+}
+
+async function delReport(id) {
+  if (!confirm('确定删除这张返图？')) return;
+  await fetch('/api/report/delete', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id }) });
+  loadGallery();
 }
 
 function goTo(i) {
