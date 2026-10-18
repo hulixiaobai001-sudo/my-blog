@@ -73,5 +73,32 @@
   @media (max-width: 768px) {
     .container { padding: 10px !important; }
   }
+  #auth-status {
+    position: absolute; right: 60px; top: 14px; z-index: 10;
+    color: #fff; font-size: 13px; text-decoration: none;
+  }
+  #auth-status:hover { color: #8ab4ff; }
 </style>
+<script>
+(async function() {
+  try {
+    const res = await fetch('/api/auth/me');
+    const data = await res.json();
+    const a = document.createElement('a');
+    a.id = 'auth-status';
+    if (data.user) {
+      a.textContent = data.user.username;
+      a.href = 'javascript:void(0)';
+      a.onclick = async () => {
+        await fetch('/api/auth/logout', { method: 'POST' });
+        location.href = '/';
+      };
+    } else {
+      a.textContent = '登录';
+      a.href = '/login/';
+    }
+    document.body.appendChild(a);
+  } catch(e) {}
+})();
+</script>
 {{ end }}
