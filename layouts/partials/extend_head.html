@@ -9,13 +9,16 @@
     --border: rgba(255,255,255,.1);
   }
   body {
-    background: url('/images/bg-inner.jpg') center/cover fixed !important;
-    background-attachment: fixed !important;
+    background: #1a1a2e !important;
     color: var(--content) !important;
   }
   body::before {
-    content: ''; position: fixed; inset: 0;
-    background: rgba(0,0,0,.5); z-index: 0;
+    content: ''; position: fixed; inset: 0; z-index: 0;
+    background: url('/images/bg-inner.jpg') center/cover no-repeat;
+  }
+  body::after {
+    content: ''; position: fixed; inset: 0; z-index: 0;
+    background: rgba(0,0,0,.5);
   }
   #top-bar, .post-tags, .nav, .container, .main, .footer, .searchbar {
     position: relative; z-index: 1;
@@ -68,7 +71,6 @@
   }
   code, pre { background: rgba(0,0,0,.4) !important; color: #e8e8e8; }
   @media (max-width: 768px) {
-    body { background-attachment: scroll !important; }
     .container { padding: 10px !important; }
   }
 </style>
