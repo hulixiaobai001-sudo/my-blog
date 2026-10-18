@@ -1,0 +1,49 @@
+{{ define "main" }}
+<style>
+  .auth-wrap { max-width: 400px; margin: 40px auto; padding: 0 20px; }
+  .auth-card { background: rgba(255,255,255,.1); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,.15); border-radius: 16px; padding: 30px; }
+  .auth-card h1 { color: #fff; font-size: 24px; margin: 0 0 20px; text-align: center; }
+  .auth-card input { width: 100%; padding: 12px 14px; margin: 8px 0; border: 1px solid rgba(255,255,255,.2); border-radius: 10px; background: rgba(255,255,255,.1); color: #fff; font-size: 14px; box-sizing: border-box; }
+  .auth-card input::placeholder { color: rgba(255,255,255,.5); }
+  .auth-card button { width: 100%; padding: 12px; margin-top: 12px; border: none; border-radius: 10px; background: #667eea; color: #fff; font-size: 15px; cursor: pointer; }
+  .auth-card button:hover { background: #5568d3; }
+  .auth-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+  .auth-tabs button { flex: 1; background: rgba(255,255,255,.1); color: #ccc; border: 1px solid rgba(255,255,255,.15); margin: 0; }
+  .auth-tabs button.active { background: #667eea; color: #fff; }
+  .auth-msg { margin-top: 12px; font-size: 13px; text-align: center; }
+</style>
+
+<div class="auth-wrap">
+  <div class="auth-card">
+    <h1 id="title">登录</h1>
+    <div class="auth-tabs">
+      <button id="tab-login" class="active" onclick="switchTab('login')">登录</button>
+      <button id="tab-register" onclick="switchTab('register')">注册</button>
+    </div>
+    <input type="text" id="username" placeholder="用户名" />
+    <input type="password" id="password" placeholder="密码（至少6位）" />
+    <button onclick="submit()">提交</button>
+    <div class="auth-msg" id="msg"></div>
+  </div>
+</div>
+
+<script>
+let mode = 'login';
+function switchTab(m) {
+  mode = m;
+  document.getElementById('title').textContent = m === 'login' ? '登录' : '注册';
+  document.getElementById('tab-login').classList.toggle('active', m === 'login');
+  document.getElementById('tab-register').classList.toggle('active', m === 'register');
+  document.getElementById('msg').textContent = '';
+}
+async function submit() {
+  const u = document.getElementById('username').value.trim();
+  const p = document.getElementById('password').value;
+  if (!u || !p) { document.getElementById('msg').textContent = '请填写用户名和密码'; return; }
+  const res = await fetch('/api/auth/' + mode, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ username: u, password: p }) });
+  const data = await res.json();
+  if (data.error) { document.getElementById('msg').textContent = data.error; return; }
+  location.href = '/report/';
+}
+</script>
+{{ end }}

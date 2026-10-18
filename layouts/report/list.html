@@ -1,0 +1,90 @@
+{{ define "main" }}
+<style>
+  .report-wrap { max-width: 600px; margin: 20px auto; padding: 0 20px; }
+  .report-card { background: rgba(255,255,255,.1); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,.15); border-radius: 16px; padding: 24px; }
+  .report-card h1 { color: #fff; font-size: 22px; margin: 0 0 16px; }
+  .report-card input[type=text], .report-card textarea { width: 100%; padding: 10px 12px; margin: 8px 0; border: 1px solid rgba(255,255,255,.2); border-radius: 10px; background: rgba(255,255,255,.1); color: #fff; font-size: 14px; box-sizing: border-box; }
+  .report-card textarea { min-height: 60px; resize: vertical; }
+  .report-card input::placeholder, .report-card textarea::placeholder { color: rgba(255,255,255,.5); }
+  .preview { width: 100%; border-radius: 12px; margin: 10px 0; display: none; }
+  .report-card button { padding: 10px 20px; border: none; border-radius: 10px; background: #667eea; color: #fff; font-size: 14px; cursor: pointer; margin-right: 8px; }
+  .msg { margin-top: 12px; font-size: 13px; }
+  .my-reports { margin-top: 24px; }
+  .my-reports h2 { color: #fff; font-size: 18px; margin: 0 0 12px; }
+  .report-item { display: flex; gap: 12px; align-items: center; background: rgba(255,255,255,.06); border-radius: 12px; padding: 10px; margin-bottom: 8px; }
+  .report-item img { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; }
+  .report-item .info { flex: 1; }
+  .status-pending { color: #f0ad4e; font-size: 12px; }
+  .status-approved { color: #5cb85c; font-size: 12px; }
+  .status-rejected { color: #d9534f; font-size: 12px; }
+</style>
+
+<div class="report-wrap">
+  <div class="report-card">
+    <h1>上传返图</h1>
+    <input type="file" id="file" accept="image/*" onchange="compressImg(this)" />
+    <img class="preview" id="preview" />
+    <input type="text" id="caption" placeholder="配文（可选）" />
+    <button onclick="upload()">提交</button>
+    <div class="msg" id="msg"></div>
+  </div>
+  <div class="my-reports">
+    <h2>我的返图</h2>
+    <div id="list"></div>
+  </div>
+</div>
+
+<script>
+let compressedBase64 = '';
+
+function compressImg(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const img = new Image();
+  img.onload = function() {
+    const canvas = document.createElement('canvas');
+    const maxW = 1200;
+    let w = img.width, h = img.height;
+    if (w > maxW) { h = h * maxW / w; w = maxW; }
+    canvas.width = w; canvas.height = h;
+    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+    compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
+    const p = document.getElementById('preview');
+    p.src = compressedBase64; p.style.display = 'block';
+  };
+  img.src = URL.createObjectURL(file);
+}
+
+async function upload() {
+  if (!compressedBase64) { document.getElementById('msg').textContent = '请先选择图片'; return; }
+  const caption = document.getElementById('caption').value;
+  const res = await fetch('/api/report/upload', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ imageBase64: compressedBase64, caption }) });
+  const data = await res.json();
+  if (data.error) { document.getElementById('msg').textContent = data.error; return; }
+  document.getElementById('msg').textContent = '提交成功，等待审核';
+  compressedBase64 = '';
+  document.getElementById('preview').style.display = 'none';
+  document.getElementById('file').value = '';
+  document.getElementById('caption').value = '';
+  loadList();
+}
+
+async function loadList() {
+  const res = await fetch('/api/report/list');
+  const data = await res.json();
+  const el = document.getElementById('list');
+  if (!data.reports || data.reports.length === 0) { el.innerHTML = '<p style="color:#999;font-size:13px;">还没有上传记录</p>'; return; }
+  el.innerHTML = data.reports.map(r => `
+    <div class="report-item">
+      <img src="/api/report/view?key=${r.image_key}" />
+      <div class="info">
+        <div style="color:#fff;font-size:13px;">${r.caption || '无配文'}</div>
+        <div class="status-${r.status}">${r.status === 'pending' ? '待审核' : r.status === 'approved' ? '已通过' : '已拒绝'}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+loadList();
+</script>
+{{ end }}
