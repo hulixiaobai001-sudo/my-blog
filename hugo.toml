@@ -1,6 +1,6 @@
 baseURL = 'https://blog.ba3pkz.top/'
 locale = 'zh-cn'
-title = '狐狸的个人站'
+title = '狐狸白沁个人站'
 theme = 'PaperMod'
 
 enableRobotsTXT = true
