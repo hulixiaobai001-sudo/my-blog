@@ -1,5 +1,24 @@
 {
   "name": "my-blog",
   "compatibility_date": "2026-10-01",
-  "assets": { "directory": "./public" }
+  "assets": {
+    "directory": "./public"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "blog-db",
+      "database_id": "189643aa-0be9-478d-b11a-23e22390ce59"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "AUTH_KV",
+      "id": "972a0a9a1c2840898b9d33f6cc7a7b0f"
+    },
+    {
+      "binding": "IMAGES_KV",
+      "id": "4dab216a5aa9451bbc0f58f65450a76f"
+    }
+  ]
 }
