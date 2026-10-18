@@ -1,0 +1,67 @@
+{{ if not .IsHome }}
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --entry: rgba(255,255,255,.08);
+    --primary: #fff;
+    --content: #e8e8e8;
+    --secondary: #aaa;
+    --border: rgba(255,255,255,.1);
+  }
+  body {
+    background: url('/images/bg.jpg') center/cover fixed !important;
+    background-attachment: fixed !important;
+    color: var(--content) !important;
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background: rgba(0,0,0,.5); z-index: 0;
+  }
+  #top-bar, .post-tags, .nav, .container, .main, .footer, .searchbar {
+    position: relative; z-index: 1;
+  }
+  .header, .post-header, .post-content, .post-footer, .terms-tags, .pagination, .nav, .comment {
+    background: rgba(255,255,255,.08) !important;
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    border: 1px solid rgba(255,255,255,.12) !important;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .container {
+    max-width: 900px !important;
+    margin: 0 auto;
+  }
+  h1, h2, h3, h4, h5, h6 { color: #fff !important; }
+  p, li, span, div { color: var(--content); }
+  a { color: #8ab4ff !important; }
+  a:hover { color: #fff !important; }
+  .header { background: transparent !important; backdrop-filter: none; border: none !important; }
+  .header a { color: #fff !important; }
+  .footer { background: transparent !important; backdrop-filter: none; border: none !important; text-align: center; }
+  .footer a { color: #8ab4ff !important; }
+  .post-entry, .group {
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .post-entry:hover { background: rgba(255,255,255,.12); }
+  .post-entry .entry-header h2 a { color: #fff !important; }
+  .post-entry .post-content, .post-entry .entry-footer { color: #ccc !important; }
+  table { background: rgba(255,255,255,.05); border-radius: 8px; }
+  th, td { border-color: rgba(255,255,255,.1) !important; color: var(--content); }
+  blockquote {
+    background: rgba(138,180,255,.1);
+    border-left: 3px solid #8ab4ff;
+    color: #ccc;
+  }
+  code, pre { background: rgba(0,0,0,.4) !important; color: #e8e8e8; }
+  @media (max-width: 768px) {
+    body { background-attachment: scroll !important; }
+    .container { padding: 10px !important; }
+  }
+</style>
+{{ end }}
