@@ -17,7 +17,7 @@ buildFuture = true
   [[menu.main]]
     identifier = 'blog'
     name = '博客'
-    pageRef = '/posts'
+    pageRef = '/blog'
     weight = 10
   [[menu.main]]
     identifier = 'about'

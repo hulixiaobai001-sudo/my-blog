@@ -1,0 +1,68 @@
+{{ define "main" }}
+<style>
+  .blog-wrap { max-width: 700px; margin: 20px auto; padding: 0 20px; position: relative; z-index: 1; }
+  .blog-wrap h1 { color: #fff; font-size: 24px; margin: 20px 0; }
+  .post-card { background: rgba(255,255,255,.08); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,.12); border-radius: 16px; padding: 20px; margin-bottom: 14px; cursor: pointer; transition: transform 0.2s; }
+  .post-card:hover { transform: translateY(-2px); }
+  .post-card h2 { color: #fff; font-size: 18px; margin: 0 0 8px; }
+  .post-card .date { color: #999; font-size: 12px; }
+  .post-card .preview { color: #ccc; font-size: 14px; margin-top: 8px; }
+  .empty { color: #888; text-align: center; padding: 40px 0; font-size: 14px; }
+  .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 100; overflow-y: auto; }
+  .modal.open { display: flex; justify-content: center; padding: 40px 20px; }
+  .modal-content { background: rgba(30,30,50,.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,.15); border-radius: 16px; max-width: 700px; width: 100%; padding: 30px; }
+  .modal-content h2 { color: #fff; font-size: 22px; margin: 0 0 8px; }
+  .modal-content .date { color: #999; font-size: 12px; margin-bottom: 16px; }
+  .modal-content .body { color: #ddd; font-size: 15px; line-height: 1.8; white-space: pre-wrap; }
+  .close-btn { float: right; background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; }
+</style>
+
+<div class="blog-wrap">
+  <h1>博客</h1>
+  <div id="post-list"></div>
+</div>
+
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <button class="close-btn" onclick="closeModal()">&times;</button>
+    <h2 id="modal-title"></h2>
+    <div class="date" id="modal-date"></div>
+    <div class="body" id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+async function loadPosts() {
+  const res = await fetch('/api/blog/');
+  const data = await res.json();
+  const el = document.getElementById('post-list');
+  if (!data.posts || data.posts.length === 0) {
+    el.innerHTML = '<p class="empty">还没有文章</p>';
+    return;
+  }
+  el.innerHTML = data.posts.map(p => `
+    <div class="post-card" onclick="openPost(${p.id})">
+      <h2>${p.title}</h2>
+      <div class="date">${p.created_at}</div>
+    </div>
+  `).join('');
+}
+
+async function openPost(id) {
+  const res = await fetch('/api/blog/' + id);
+  const data = await res.json();
+  if (data.post) {
+    document.getElementById('modal-title').textContent = data.post.title;
+    document.getElementById('modal-date').textContent = data.post.created_at;
+    document.getElementById('modal-body').textContent = data.post.content;
+    document.getElementById('modal').classList.add('open');
+  }
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+}
+
+loadPosts();
+</script>
+{{ end }}
