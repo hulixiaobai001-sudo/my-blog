@@ -1,4 +1,5 @@
 ---
 title: "工单"
-layout: ticket
+type: ticket
+layout: single
 ---
