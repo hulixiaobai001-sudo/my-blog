@@ -1,0 +1,40 @@
+baseURL = 'https://blog.ba3pkz.top/'
+locale = 'zh-cn'
+title = '狐狸的个人站'
+theme = 'PaperMod'
+
+enableRobotsTXT = true
+
+[taxonomies]
+  category = 'categories'
+  tag = 'tags'
+
+[params]
+  description = '狐狸的个人站：博客、个人介绍、友链、公告、工单'
+
+[menu]
+  [[menu.main]]
+    identifier = 'blog'
+    name = '博客'
+    pageRef = '/posts'
+    weight = 10
+  [[menu.main]]
+    identifier = 'about'
+    name = '个人'
+    pageRef = '/about'
+    weight = 20
+  [[menu.main]]
+    identifier = 'links'
+    name = '友链'
+    pageRef = '/links'
+    weight = 30
+  [[menu.main]]
+    identifier = 'announcements'
+    name = '公告'
+    pageRef = '/announcements'
+    weight = 40
+  [[menu.main]]
+    identifier = 'tickets'
+    name = '工单'
+    pageRef = '/tickets'
+    weight = 50

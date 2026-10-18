@@ -1,0 +1,7 @@
+# Hugo 构建产物与临时文件
+public/
+resources/
+.hugo_build.lock
+
+# 本地开发服务器日志
+hugo_server.log
