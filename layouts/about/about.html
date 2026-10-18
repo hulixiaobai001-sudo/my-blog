@@ -7,7 +7,12 @@
     color: #fff; margin-bottom: 24px;
     box-shadow: 0 10px 40px rgba(118,75,162,.3);
   }
-  .hero .avatar { font-size: 72px; margin-bottom: 12px; }
+  .hero .avatar {
+    width: 80px; height: 80px; border-radius: 50%;
+    background: rgba(255,255,255,.2); margin: 0 auto 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px; font-weight: 700; letter-spacing: 1px;
+  }
   .hero h1 { font-size: 32px; margin: 0 0 8px; color: #fff; }
   .hero .tagline { opacity: .9; font-size: 15px; }
   .hero .badges { margin-top: 16px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
@@ -21,20 +26,21 @@
     border: 1px solid #f0f0f0;
   }
   .card h2 {
-    font-size: 20px; margin: 0 0 18px; display: flex; align-items: center; gap: 8px;
+    font-size: 18px; margin: 0 0 18px;
     padding-bottom: 12px; border-bottom: 2px solid #f5f5f5;
+    font-weight: 600;
   }
   .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .info-item { padding: 10px 14px; background: #f9f9fc; border-radius: 10px; font-size: 14px; }
-  .info-item b { color: #555; }
+  .info-item { padding: 12px 16px; background: #f9f9fc; border-radius: 10px; font-size: 14px; }
+  .info-item b { color: #555; display: block; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
   .social-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
   .social-btn {
-    display: flex; align-items: center; gap: 10px; padding: 12px 16px;
+    display: block; padding: 14px 16px;
     background: #f9f9fc; border-radius: 12px; text-decoration: none; color: #333;
-    transition: all .2s; border: 1px solid transparent; font-size: 14px;
+    transition: all .2s; border: 1px solid transparent; font-size: 14px; font-weight: 500;
   }
+  .social-btn small { display: block; color: #999; font-size: 12px; margin-top: 2px; font-weight: 400; }
   .social-btn:hover { background: #fff; border-color: #667eea; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(102,126,234,.15); }
-  .social-btn .icon { font-size: 20px; }
   .gallery { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .gallery img { width: 100%; border-radius: 12px; aspect-ratio: 4/3; object-fit: cover; transition: transform .2s; }
   .gallery img:hover { transform: scale(1.02); }
@@ -48,11 +54,11 @@
     box-shadow: 0 0 0 2px #667eea;
   }
   .tl-item .date { font-size: 13px; color: #888; }
-  .tl-item .event { font-size: 15px; margin-top: 2px; }
+  .tl-item .event { font-size: 15px; margin-top: 2px; font-weight: 500; }
   .donate { text-align: center; }
   .donate img { max-width: 280px; border-radius: 12px; margin: 12px auto; display: block; box-shadow: 0 4px 20px rgba(0,0,0,.1); }
   .donate p { color: #666; font-size: 14px; }
-  .quote { background: linear-gradient(135deg, #f5f7ff 0%, #fff5f5 100%); border-left: 4px solid #667eea; padding: 14px 18px; border-radius: 0 10px 10px 0; font-size: 14px; color: #555; margin-bottom: 20px; }
+  .quote { background: #f5f7ff; border-left: 4px solid #667eea; padding: 14px 18px; border-radius: 0 10px 10px 0; font-size: 14px; color: #555; margin-bottom: 20px; }
   @media (max-width: 600px) {
     .info-grid { grid-template-columns: 1fr; }
     .gallery { grid-template-columns: 1fr; }
@@ -63,61 +69,61 @@
 <div class="about-wrap">
 
   <div class="hero">
-    <div class="avatar">🦊</div>
+    <div class="avatar">白</div>
     <h1>白沁</h1>
-    <div class="tagline">18岁大兽太 · BA3PKZ · 电商学牲 · 爱喝酒的狐狸</div>
+    <div class="tagline">18岁大兽太 · BA3PKZ · 电商学牲</div>
     <div class="badges">
-      <span class="badge">📍 涿州</span>
-      <span class="badge">♍ ENFP-T</span>
-      <span class="badge">📻 BA3PKZ</span>
+      <span class="badge">涿州</span>
+      <span class="badge">ENFP-T</span>
+      <span class="badge">业余无线电</span>
     </div>
   </div>
 
   <div class="quote">
-    💡 欢迎来到我的天地！这里是我的私人档案与社交矩阵。
+    欢迎来到我的天地，这里是我的私人档案与社交矩阵。
   </div>
 
   <div class="card">
-    <h2>🦊 关于这只狐狸</h2>
+    <h2>关于我</h2>
     <div class="info-grid">
-      <div class="info-item"><b>设定名</b><br>白沁（小白/白狐/狐狐/老狐狸）</div>
-      <div class="info-item"><b>坐标</b><br>来自东北（压声），啊不对……涿州～</div>
-      <div class="info-item"><b>属性</b><br>18岁大兽太 · 处女座男生 · ENFP-T</div>
-      <div class="info-item"><b>性向</b><br>嘻嘻（狐性恋）</div>
+      <div class="info-item"><b>设定名</b>白沁（小白/白狐/狐狐）</div>
+      <div class="info-item"><b>坐标</b>来自东北，现居涿州</div>
+      <div class="info-item"><b>属性</b>18岁大兽太 · 处女座男生 · ENFP-T</div>
+      <div class="info-item"><b>性向</b>狐性恋</div>
     </div>
     <p style="margin-top:16px;font-size:14px;color:#555;">
-      一名苦命的电商学牲，24h 在线（也不一定）。短期出毛の神，非常爱喝酒的狐狸！
+      一名苦命的电商学牲，24h 在线（也不一定）。短期出毛的神，非常爱喝酒的狐狸。
     </p>
   </div>
 
   <div class="card">
-    <h2>📻 技能树与爱好</h2>
+    <h2>技能与爱好</h2>
     <div class="info-grid">
-      <div class="info-item"><b>业余无线电</b><br>BA3PKZ，欢迎换 QSL 卡</div>
-      <div class="info-item"><b>摄影</b><br>大疆重度发烧友</div>
-      <div class="info-item"><b>印刷</b><br>名片印刷狂魔</div>
-      <div class="info-item"><b>日常</b><br>上学 + 旅游 + 兽聚 + 24h在线</div>
+      <div class="info-item"><b>业余无线电</b>BA3PKZ，欢迎换 QSL 卡</div>
+      <div class="info-item"><b>摄影</b>大疆重度发烧友</div>
+      <div class="info-item"><b>印刷</b>名片印刷狂魔</div>
+      <div class="info-item"><b>日常</b>上学、旅游、兽聚、24h在线</div>
     </div>
     <div class="quote" style="margin-top:16px;margin-bottom:0;">
-      ⚠️ 避雷：快手、特定称呼、NPD 人格。
+      避雷：快手、特定称呼、NPD 人格。
     </div>
   </div>
 
   <div class="card">
-    <h2>🌐 找我玩</h2>
+    <h2>找我玩</h2>
     <div class="social-grid">
-      <a class="social-btn" href="https://b23.tv/j6Bfvnq" target="_blank"><span class="icon">📺</span>哔哩哔哩</a>
-      <a class="social-btn" href="https://www.qrz.com/db/BA3PKZ" target="_blank"><span class="icon">📻</span>QRZ.com</a>
-      <a class="social-btn" href="https://github.com/hulixiaobai001-sudo" target="_blank"><span class="icon">🐙</span>GitHub</a>
-      <a class="social-btn" href="#"><span class="icon">🎵</span>抖音：狐狸不想干电商</a>
-      <a class="social-btn" href="#"><span class="icon">💬</span>QQ：3441972628</a>
-      <a class="social-btn" href="#"><span class="icon">💬</span>微信：HLBQBA3PKZ</a>
-      <a class="social-btn" href="mailto:3441972628@qq.com"><span class="icon">✉️</span>邮箱</a>
+      <a class="social-btn" href="https://b23.tv/j6Bfvnq" target="_blank">哔哩哔哩<small>狐狸不想营业</small></a>
+      <a class="social-btn" href="https://www.qrz.com/db/BA3PKZ" target="_blank">QRZ.com<small>BA3PKZ</small></a>
+      <a class="social-btn" href="https://github.com/hulixiaobai001-sudo" target="_blank">GitHub<small>hulixiaobai001-sudo</small></a>
+      <a class="social-btn" href="#">抖音<small>狐狸不想干电商</small></a>
+      <a class="social-btn" href="#">QQ<small>3441972628</small></a>
+      <a class="social-btn" href="#">微信<small>HLBQBA3PKZ</small></a>
+      <a class="social-btn" href="mailto:3441972628@qq.com">邮箱<small>3441972628@qq.com</small></a>
     </div>
   </div>
 
   <div class="card">
-    <h2>🐾 兽装相册</h2>
+    <h2>兽装相册</h2>
     <div class="gallery">
       <img src="/images/fursuit-1.jpg" alt="兽聚合照">
       <img src="/images/fursuit-2.jpg" alt="FurShion">
@@ -126,22 +132,22 @@
   </div>
 
   <div class="card">
-    <h2>📅 最近行程</h2>
+    <h2>最近行程</h2>
     <div class="timeline">
       <div class="tl-item">
         <div class="date">2026.10.19 — 待定</div>
-        <div class="event">🏫 上学中</div>
+        <div class="event">上学中</div>
       </div>
       <div class="tl-item">
         <div class="date">2027.2.10</div>
-        <div class="event">🐾 绒兽汇</div>
+        <div class="event">绒兽汇</div>
       </div>
     </div>
   </div>
 
   <div class="card donate">
-    <h2 style="justify-content:center;">💖 赞赏支持</h2>
-    <p>如果这个小站或者白沁让你开心到了，可以请我喝杯奶茶～</p>
+    <h2>赞赏支持</h2>
+    <p>如果这个小站或者我让你开心到了，可以请我喝杯奶茶。</p>
     <img src="/images/donate.jpg" alt="赞赏码">
   </div>
 

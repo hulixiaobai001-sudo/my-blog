@@ -1,0 +1,22 @@
+﻿git.exe : warning: in the working copy of 'content/about.md', LF will be replaced by CRLF the next time Git touches it
+所在位置 行:2 字符: 1
++ & "C:\Program Files\Git\cmd\git.exe" -c http.proxy=http://127.0.0.1:7 ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (warning: in the... Git touches it:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+warning: in the working copy of 'layouts/about/about.html', LF will be replaced by CRLF the next time Git touches it
+
+[main 22ab2fc] style: 重设计about页为卡片式布局
+ 4 files changed, 151 insertions(+), 1 deletion(-)
+ create mode 100644 git.log
+ create mode 100644 layouts/about/about.html
+git.exe : To https://github.com/hulixiaobai001-sudo/my-blog.git
+所在位置 行:4 字符: 1
++ & "C:\Program Files\Git\cmd\git.exe" -c http.proxy=http://127.0.0.1:7 ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (To https://gith...udo/my-blog.git:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+   3feeecc..22ab2fc  main -> main
+
