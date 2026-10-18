@@ -37,7 +37,15 @@
   p, li, span, div { color: var(--content); }
   a { color: #8ab4ff !important; }
   a:hover { color: #fff !important; }
-  .header { background: transparent !important; backdrop-filter: none; border: none !important; }
+  .header {
+    background: rgba(255,255,255,.1) !important;
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    border: 1px solid rgba(255,255,255,.12) !important;
+    border-radius: 12px !important;
+    padding: 10px 20px !important;
+    margin-bottom: 16px !important;
+  }
   .header a { color: #fff !important; }
   .footer { background: transparent !important; backdrop-filter: none; border: none !important; text-align: center; }
   .footer a { color: #8ab4ff !important; }
