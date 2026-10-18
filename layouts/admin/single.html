@@ -1,0 +1,93 @@
+{{ define "main" }}
+<style>
+  .admin-wrap { max-width: 800px; margin: 20px auto; padding: 0 20px; position: relative; z-index: 1; }
+  .admin-card { background: rgba(255,255,255,.08); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,.12); border-radius: 16px; padding: 24px; margin-bottom: 20px; }
+  .admin-card h1 { color: #fff; font-size: 22px; margin: 0 0 16px; }
+  .admin-card h2 { color: #fff; font-size: 16px; margin: 0 0 12px; }
+  .report-item { display: flex; gap: 14px; align-items: flex-start; background: rgba(255,255,255,.05); border-radius: 12px; padding: 12px; margin-bottom: 10px; }
+  .report-item img { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; }
+  .report-item .info { flex: 1; }
+  .report-item .caption { color: #fff; font-size: 14px; }
+  .report-item .meta { color: #999; font-size: 12px; margin-top: 4px; }
+  .report-item .actions button { margin-right: 8px; padding: 6px 14px; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; }
+  .btn-approve { background: #5cb85c; color: #fff; }
+  .btn-reject { background: #d9534f; color: #fff; }
+  .ticket-item { background: rgba(255,255,255,.05); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+  .ticket-item .title { color: #fff; font-size: 14px; font-weight: 500; }
+  .ticket-item .content { color: #ccc; font-size: 13px; margin: 6px 0; }
+  .ticket-item .reply-box { width: 100%; padding: 8px; margin-top: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,.15); background: rgba(255,255,255,.08); color: #fff; font-size: 13px; box-sizing: border-box; }
+  .ticket-item .reply-btn { margin-top: 6px; padding: 6px 14px; border: none; border-radius: 8px; background: #667eea; color: #fff; cursor: pointer; font-size: 13px; }
+  .status-pending { color: #f0ad4e; font-size: 12px; }
+  .status-approved { color: #5cb85c; font-size: 12px; }
+  .status-rejected { color: #d9534f; font-size: 12px; }
+</style>
+
+<div class="admin-wrap">
+  <div class="admin-card">
+    <h1>管理后台</h1>
+  </div>
+
+  <div class="admin-card">
+    <h2>返图审核</h2>
+    <div id="reports"></div>
+  </div>
+
+  <div class="admin-card">
+    <h2>工单处理</h2>
+    <div id="tickets"></div>
+  </div>
+</div>
+
+<script>
+async function loadReports() {
+  const res = await fetch('/api/report/moderate');
+  const data = await res.json();
+  const el = document.getElementById('reports');
+  if (!data.reports || data.reports.length === 0) { el.innerHTML = '<p style="color:#999;font-size:13px;">暂无返图</p>'; return; }
+  el.innerHTML = data.reports.map(r => `
+    <div class="report-item">
+      <img src="/api/report/view?key=${r.image_key}" />
+      <div class="info">
+        <div class="caption">${r.caption || '无配文'}</div>
+        <div class="meta">${r.username} · ${r.created_at} · <span class="status-${r.status}">${r.status === 'pending' ? '待审核' : r.status === 'approved' ? '已通过' : '已拒绝'}</span></div>
+        <div class="actions" style="margin-top:8px;">
+          <button class="btn-approve" onclick="moderate(${r.id},'approved')">通过</button>
+          <button class="btn-reject" onclick="moderate(${r.id},'rejected')">拒绝</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function moderate(id, status) {
+  await fetch('/api/report/moderate', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id, status }) });
+  loadReports();
+}
+
+async function loadTickets() {
+  const res = await fetch('/api/ticket/');
+  const data = await res.json();
+  const el = document.getElementById('tickets');
+  if (!data.tickets || data.tickets.length === 0) { el.innerHTML = '<p style="color:#999;font-size:13px;">暂无工单</p>'; return; }
+  el.innerHTML = data.tickets.map(t => `
+    <div class="ticket-item">
+      <div class="title">${t.title} <span class="status-${t.status}">${t.status === 'open' ? '处理中' : '已关闭'}</span></div>
+      <div class="content">${t.content}</div>
+      ${t.reply ? `<div style="color:#8ab4ff;font-size:13px;margin-top:6px;">回复：${t.reply}</div>` : ''}
+      <textarea class="reply-box" id="reply-${t.id}" placeholder="回复内容..."></textarea>
+      <button class="reply-btn" onclick="replyTicket(${t.id})">回复并关闭</button>
+    </div>
+  `).join('');
+}
+
+async function replyTicket(id) {
+  const reply = document.getElementById('reply-' + id).value;
+  if (!reply) return;
+  await fetch('/api/ticket/reply', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id, reply }) });
+  loadTickets();
+}
+
+loadReports();
+loadTickets();
+</script>
+{{ end }}
