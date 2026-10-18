@@ -23,6 +23,11 @@
   #top-bar, .post-tags, .nav, .container, .main, .footer, .searchbar, .header, .post {
     position: relative; z-index: 1;
   }
+  .about-scroll, .admin-scroll {
+    scroll-snap-type: x proximity !important;
+    scroll-behavior: smooth;
+    touch-action: pan-x pan-y;
+  }
   .header, .post-header, .post-content, .terms-tags, .pagination, .nav, .comment {
     background: rgba(255,255,255,.08) !important;
     backdrop-filter: blur(16px) saturate(140%);

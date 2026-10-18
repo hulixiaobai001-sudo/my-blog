@@ -35,9 +35,9 @@ buildFuture = true
     pageRef = '/announcements'
     weight = 40
   [[menu.main]]
-    identifier = 'report'
-    name = '返图'
-    pageRef = '/report'
+    identifier = 'gallery'
+    name = '返图墙'
+    pageRef = '/gallery'
     weight = 45
   [[menu.main]]
     identifier = 'tickets'
