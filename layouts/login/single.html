@@ -11,6 +11,10 @@
   .auth-tabs button { flex: 1; background: rgba(255,255,255,.1); color: #ccc; border: 1px solid rgba(255,255,255,.15); margin: 0; }
   .auth-tabs button.active { background: #667eea; color: #fff; }
   .auth-msg { margin-top: 12px; font-size: 13px; text-align: center; }
+  .code-row { display: flex; gap: 8px; }
+  .code-row input { flex: 1; }
+  .code-row button { width: auto; padding: 12px 16px; margin-top: 8px; white-space: nowrap; font-size: 13px; }
+  .hidden { display: none; }
 </style>
 
 <div class="auth-wrap">
@@ -22,6 +26,13 @@
     </div>
     <input type="text" id="username" placeholder="用户名" />
     <input type="password" id="password" placeholder="密码（至少6位）" />
+    <div id="register-fields" class="hidden">
+      <input type="email" id="email" placeholder="邮箱（用于接收验证码）" />
+      <div class="code-row">
+        <input type="text" id="code" placeholder="验证码" />
+        <button onclick="sendCode()" style="margin-top:8px;">发送验证码</button>
+      </div>
+    </div>
     <button onclick="submit()">提交</button>
     <div class="auth-msg" id="msg"></div>
   </div>
@@ -34,16 +45,48 @@ function switchTab(m) {
   document.getElementById('title').textContent = m === 'login' ? '登录' : '注册';
   document.getElementById('tab-login').classList.toggle('active', m === 'login');
   document.getElementById('tab-register').classList.toggle('active', m === 'register');
+  document.getElementById('register-fields').classList.toggle('hidden', m !== 'register');
   document.getElementById('msg').textContent = '';
 }
+
+async function sendCode() {
+  const email = document.getElementById('email').value.trim();
+  if (!email) { document.getElementById('msg').textContent = '请先填邮箱'; return; }
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  sessionStorage.setItem('reg_code', code);
+  sessionStorage.setItem('reg_email', email);
+  const btn = event.target;
+  btn.disabled = true;
+  btn.textContent = '发送中...';
+  const res = await fetch('/api/auth/sendcode', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ email, code }) });
+  if (res.ok) {
+    btn.textContent = '已发送';
+    document.getElementById('msg').textContent = '验证码已发送到邮箱';
+  } else {
+    btn.disabled = false;
+    btn.textContent = '发送验证码';
+    document.getElementById('msg').textContent = '发送失败';
+  }
+}
+
 async function submit() {
   const u = document.getElementById('username').value.trim();
   const p = document.getElementById('password').value;
   if (!u || !p) { document.getElementById('msg').textContent = '请填写用户名和密码'; return; }
-  const res = await fetch('/api/auth/' + mode, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ username: u, password: p }) });
+  let body = { username: u, password: p };
+  if (mode === 'register') {
+    const email = document.getElementById('email').value.trim();
+    const code = document.getElementById('code').value.trim();
+    const savedCode = sessionStorage.getItem('reg_code');
+    const savedEmail = sessionStorage.getItem('reg_email');
+    if (!email || !code) { document.getElementById('msg').textContent = '请填邮箱和验证码'; return; }
+    if (code !== savedCode || email !== savedEmail) { document.getElementById('msg').textContent = '验证码错误'; return; }
+    body.email = email;
+  }
+  const res = await fetch('/api/auth/' + mode, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
   const data = await res.json();
   if (data.error) { document.getElementById('msg').textContent = data.error; return; }
-  location.href = '/report/';
+  location.href = '/gallery/';
 }
 </script>
 {{ end }}
