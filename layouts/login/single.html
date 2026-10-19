@@ -38,7 +38,10 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>
+emailjs.init({ publicKey: 'gKtkQsQqhRjt9CaDE' });
+
 let mode = 'login';
 function switchTab(m) {
   mode = m;
@@ -58,14 +61,15 @@ async function sendCode() {
   const btn = event.target;
   btn.disabled = true;
   btn.textContent = '发送中...';
-  const res = await fetch('/api/auth/sendcode', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ email, code }) });
-  if (res.ok) {
+  try {
+    await emailjs.send('service_fc3udqj', 'wr93quh', { passcode: code, time: '5分钟', to_email: email });
+    await fetch('/api/auth/sendcode', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ email, code }) });
     btn.textContent = '已发送';
     document.getElementById('msg').textContent = '验证码已发送到邮箱';
-  } else {
+  } catch (e) {
     btn.disabled = false;
     btn.textContent = '发送验证码';
-    document.getElementById('msg').textContent = '发送失败';
+    document.getElementById('msg').textContent = '发送失败: ' + e.text;
   }
 }
 
