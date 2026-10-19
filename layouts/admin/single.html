@@ -221,9 +221,15 @@ async function uploadAdminImg() {
   const date = document.getElementById('admin-date').value;
   const caption = document.getElementById('admin-caption').value;
   const result = document.getElementById('admin-img-result');
+  result.textContent = '压缩中...';
+  let blob = file;
+  if (file.size > 20 * 1024 * 1024) {
+    result.textContent = '图片太大，自动压缩中...';
+    blob = await compressImage(file, 0.7);
+  }
   result.textContent = '上传中...';
   const fd = new FormData();
-  fd.append('file', file);
+  fd.append('file', blob, 'admin.jpg');
   fd.append('admin_date', date);
   fd.append('caption', caption);
   const res = await fetch('/api/report/upload-admin', { method: 'POST', body: fd });
@@ -235,6 +241,22 @@ async function uploadAdminImg() {
   } else {
     result.textContent = '上传失败：' + (data.error || res.status);
   }
+}
+
+function compressImage(file, quality) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const maxW = 1920;
+      const scale = Math.min(1, maxW / img.width);
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(resolve, 'image/jpeg', quality);
+    };
+    img.src = URL.createObjectURL(file);
+  });
 }
 </script>
 {{ end }}
