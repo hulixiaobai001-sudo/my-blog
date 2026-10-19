@@ -227,12 +227,13 @@ async function uploadAdminImg() {
   fd.append('admin_date', date);
   fd.append('caption', caption);
   const res = await fetch('/api/report/upload-admin', { method: 'POST', body: fd });
-  if (res.ok) {
+  const data = await res.json();
+  if (res.ok && data.ok) {
     result.textContent = '上传成功！';
     document.getElementById('admin-img').value = '';
     document.getElementById('admin-caption').value = '';
   } else {
-    result.textContent = '上传失败';
+    result.textContent = '上传失败：' + (data.error || res.status);
   }
 }
 </script>
