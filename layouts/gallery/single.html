@@ -46,10 +46,11 @@
     <h3 style="color:#fff;font-size:15px;margin:0 0 10px;">积分规则</h3>
     <div style="color:#ccc;font-size:13px;line-height:1.8;">
       <div>每上传一张返图并通过审核：+5 分</div>
-      <div>每提交一条工单：+5 分</div>
+      <div>每提交一条工单：-10 分</div>
       <div style="margin-top:8px;color:#8ab4ff;">积分兑换：</div>
       <div>· 1000 分 = 一杯奶茶</div>
       <div>· 1500 分 = 一份周边物料</div>
+      <div id="my-points" style="margin-top:12px;color:#f0ad4e;font-size:14px;"></div>
     </div>
   </div>
   <div class="slider" id="slider"></div>
@@ -65,6 +66,9 @@ async function loadGallery() {
   const me = await fetch('/api/auth/me');
   const meData = await me.json();
   isAdmin = !!(meData.user && meData.user.is_admin);
+  if (meData.user) {
+    document.getElementById('my-points').textContent = '我的当前积分：' + (meData.user.points || 0) + ' 分';
+  }
 
   const res = await fetch('/api/report/gallery');
   const data = await res.json();

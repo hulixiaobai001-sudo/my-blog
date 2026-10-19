@@ -3,7 +3,7 @@
   .about-scroll {
     display: flex;
     overflow-x: auto;
-    scroll-snap-type: x mandatory;
+    scroll-snap-type: x proximity;
     -webkit-overflow-scrolling: touch;
     gap: 20px;
     padding: 20px;
@@ -11,6 +11,17 @@
     height: calc(100vh - 120px);
     align-items: stretch;
   }
+  .nav-arrow {
+    position: fixed; top: 50%; transform: translateY(-50%);
+    width: 44px; height: 44px; border-radius: 50%;
+    background: rgba(255,255,255,.15); backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,.2);
+    color: #fff; font-size: 20px; cursor: pointer;
+    z-index: 100; display: flex; align-items: center; justify-content: center;
+  }
+  .nav-arrow:hover { background: rgba(255,255,255,.3); }
+  .nav-left { left: 10px; }
+  .nav-right { right: 10px; }
   .about-scroll::-webkit-scrollbar { display: none; }
   .panel {
     flex: 0 0 85vw;
@@ -145,4 +156,24 @@
   </div>
 
 </div>
+
+<button class="nav-arrow nav-left" onclick="scrollAbout(-1)">&#8249;</button>
+<button class="nav-arrow nav-right" onclick="scrollAbout(1)">&#8250;</button>
+
+<script>
+function scrollAbout(dir) {
+  document.querySelector('.about-scroll').scrollBy({ left: dir * 400, behavior: 'smooth' });
+}
+document.addEventListener('DOMContentLoaded', () => {
+  const scroller = document.querySelector('.about-scroll');
+  if (scroller) {
+    scroller.addEventListener('wheel', (e) => {
+      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+        e.preventDefault();
+        scroller.scrollLeft += e.deltaY;
+      }
+    }, { passive: false });
+  }
+});
+</script>
 {{ end }}

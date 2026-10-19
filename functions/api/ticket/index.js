@@ -12,7 +12,7 @@
   if (!title || !content) return new Response(JSON.stringify({ error: '标题和内容不能为空' }), { status: 400 });
 
   await env.DB.prepare('INSERT INTO tickets (user_id, title, content) VALUES (?, ?, ?)').bind(userId, title, content).run();
-  await env.DB.prepare('UPDATE users SET points = points + 5 WHERE id = ?').bind(userId).run();
+  await env.DB.prepare('UPDATE users SET points = points - 10 WHERE id = ?').bind(userId).run();
   return new Response(JSON.stringify({ ok: true }));
 }
 
