@@ -99,6 +99,11 @@
   </div>
 
   <div class="panel">
+    <h2>文章管理</h2>
+    <div id="post-list-admin" style="display:flex;flex-direction:column;gap:8px;"></div>
+  </div>
+
+  <div class="panel">
     <h2>站长返图上传</h2>
     <input type="file" id="admin-img" accept="image/*" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff;font-size:13px;box-sizing:border-box;margin-bottom:10px;" />
     <input type="date" id="admin-date" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff;font-size:13px;box-sizing:border-box;margin-bottom:10px;" />
@@ -143,6 +148,7 @@ async function checkAdmin() {
   if (await checkAdmin()) {
     loadReports();
     loadTickets();
+    loadPostsAdmin();
   }
 })();
 
@@ -169,6 +175,25 @@ async function loadReports() {
 async function moderate(id, status) {
   await fetch('/api/report/moderate', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id, status }) });
   loadReports();
+}
+
+async function loadPostsAdmin() {
+  const res = await fetch('/api/blog/');
+  const data = await res.json();
+  const el = document.getElementById('post-list-admin');
+  if (!data.posts || data.posts.length === 0) { el.innerHTML = '<p class="empty">还没有文章</p>'; return; }
+  el.innerHTML = data.posts.map(p => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:rgba(255,255,255,.05);border-radius:10px;">
+      <div style="color:#eee;font-size:13px;">${p.title} <span style="color:#888;font-size:11px;">[${p.category || '未分类'}]</span></div>
+      <button onclick="delPost(${p.id})" style="padding:4px 12px;background:rgba(217,83,79,.8);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;">删除</button>
+    </div>
+  `).join('');
+}
+
+async function delPost(id) {
+  if (!confirm('确定删除这篇文章？')) return;
+  await fetch('/api/blog/' + id, { method: 'DELETE' });
+  loadPostsAdmin();
 }
 
 async function loadTickets() {
