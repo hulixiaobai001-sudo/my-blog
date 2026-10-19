@@ -60,6 +60,12 @@ let currentPostId = null;
 let offset = 0;
 let hasMore = false;
 
+function fmtTime(t) {
+  if (!t) return '';
+  const d = new Date(t.replace(' ', 'T') + '+08:00');
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+
 async function loadPosts() {
   offset = 0;
   const res = await fetch('/api/blog/?offset=0');
@@ -94,7 +100,7 @@ async function loadMore() {
     <div class="post-card" onclick="openPost(${p.id})">
       ${p.cover_url ? '<img class="cover" src="' + p.cover_url + '">' : ''}
       <h2>${p.title}</h2>
-      <div class="date">${p.created_at} ${p.category ? '<span style="color:#8ab4ff;margin-left:8px;">[' + p.category + ']</span>' : ''}</div>
+      <div class="date">${fmtTime(p.created_at)} ${p.category ? '<span style="color:#8ab4ff;margin-left:8px;">[' + p.category + ']</span>' : ''}</div>
     </div>
   `).join('');
   offset += data.posts.length;
@@ -108,7 +114,7 @@ async function openPost(id) {
   if (data.post) {
     currentPostId = id;
     document.getElementById('modal-title').textContent = data.post.title;
-    document.getElementById('modal-date').textContent = data.post.created_at;
+    document.getElementById('modal-date').textContent = fmtTime(data.post.created_at);
     document.getElementById('modal-body').textContent = data.post.content;
     document.getElementById('modal').classList.add('open');
     history.replaceState(null, '', '/blog/?post=' + id);
@@ -129,7 +135,7 @@ async function loadComments(postId) {
   }
   el.innerHTML = data.comments.map(c => `
     <div class="comment-item">
-      <span class="c-user">@${c.username}</span><span class="c-time">${c.created_at}</span>
+      <span class="c-user">@${c.username}</span><span class="c-time">${fmtTime(c.created_at)}</span>
       <div class="c-body">${c.content}</div>
     </div>
   `).join('');

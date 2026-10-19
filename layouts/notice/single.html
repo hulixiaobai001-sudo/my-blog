@@ -24,10 +24,15 @@
   el.innerHTML = data.posts.map(p => `
     <div class="notice-item">
       <h2>${p.title}</h2>
-      <div class="time">${p.created_at}</div>
+      <div class="time">${fmtTime(p.created_at)}</div>
       <div class="content" id="content-${p.id}"></div>
     </div>
   `).join('');
+  function fmtTime(t) {
+    if (!t) return '';
+    const d = new Date(t.replace(' ', 'T') + '+08:00');
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  }
   for (const p of data.posts) {
     const r = await fetch('/api/blog/' + p.id);
     const d = await r.json();
