@@ -1,51 +1,42 @@
 {{ define "main" }}
 <style>
-  .gallery-wrap { max-width: 800px; margin: 20px auto; padding: 0 20px; position: relative; z-index: 1; }
-  .gallery-title { color: #fff; font-size: 24px; margin: 20px 0; text-align: center; }
-  .section-title { color: #fff; font-size: 18px; margin: 24px 0 12px; padding-left: 12px; border-left: 3px solid #8ab4ff; }
-  .slider {
-    position: relative;
-    width: 100%;
-    border-radius: 20px;
-    overflow: hidden;
-    background: rgba(255,255,255,.06);
-    backdrop-filter: blur(20px);
+  .gallery-wrap { max-width: 900px; margin: 0 auto; padding: 20px; position: relative; z-index: 1; }
+  .gallery-scroll {
+    display: flex; overflow-x: auto; scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch; gap: 20px;
+  }
+  .gallery-scroll::-webkit-scrollbar { display: none; }
+  .g-panel {
+    flex: 0 0 100%; max-width: 860px; scroll-snap-align: start;
+    border-radius: 20px; padding: 20px;
+    background: rgba(255,255,255,.06); backdrop-filter: blur(20px);
     border: 1px solid rgba(255,255,255,.12);
-    aspect-ratio: 4/3;
   }
-  .slide {
-    position: absolute; inset: 0;
-    display: flex; align-items: center; justify-content: center;
-    opacity: 0; transition: opacity 0.8s ease;
-  }
+  .g-panel h2 { color: #fff; font-size: 20px; margin: 0 0 16px; }
+  .slider { position: relative; width: 100%; border-radius: 16px; overflow: hidden; background: rgba(0,0,0,.2); aspect-ratio: 4/3; }
+  .slide { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.8s ease; }
   .slide.active { opacity: 1; }
   .slide img { max-width: 100%; max-height: 100%; object-fit: contain; }
-  .slide .caption {
-    position: absolute; bottom: 0; left: 0; right: 0;
-    padding: 40px 20px 16px;
-    background: linear-gradient(transparent, rgba(0,0,0,.7));
-    color: #fff;
-  }
+  .slide .caption { position: absolute; bottom: 0; left: 0; right: 0; padding: 40px 20px 16px; background: linear-gradient(transparent, rgba(0,0,0,.7)); color: #fff; }
   .slide .caption .who { font-size: 14px; font-weight: 500; }
   .slide .caption .what { font-size: 13px; color: #ccc; margin-top: 4px; }
   .slide .caption .when { font-size: 11px; color: #999; margin-top: 2px; }
   .dots { display: flex; justify-content: center; gap: 8px; margin-top: 16px; }
   .dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,.2); cursor: pointer; transition: background 0.3s; }
   .dot.active { background: #8ab4ff; }
-  .empty { text-align: center; color: #888; padding: 40px 0; font-size: 14px; }
-  .timeline { display: flex; flex-direction: column; gap: 16px; }
-  .tl-item {
-    background: rgba(255,255,255,.06); backdrop-filter: blur(20px);
-    border: 1px solid rgba(255,255,255,.12); border-radius: 16px; overflow: hidden;
-  }
+  .empty { text-align: center; color: #888; padding: 60px 0; font-size: 14px; }
+  .timeline { display: flex; flex-direction: column; gap: 16px; max-height: 600px; overflow-y: auto; }
+  .timeline::-webkit-scrollbar { display: none; }
+  .tl-item { background: rgba(255,255,255,.05); border-radius: 12px; overflow: hidden; }
   .tl-item img { width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block; }
-  .tl-item .tl-info { padding: 12px 16px; }
+  .tl-item .tl-info { padding: 10px 14px; }
   .tl-item .tl-date { color: #8ab4ff; font-size: 12px; }
   .tl-item .tl-caption { color: #ccc; font-size: 13px; margin-top: 4px; }
+  .nav-hint { text-align: center; color: rgba(255,255,255,.3); font-size: 12px; margin-top: 12px; }
 </style>
 
 <div class="gallery-wrap">
-  <h1 class="gallery-title">返图墙</h1>
+  <h1 style="color:#fff;text-align:center;font-size:24px;margin:20px 0;">返图墙</h1>
   <div style="text-align:center;margin-bottom:16px;">
     <a href="/report/" style="display:inline-block;padding:8px 20px;background:rgba(138,180,255,.2);color:#8ab4ff;border-radius:10px;text-decoration:none;font-size:13px;">上传我的返图</a>
   </div>
@@ -61,12 +52,18 @@
     </div>
   </div>
 
-  <h2 class="section-title">站长返图时间线</h2>
-  <div class="timeline" id="admin-timeline"></div>
-
-  <h2 class="section-title">用户返图</h2>
-  <div class="slider" id="slider"></div>
-  <div class="dots" id="dots"></div>
+  <div class="gallery-scroll" id="gScroll">
+    <div class="g-panel">
+      <h2>用户返图</h2>
+      <div class="slider" id="slider"></div>
+      <div class="dots" id="dots"></div>
+      <div class="nav-hint">← 左右滑动看站长返图 →</div>
+    </div>
+    <div class="g-panel">
+      <h2>站长返图时间线</h2>
+      <div class="timeline" id="admin-timeline"></div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -104,7 +101,7 @@ async function loadGallery() {
   const slider = document.getElementById('slider');
   const dots = document.getElementById('dots');
   if (slides.length === 0) {
-    slider.innerHTML = '<p class="empty">还没有用户返图，快去上传第一张吧</p>';
+    slider.innerHTML = '<p class="empty">还没有用户返图</p>';
     dots.innerHTML = '';
     return;
   }

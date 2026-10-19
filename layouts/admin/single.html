@@ -97,6 +97,15 @@
     <button onclick="publishBlog('notice')" style="margin-top:10px;padding:10px 20px;border:none;border-radius:10px;background:#e67e22;color:#fff;cursor:pointer;font-size:14px;">发布公告</button>
     <div id="notice-result" style="margin-top:10px;font-size:13px;"></div>
   </div>
+
+  <div class="panel">
+    <h2>站长返图上传</h2>
+    <input type="file" id="admin-img" accept="image/*" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff;font-size:13px;box-sizing:border-box;margin-bottom:10px;" />
+    <input type="date" id="admin-date" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff;font-size:13px;box-sizing:border-box;margin-bottom:10px;" />
+    <textarea id="admin-caption" placeholder="配文（比如：绒兽汇 2026）" style="width:100%;height:80px;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff;font-size:13px;box-sizing:border-box;resize:vertical;"></textarea>
+    <button onclick="uploadAdminImg()" style="margin-top:10px;padding:10px 20px;border:none;border-radius:10px;background:#27ae60;color:#fff;cursor:pointer;font-size:14px;">上传到时间线</button>
+    <div id="admin-img-result" style="margin-top:10px;font-size:13px;"></div>
+  </div>
 </div>
 
 <button class="nav-arrow nav-left" onclick="scrollAdmin(-1)">&#8249;</button>
@@ -203,6 +212,27 @@ async function publishBlog(type) {
     document.getElementById(type === 'blog' ? 'blog-content' : 'notice-content').value = '';
   } else {
     result.textContent = '发布失败';
+  }
+}
+
+async function uploadAdminImg() {
+  const file = document.getElementById('admin-img').files[0];
+  if (!file) { document.getElementById('admin-img-result').textContent = '请先选图片'; return; }
+  const date = document.getElementById('admin-date').value;
+  const caption = document.getElementById('admin-caption').value;
+  const result = document.getElementById('admin-img-result');
+  result.textContent = '上传中...';
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('admin_date', date);
+  fd.append('caption', caption);
+  const res = await fetch('/api/report/upload-admin', { method: 'POST', body: fd });
+  if (res.ok) {
+    result.textContent = '上传成功！';
+    document.getElementById('admin-img').value = '';
+    document.getElementById('admin-caption').value = '';
+  } else {
+    result.textContent = '上传失败';
   }
 }
 </script>
