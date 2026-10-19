@@ -1,12 +1,7 @@
 {{ if not .IsHome }}
 <style>
   :root {
-    --bg: #1a1a2e;
-    --entry: rgba(255,255,255,.08);
-    --primary: #fff;
     --content: #e8e8e8;
-    --secondary: #aaa;
-    --border: rgba(255,255,255,.1);
   }
   body {
     background: #1a1a2e !important;
@@ -20,27 +15,38 @@
     content: ''; position: fixed; inset: 0; z-index: 0;
     background: rgba(0,0,0,.5);
   }
-  #top-bar, .post-tags, .nav, .container, .main, .footer, .searchbar, .post {
+  .container, .main, .footer, .post {
     position: relative; z-index: 1;
   }
-  .about-scroll, .admin-scroll {
-    scroll-snap-type: x proximity !important;
-    scroll-behavior: smooth;
-    touch-action: pan-x pan-y;
-  }
 
-  /* 导航栏毛玻璃 */
+  /* 顶部导航：全宽固定，半透明黑毛玻璃，不要大黑条 */
   .header {
-    background: rgba(20,22,35,.7) !important;
-    backdrop-filter: blur(20px) saturate(140%);
-    -webkit-backdrop-filter: blur(20px) saturate(140%);
-    border: 1px solid rgba(255,255,255,.1) !important;
-    border-radius: 16px !important;
-    padding: 12px 24px !important;
-    margin-bottom: 20px !important;
-    position: sticky; top: 10px; z-index: 50;
+    position: fixed !important; top: 0; left: 0; right: 0;
+    background: rgba(0,0,0,.4) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 14px 24px !important;
+    margin: 0 !important;
+    z-index: 50;
   }
-  .header a { color: #fff !important; }
+  .header .header-nav {
+    max-width: 900px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .header a { color: #fff !important; text-decoration: none; }
+  .header .logo a { font-size: 16px; font-weight: 600; }
+
+  /* 主菜单 */
+  #menu.menu { display: flex; gap: 20px; list-style: none; margin: 0; padding: 0; }
+  #menu.menu li { display: none; }
+  #menu.menu li.nav-keep { display: inline-block; }
+  #menu.menu li a { font-size: 14px; color: #e5e7eb !important; transition: color .2s; }
+  #menu.menu li a:hover { color: #fff !important; }
+
+  /* 给body顶部留导航高度 */
+  body { padding-top: 60px; }
 
   .container {
     max-width: 900px !important;
@@ -48,10 +54,8 @@
   }
   h1, h2, h3, h4, h5, h6 { color: #fff !important; }
   p, li, span, div { color: var(--content); }
-  a { color: #8ab4ff !important; }
-  a:hover { color: #fff !important; }
 
-  .footer { background: transparent !important; backdrop-filter: none; border: none !important; text-align: center; }
+  .footer { background: transparent !important; backdrop-filter: none; border: none !important; text-align: center; padding: 20px; }
   .footer a { color: #8ab4ff !important; }
 
   .icp-beian {
@@ -62,80 +66,56 @@
   }
   .icp-beian:hover { color: #ccc !important; box-shadow: 0 0 10px rgba(255,255,255,.15); }
 
-  .post-entry, .group {
-    background: rgba(255,255,255,.06);
-    border: 1px solid rgba(255,255,255,.08);
-    border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 12px;
-  }
-  .post-entry:hover { background: rgba(255,255,255,.12); }
-  .post-entry .entry-header h2 a { color: #fff !important; }
-  .post-entry .post-content, .post-entry .entry-footer { color: #ccc !important; }
-
-  table { background: rgba(255,255,255,.05); border-radius: 8px; }
-  th, td { border-color: rgba(255,255,255,.1) !important; color: var(--content); }
-  blockquote {
-    background: rgba(138,180,255,.1);
-    border-left: 3px solid #8ab4ff;
-    color: #ccc;
-  }
-  code, pre { background: rgba(0,0,0,.4) !important; color: #e8e8e8; }
-
-  /* 隐藏原菜单中不需要的项，用JS重建 */
-  #menu.menu li { display: none; }
-  #menu.menu li.nav-keep { display: inline-block; }
-
-  /* 更多下拉 */
-  .more-dropdown { position: relative; display: inline-block; }
-  .more-dropdown-content {
-    display: none; position: absolute; right: 0; top: 100%;
-    background: rgba(20,22,35,.95); backdrop-filter: blur(20px);
-    border: 1px solid rgba(255,255,255,.12); border-radius: 12px;
-    min-width: 140px; padding: 8px 0; z-index: 100;
-  }
-  .more-dropdown.open .more-dropdown-content { display: block; }
-  .more-dropdown-content a {
-    display: block; padding: 10px 18px; color: #ddd !important; text-decoration: none; font-size: 14px;
-  }
-  .more-dropdown-content a:hover { background: rgba(255,255,255,.08); color: #fff !important; }
-
   /* 用户头像下拉 */
   #user-menu {
-    position: fixed; right: 20px; top: 14px; z-index: 60;
+    position: fixed; right: 20px; top: 12px; z-index: 60;
     display: flex; align-items: center; gap: 8px;
-    background: rgba(20,22,35,.7); backdrop-filter: blur(20px);
-    border: 1px solid rgba(255,255,255,.12); border-radius: 20px;
-    padding: 4px 12px 4px 4px; cursor: pointer;
+    background: transparent;
+    border: none; border-radius: 20px;
+    padding: 4px; cursor: pointer;
   }
   #user-menu .avatar-mini {
-    width: 28px; height: 28px; border-radius: 50%;
+    width: 30px; height: 30px; border-radius: 50%;
     background: linear-gradient(135deg, #667eea, #764ba2);
     display: flex; align-items: center; justify-content: center;
-    font-size: 13px; color: #fff; font-weight: 600;
+    font-size: 14px; color: #fff; font-weight: 600;
   }
   #user-menu .uname { font-size: 13px; color: #fff; }
   #user-menu .dropdown-arrow { font-size: 10px; color: #aaa; }
   #user-menu-content {
-    display: none; position: absolute; right: 0; top: 110%;
-    background: rgba(20,22,35,.95); backdrop-filter: blur(20px);
-    border: 1px solid rgba(255,255,255,.12); border-radius: 12px;
-    min-width: 160px; padding: 8px 0; z-index: 100;
+    display: none; position: absolute; right: 0; top: 120%;
+    background: rgba(30,30,30,.95); backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,.1); border-radius: 12px;
+    min-width: 180px; padding: 6px 0; z-index: 100;
+    box-shadow: 0 4px 20px rgba(0,0,0,.5);
   }
   #user-menu.open #user-menu-content { display: block; }
   #user-menu-content a, #user-menu-content button {
     display: block; width: 100%; text-align: left;
-    padding: 10px 18px; color: #ddd; text-decoration: none;
+    padding: 10px 18px; color: #e5e7eb !important;
+    text-decoration: none !important;
     font-size: 14px; background: none; border: none; cursor: pointer;
+    transition: background .15s;
   }
   #user-menu-content a:hover, #user-menu-content button:hover {
-    background: rgba(255,255,255,.08); color: #fff;
+    background: rgba(255,255,255,.1); color: #fff !important;
+  }
+  #user-menu-content .admin-link { color: #8ab4ff !important; font-weight: 600; }
+
+  /* 博客列表页毛玻璃容器 */
+  .blog-wrap {
+    background: rgba(255,255,255,.05) !important;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-top: 20px;
   }
 
   @media (max-width: 768px) {
-    .container { padding: 10px !important; }
-    .header { padding: 10px 16px !important; }
+    .header { padding: 12px 16px !important; }
     #user-menu { right: 10px; top: 10px; }
+    #user-menu .uname { display: none; }
   }
 </style>
 <script>
@@ -146,25 +126,9 @@
   items.forEach(li => {
     const a = li.querySelector('a span, a');
     const text = (a.textContent || '').trim();
-    if (['博客','返图墙','个人'].includes(text)) {
+    if (['博客','个人','返图墙','工单'].includes(text)) {
       li.classList.add('nav-keep');
     }
-  });
-
-  // 加"更多"下拉
-  const moreLi = document.createElement('li');
-  moreLi.className = 'nav-keep more-dropdown';
-  moreLi.innerHTML = '<a href="javascript:void(0)" onclick="event.stopPropagation();this.parentElement.classList.toggle(\'open\')">更多 ▾</a>' +
-    '<div class="more-dropdown-content">' +
-    '<a href="/links/">友链</a>' +
-    '<a href="/notice/">公告</a>' +
-    '<a href="/ticket/">工单</a>' +
-    '</div>';
-  menu.appendChild(moreLi);
-
-  // 点页面其他地方关闭下拉
-  document.addEventListener('click', () => {
-    document.querySelectorAll('.more-dropdown.open, #user-menu.open').forEach(el => el.classList.remove('open'));
   });
 })();
 </script>
@@ -180,14 +144,16 @@
     wrap.id = 'user-menu';
     if (data.user) {
       const initial = data.user.username.charAt(0).toUpperCase();
-      let extra = '';
-      if (data.user.is_admin) extra = '<a href="/admin/">站长后台</a>';
+      let adminLink = '';
+      if (data.user.is_admin) adminLink = '<a href="/admin/" class="admin-link">⚙️ 站长后台</a>';
       wrap.innerHTML =
         '<div class="avatar-mini">' + initial + '</div>' +
         '<span class="uname">' + data.user.username + '</span>' +
         '<span class="dropdown-arrow">▾</span>' +
         '<div id="user-menu-content">' +
-        extra +
+        adminLink +
+        '<a href="/links/">友链</a>' +
+        '<a href="/notice/">公告</a>' +
         '<a href="/profile/">我的积分</a>' +
         '<a href="/shop/">积分商店</a>' +
         '<button id="logout-btn">退出登录</button>' +
@@ -210,6 +176,11 @@
     }
     document.body.appendChild(wrap);
   } catch(e) {}
+
+  // 点页面其他地方关闭下拉
+  document.addEventListener('click', () => {
+    document.querySelectorAll('#user-menu.open').forEach(el => el.classList.remove('open'));
+  });
 })();
 
 // 注入页脚备案

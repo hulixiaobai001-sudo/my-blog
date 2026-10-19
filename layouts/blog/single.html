@@ -51,7 +51,7 @@ async function loadPosts() {
   const data = await res.json();
   const el = document.getElementById('post-list');
   if (!data.posts || data.posts.length === 0) {
-    el.innerHTML = '<p class="empty">还没有文章</p>';
+    el.innerHTML = '<p class="empty">📝 还没有文章，去后台写一篇吧</p>';
     document.getElementById('load-more').style.display = 'none';
     return;
   }
