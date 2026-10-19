@@ -36,7 +36,7 @@
       <div class="avatar">${u.avatar ? '<img src="' + u.avatar + '">' : u.username.charAt(0).toUpperCase()}</div>
       <div class="name">${u.username}</div>
       <div class="bio">${u.bio || '这个人很懒，什么都没写'}</div>
-      <a class="add-btn" href="https://user.qzone.qq.com/${u.qq}" target="_blank">加好友</a>
+      <a class="add-btn" href="mqqapi://card/show_pslcard?src_type=internal&version=1&uin=${u.qq}" target="_blank">加好友</a>
     </div>
   `).join('');
 })();
