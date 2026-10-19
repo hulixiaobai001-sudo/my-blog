@@ -93,14 +93,16 @@
   }
 
   @media (max-width: 768px) {
-    .hamburger { display: block; }
+    .admin-root { flex-direction: column; }
     .sidebar {
-      position: fixed; top: 0; left: 0; bottom: 0; z-index: 90;
-      transform: translateX(-100%); transition: transform .3s;
-      width: 240px;
+      position: static; width: 100%; transform: none;
+      display: flex; flex-wrap: wrap; gap: 6px;
+      padding: 10px; border-right: none; border-bottom: 1px solid rgba(255,255,255,.1);
     }
-    .sidebar.open { transform: translateX(0); }
-    .content { padding: 60px 16px 30px; }
+    .sidebar-title { width: 100%; padding: 0 0 8px; border: none; margin: 0; }
+    .nav-btn { flex: 0 0 auto; padding: 8px 14px; margin: 0; font-size: 13px; }
+    .content { padding: 16px; }
+    .hamburger { display: none; }
   }
 </style>
 
