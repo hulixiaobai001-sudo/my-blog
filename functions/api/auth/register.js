@@ -1,18 +1,11 @@
 export async function onRequestPost(context) {
   const { request, env } = context;
   try {
-    const { username, password, email, code } = await request.json();
+    const { username, password } = await request.json();
 
     if (!username || !password || username.length < 2 || password.length < 6) {
       return new Response(JSON.stringify({ error: '用户名至少2字符，密码至少6位' }), { status: 400 });
     }
-
-    // 验证邮箱验证码
-    const savedCode = await env.AUTH_KV.get(`code:${email}`);
-    if (!savedCode || savedCode !== code) {
-      return new Response(JSON.stringify({ error: '验证码错误或已过期' }), { status: 400 });
-    }
-    await env.AUTH_KV.delete(`code:${email}`);
 
     const existing = await env.DB.prepare('SELECT id FROM users WHERE username = ?').bind(username).first();
     if (existing) {
@@ -30,7 +23,7 @@ export async function onRequestPost(context) {
       headers: { 'Set-Cookie': `session=${token}; Path=/; HttpOnly; Secure; Max-Age=2592000; SameSite=Lax`, 'Content-Type': 'application/json' }
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: e.message, stack: e.stack }), { status: 500 });
+    return new Response(JSON.stringify({ error: e.message }), { status: 500 });
   }
 }
 
