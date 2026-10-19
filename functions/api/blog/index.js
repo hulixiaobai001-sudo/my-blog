@@ -9,20 +9,26 @@ export async function onRequestPost(context) {
   const { isAdmin } = JSON.parse(session);
   if (!isAdmin) return new Response(JSON.stringify({ error: '仅站长可访问' }), { status: 403 });
 
-  const { title, content, type, category } = await request.json();
+  const { title, content, type, category, cover_url } = await request.json();
   if (!title || !content) return new Response(JSON.stringify({ error: '标题和内容不能为空' }), { status: 400 });
   const t = type || 'blog';
   const cat = category || '';
+  const cover = cover_url || '';
 
   try {
-    await env.DB.prepare('INSERT INTO posts (title, content, type, category) VALUES (?, ?, ?, ?)').bind(title, content, t, cat).run();
+    await env.DB.prepare('INSERT INTO posts (title, content, type, category, cover_url) VALUES (?, ?, ?, ?, ?)').bind(title, content, t, cat, cover).run();
   } catch (e) {
     await env.DB.exec('ALTER TABLE posts ADD COLUMN type TEXT DEFAULT \'blog\'');
     try {
-      await env.DB.prepare('INSERT INTO posts (title, content, type, category) VALUES (?, ?, ?, ?)').bind(title, content, t, cat).run();
+      await env.DB.prepare('INSERT INTO posts (title, content, type, category, cover_url) VALUES (?, ?, ?, ?, ?)').bind(title, content, t, cat, cover).run();
     } catch (e2) {
       await env.DB.exec('ALTER TABLE posts ADD COLUMN category TEXT DEFAULT \'\'');
-      await env.DB.prepare('INSERT INTO posts (title, content, type, category) VALUES (?, ?, ?, ?)').bind(title, content, t, cat).run();
+      try {
+        await env.DB.prepare('INSERT INTO posts (title, content, type, category, cover_url) VALUES (?, ?, ?, ?, ?)').bind(title, content, t, cat, cover).run();
+      } catch (e3) {
+        await env.DB.exec('ALTER TABLE posts ADD COLUMN cover_url TEXT DEFAULT \'\'');
+        await env.DB.prepare('INSERT INTO posts (title, content, type, category, cover_url) VALUES (?, ?, ?, ?, ?)').bind(title, content, t, cat, cover).run();
+      }
     }
   }
   return new Response(JSON.stringify({ ok: true }));
@@ -35,7 +41,7 @@ export async function onRequestGet(context) {
   const offset = parseInt(url.searchParams.get('offset') || '0');
   const limit = 10;
   try {
-    const { results } = await env.DB.prepare('SELECT id, title, category, created_at FROM posts WHERE published = 1 AND (type = ? OR type IS NULL) ORDER BY id DESC LIMIT ? OFFSET ?').bind(type, limit, offset).all();
+    const { results } = await env.DB.prepare('SELECT id, title, category, created_at, cover_url FROM posts WHERE published = 1 AND (type = ? OR type IS NULL) ORDER BY id DESC LIMIT ? OFFSET ?').bind(type, limit, offset).all();
     return new Response(JSON.stringify({ posts: results, has_more: results.length === limit }), { headers: { 'Content-Type': 'application/json; charset=utf-8' } });
   } catch (e) {
     return new Response(JSON.stringify({ posts: [], has_more: false }), { headers: { 'Content-Type': 'application/json; charset=utf-8' } });

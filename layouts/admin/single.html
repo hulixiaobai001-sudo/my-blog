@@ -125,6 +125,11 @@
       <h2>写博客</h2>
       <input id="blog-title" placeholder="文章标题" />
       <input id="blog-category" placeholder="分类（如：技术、日常、无线电）" />
+      <div style="margin-bottom:10px;">
+        <button onclick="document.getElementById('cover-input').click()" style="padding:10px 16px;border-radius:10px;border:1px dashed rgba(255,255,255,.3);background:rgba(255,255,255,.05);color:#ddd;cursor:pointer;">上传封面图</button>
+        <input type="file" id="cover-input" accept="image/*" style="display:none;" onchange="uploadCover(this)">
+        <img id="cover-preview" style="display:none;margin-top:10px;max-width:200px;border-radius:10px;">
+      </div>
       <textarea id="blog-content" placeholder="正文内容..."></textarea>
       <button class="btn-primary" onclick="publishBlog('blog')">发布文章</button>
       <div class="result-msg" id="blog-result"></div>
@@ -272,13 +277,40 @@ async function publishBlog(type) {
   result.textContent = '发布中...';
   const body = { title, content, type };
   if (category) body.category = category;
+  if (type === 'blog' && window._coverUrl) body.cover_url = window._coverUrl;
   const res = await fetch('/api/blog/', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
   if (res.ok) {
     result.textContent = '发布成功！';
     document.getElementById(type === 'blog' ? 'blog-title' : 'notice-title').value = '';
     if (type === 'blog' && mde) mde.value('');
     else document.getElementById(type === 'blog' ? 'blog-content' : 'notice-content').value = '';
+    window._coverUrl = '';
+    document.getElementById('cover-preview').style.display = 'none';
+    document.getElementById('cover-input').value = '';
   } else { result.textContent = '发布失败'; }
+}
+
+async function uploadCover(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async function(e) {
+    const res = await fetch('/api/upload/image', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ imageBase64: e.target.result })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      window._coverUrl = data.url;
+      const img = document.getElementById('cover-preview');
+      img.src = data.url;
+      img.style.display = 'block';
+    } else {
+      alert(data.error || '上传失败');
+    }
+  };
+  reader.readAsDataURL(file);
 }
 
 async function uploadAdminImg() {
