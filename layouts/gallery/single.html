@@ -130,6 +130,20 @@ function closeDetail() {
   currentDetailId = null;
 }
 
+function openAdminDetail(r) {
+  currentDetailId = r.id;
+  document.getElementById('d-img').src = '/api/report/view?key=' + r.image_key;
+  document.getElementById('d-title').textContent = escapeHtml(r.caption || '无配文');
+  document.getElementById('d-meta').innerHTML = `
+    <div><b>上传人：</b>站长</div>
+    <div><b>上传时间：</b>${r.created_at}</div>
+    <div><b>类型：</b>站长返图</div>
+    <div><b>图片标识：</b><code style="font-size:11px;color:#8ab4ff;">${r.image_key}</code></div>
+  `;
+  document.getElementById('detail-modal').classList.add('open');
+  loadDetailComments(r.id);
+}
+
 async function loadDetailComments(reportId) {
   const postId = reportId + 100000;
   const res = await fetch('/api/comments/?post_id=' + postId);
@@ -173,7 +187,7 @@ async function loadGallery() {
   const adminEl = document.getElementById('admin-timeline');
   if (data.admin_reports && data.admin_reports.length > 0) {
     adminEl.innerHTML = data.admin_reports.map(r => `
-      <div class="tl-item">
+      <div class="tl-item" style="cursor:pointer;" onclick="openAdminDetail(${JSON.stringify(r).replace(/"/g, '&quot;')})">
         <img src="/api/report/view?key=${r.image_key}" />
         <div class="tl-info">
           <div class="tl-date">${r.created_at}</div>
