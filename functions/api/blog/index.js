@@ -9,15 +9,18 @@ export async function onRequestPost(context) {
   const { isAdmin } = JSON.parse(session);
   if (!isAdmin) return new Response(JSON.stringify({ error: '仅站长可访问' }), { status: 403 });
 
-  const { title, content } = await request.json();
+  const { title, content, type } = await request.json();
   if (!title || !content) return new Response(JSON.stringify({ error: '标题和内容不能为空' }), { status: 400 });
+  const t = type || 'blog';
 
-  await env.DB.prepare('INSERT INTO posts (title, content) VALUES (?, ?)').bind(title, content).run();
+  await env.DB.prepare('INSERT INTO posts (title, content, type) VALUES (?, ?, ?)').bind(title, content, t).run();
   return new Response(JSON.stringify({ ok: true }));
 }
 
 export async function onRequestGet(context) {
-  const { env } = context;
-  const { results } = await env.DB.prepare('SELECT id, title, created_at FROM posts WHERE published = 1 ORDER BY id DESC').all();
+  const { request, env } = context;
+  const url = new URL(request.url);
+  const type = url.searchParams.get('type') || 'blog';
+  const { results } = await env.DB.prepare('SELECT id, title, created_at FROM posts WHERE published = 1 AND type = ? ORDER BY id DESC').bind(type).all();
   return new Response(JSON.stringify({ posts: results }), { headers: { 'Content-Type': 'application/json; charset=utf-8' } });
 }

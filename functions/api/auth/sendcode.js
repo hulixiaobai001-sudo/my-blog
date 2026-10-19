@@ -5,21 +5,23 @@ export async function onRequestPost(context) {
   // 验证码存 KV，5分钟过期
   await env.AUTH_KV.put(`code:${email}`, code, { expirationTtl: 300 });
 
-  // 尝试通过 Resend API 发邮件（如果配置了 key）
-  if (env.RESEND_KEY) {
-    try {
-      await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + env.RESEND_KEY, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          from: '狐狸白沁个人站 <onboarding@resend.dev>',
-          to: email,
-          subject: '你的验证码',
-          text: '你的验证码是：' + code + '\n5分钟内有效。'
-        })
-      });
-    } catch (e) {}
-  }
+  // 用 EmailJS 发邮件
+  try {
+    await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        service_id: 'service_fc3udqj',
+        template_id: 'wr93quh',
+        user_id: 'gKtkQsQqhRjt9CaDE',
+        template_params: {
+          passcode: code,
+          time: '5分钟',
+          to_email: email
+        }
+      })
+    });
+  } catch (e) {}
 
   return new Response(JSON.stringify({ ok: true }), { headers: { 'Content-Type': 'application/json; charset=utf-8' } });
 }
