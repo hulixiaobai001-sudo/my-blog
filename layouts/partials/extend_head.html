@@ -54,6 +54,14 @@
   .footer { background: transparent !important; backdrop-filter: none; border: none !important; text-align: center; }
   .footer a { color: #8ab4ff !important; }
 
+  .icp-beian {
+    display: inline-block; margin-top: 10px; padding: 4px 14px;
+    background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08);
+    border-radius: 20px; font-size: 12px; color: #888 !important;
+    text-decoration: none; transition: all .2s;
+  }
+  .icp-beian:hover { color: #ccc !important; box-shadow: 0 0 10px rgba(255,255,255,.15); }
+
   .post-entry, .group {
     background: rgba(255,255,255,.06);
     border: 1px solid rgba(255,255,255,.08);
@@ -132,7 +140,6 @@
 </style>
 <script>
 (function() {
-  // 重建导航：只保留 博客/返图墙/个人，其余收进"更多"
   const menu = document.getElementById('menu');
   if (!menu) return;
   const items = menu.querySelectorAll('li');
@@ -202,6 +209,20 @@
     }
     document.body.appendChild(wrap);
   } catch(e) {}
+})();
+
+// 注入页脚备案
+(function() {
+  const footer = document.querySelector('.footer');
+  if (footer) {
+    const a = document.createElement('a');
+    a.href = 'https://icp.gov.moe/?keyword=20260855';
+    a.target = '_blank';
+    a.className = 'icp-beian';
+    a.textContent = '萌ICP备20260855号';
+    footer.appendChild(document.createElement('br'));
+    footer.appendChild(a);
+  }
 })();
 </script>
 {{ end }}
