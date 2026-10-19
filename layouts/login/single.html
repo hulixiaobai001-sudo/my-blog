@@ -30,7 +30,7 @@
       <input type="email" id="email" placeholder="邮箱（用于接收验证码）" />
       <div class="code-row">
         <input type="text" id="code" placeholder="验证码" />
-        <button onclick="sendCode()" style="margin-top:8px;">发送验证码</button>
+        <button id="sendbtn" onclick="sendCode(this)" style="margin-top:8px;">发送验证码</button>
       </div>
     </div>
     <button onclick="submit()">提交</button>
@@ -38,10 +38,7 @@
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>
-emailjs.init({ publicKey: 'gKtkQsQqhRjt9CaDE' });
-
 let mode = 'login';
 function switchTab(m) {
   mode = m;
@@ -52,24 +49,32 @@ function switchTab(m) {
   document.getElementById('msg').textContent = '';
 }
 
-async function sendCode() {
+async function sendCode(btn) {
   const email = document.getElementById('email').value.trim();
   if (!email) { document.getElementById('msg').textContent = '请先填邮箱'; return; }
   const code = Math.floor(100000 + Math.random() * 900000).toString();
   sessionStorage.setItem('reg_code', code);
   sessionStorage.setItem('reg_email', email);
-  const btn = event.target;
   btn.disabled = true;
   btn.textContent = '发送中...';
   try {
-    await emailjs.send('service_fc3udqj', 'wr93quh', { passcode: code, time: '5分钟', to_email: email });
+    await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        service_id: 'service_fc3udqj',
+        template_id: 'wr93quh',
+        user_id: 'gKtkQsQqhRjt9CaDE',
+        template_params: { passcode: code, time: '5分钟', to_email: email }
+      })
+    });
     await fetch('/api/auth/sendcode', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ email, code }) });
     btn.textContent = '已发送';
     document.getElementById('msg').textContent = '验证码已发送到邮箱';
   } catch (e) {
     btn.disabled = false;
     btn.textContent = '发送验证码';
-    document.getElementById('msg').textContent = '发送失败: ' + e.text;
+    document.getElementById('msg').textContent = '发送失败';
   }
 }
 
