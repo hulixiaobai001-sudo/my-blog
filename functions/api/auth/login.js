@@ -9,16 +9,21 @@ export async function onRequestPost(context) {
 
   const { username, password } = await request.json();
 
-  const user = await env.DB.prepare('SELECT id, username, password_hash, is_admin FROM users WHERE username = ?').bind(username).first();
-  if (!user) {
-    await env.AUTH_KV.put(failKey, String(fails + 1), { expirationTtl: 900 });
-    return new Response(JSON.stringify({ error: '用户不存在' }), { status: 401 });
-  }
+  try {
+    const user = await env.DB.prepare('SELECT id, username, password_hash, is_admin FROM users WHERE username = ?').bind(username).first();
+    if (!user) {
+      await env.AUTH_KV.put(failKey, String(fails + 1), { expirationTtl: 900 });
+      return new Response(JSON.stringify({ error: '用户名或密码错误' }), { status: 401 });
+    }
 
-  const hash = await sha256(password);
-  if (hash !== user.password_hash) {
-    await env.AUTH_KV.put(failKey, String(fails + 1), { expirationTtl: 900 });
-    return new Response(JSON.stringify({ error: '密码错误' }), { status: 401 });
+    const hash = await sha256(password);
+    if (hash !== user.password_hash) {
+      await env.AUTH_KV.put(failKey, String(fails + 1), { expirationTtl: 900 });
+      return new Response(JSON.stringify({ error: '用户名或密码错误' }), { status: 401 });
+    }
+  } catch (e) {
+    console.error('login error', e);
+    return new Response(JSON.stringify({ error: '用户名或密码错误' }), { status: 401 });
   }
 
   await env.AUTH_KV.delete(failKey);
