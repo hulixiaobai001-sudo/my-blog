@@ -21,7 +21,8 @@ export async function onRequestPost(context) {
   try {
     await env.DB.prepare('INSERT INTO posts (title, content, type, category, cover_url) VALUES (?, ?, ?, ?, ?)').bind(title, content, t, cat, cover).run();
   } catch (e) {
-    return new Response(JSON.stringify({ error: '发布失败: ' + e.message }), { status: 500 });
+    console.error('create post error', e);
+    return new Response(JSON.stringify({ error: '服务器内部错误' }), { status: 500 });
   }
   return new Response(JSON.stringify({ ok: true }));
 }

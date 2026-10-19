@@ -28,7 +28,8 @@ export async function onRequestPost(context) {
       headers: { 'Set-Cookie': `session=${token}; Path=/; HttpOnly; Secure; Max-Age=2592000; SameSite=Lax`, 'Content-Type': 'application/json' }
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: e.message }), { status: 500 });
+    console.error('register error', e);
+    return new Response(JSON.stringify({ error: '服务器内部错误' }), { status: 500 });
   }
 }
 

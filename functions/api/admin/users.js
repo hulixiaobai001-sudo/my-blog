@@ -6,8 +6,9 @@ export async function onRequestGet(context) {
 
   const session = await env.AUTH_KV.get(`session:${token}`);
   if (!session) return new Response(JSON.stringify({ error: '登录已过期' }), { status: 401 });
-  const { isAdmin } = JSON.parse(session);
-  if (!isAdmin) return new Response(JSON.stringify({ error: '仅站长可访问' }), { status: 403 });
+  const { userId } = JSON.parse(session);
+  const dbUser = await env.DB.prepare('SELECT is_admin FROM users WHERE id = ?').bind(userId).first();
+  if (!dbUser || !dbUser.is_admin) return new Response(JSON.stringify({ error: '仅站长可访问' }), { status: 403 });
 
   try {
     const { results } = await env.DB.prepare('SELECT id, username, points, qq, bio, avatar, show_qq, created_at, is_admin FROM users ORDER BY is_admin DESC, id ASC').all();
@@ -25,17 +26,21 @@ export async function onRequestPost(context) {
 
   const session = await env.AUTH_KV.get(`session:${token}`);
   if (!session) return new Response(JSON.stringify({ error: '登录已过期' }), { status: 401 });
-  const { isAdmin } = JSON.parse(session);
-  if (!isAdmin) return new Response(JSON.stringify({ error: '仅站长可操作' }), { status: 403 });
+  const { userId: adminId } = JSON.parse(session);
+  const dbAdmin = await env.DB.prepare('SELECT is_admin FROM users WHERE id = ?').bind(adminId).first();
+  if (!dbAdmin || !dbAdmin.is_admin) return new Response(JSON.stringify({ error: '仅站长可操作' }), { status: 403 });
 
   const { userId, amount, reason } = await request.json();
   if (!userId || amount === undefined) return new Response(JSON.stringify({ error: '参数错误' }), { status: 400 });
+  const pts = parseInt(amount);
+  if (isNaN(pts) || pts < -10000 || pts > 10000) return new Response(JSON.stringify({ error: '积分范围异常' }), { status: 400 });
 
   try {
-    await env.DB.prepare('UPDATE users SET points = points + ? WHERE id = ?').bind(amount, userId).run();
-    await env.DB.prepare('INSERT INTO points_log (user_id, amount, reason) VALUES (?, ?, ?)').bind(userId, amount, reason || '站长手动调整').run();
+    await env.DB.prepare('UPDATE users SET points = points + ? WHERE id = ?').bind(pts, userId).run();
+    await env.DB.prepare('INSERT INTO points_log (user_id, amount, reason) VALUES (?, ?, ?)').bind(userId, pts, reason || '站长手动调整').run();
   } catch (e) {
-    return new Response(JSON.stringify({ error: '操作失败：' + e.message }), { status: 500 });
+    console.error('adjust points error', e);
+    return new Response(JSON.stringify({ error: '服务器内部错误' }), { status: 500 });
   }
   return new Response(JSON.stringify({ ok: true }));
 }

@@ -1,13 +1,27 @@
 export async function onRequestPost(context) {
   const { request, env } = context;
+  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+
+  // 登录失败限流：5次锁15分钟
+  const failKey = `loginfail:${ip}`;
+  const fails = parseInt(await env.AUTH_KV.get(failKey) || '0');
+  if (fails >= 5) return new Response(JSON.stringify({ error: '失败次数过多，15分钟后再试' }), { status: 429 });
+
   const { username, password } = await request.json();
 
   const user = await env.DB.prepare('SELECT id, username, password_hash, is_admin FROM users WHERE username = ?').bind(username).first();
-  if (!user) return new Response(JSON.stringify({ error: '用户不存在' }), { status: 401 });
+  if (!user) {
+    await env.AUTH_KV.put(failKey, String(fails + 1), { expirationTtl: 900 });
+    return new Response(JSON.stringify({ error: '用户不存在' }), { status: 401 });
+  }
 
   const hash = await sha256(password);
-  if (hash !== user.password_hash) return new Response(JSON.stringify({ error: '密码错误' }), { status: 401 });
+  if (hash !== user.password_hash) {
+    await env.AUTH_KV.put(failKey, String(fails + 1), { expirationTtl: 900 });
+    return new Response(JSON.stringify({ error: '密码错误' }), { status: 401 });
+  }
 
+  await env.AUTH_KV.delete(failKey);
   const token = crypto.randomUUID() + crypto.randomUUID();
   await env.AUTH_KV.put(`session:${token}`, JSON.stringify({ userId: user.id, isAdmin: user.is_admin }), { expirationTtl: 60 * 60 * 24 * 30 });
 
