@@ -1,0 +1,56 @@
+{{ define "main" }}
+<style>
+  .profile-wrap { max-width: 600px; margin: 20px auto; padding: 0 20px; position: relative; z-index: 1; }
+  .points-card {
+    background: rgba(255,255,255,.06); backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,.12); border-radius: 20px;
+    padding: 30px; text-align: center; margin-bottom: 20px;
+  }
+  .points-card .label { color: #888; font-size: 14px; }
+  .points-card .num { color: #f0ad4e; font-size: 48px; font-weight: 700; margin: 10px 0; }
+  .log-list { display: flex; flex-direction: column; gap: 10px; }
+  .log-item {
+    background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08);
+    border-radius: 12px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center;
+  }
+  .log-item .reason { color: #ddd; font-size: 13px; }
+  .log-item .time { color: #888; font-size: 11px; margin-top: 4px; }
+  .log-item .amount-pos { color: #2ecc71; font-size: 18px; font-weight: 600; }
+  .log-item .amount-neg { color: #e74c3c; font-size: 18px; font-weight: 600; }
+  .empty { color: #666; text-align: center; padding: 30px 0; font-size: 13px; }
+</style>
+
+<div class="profile-wrap">
+  <div class="points-card">
+    <div class="label">当前总积分</div>
+    <div class="num" id="total-points">--</div>
+    <div style="color:#888;font-size:12px;">1000分=奶茶 · 1500分=周边</div>
+  </div>
+  <h2 style="color:#fff;font-size:18px;margin-bottom:14px;">积分明细</h2>
+  <div class="log-list" id="log-list">
+    <p class="empty">加载中...</p>
+  </div>
+</div>
+
+<script>
+(async () => {
+  const res = await fetch('/api/points/log');
+  const data = await res.json();
+  if (data.error) { document.getElementById('log-list').innerHTML = '<p class="empty">请先登录</p>'; return; }
+  document.getElementById('total-points').textContent = data.points;
+  if (!data.logs || data.logs.length === 0) {
+    document.getElementById('log-list').innerHTML = '<p class="empty">还没有积分记录</p>';
+    return;
+  }
+  document.getElementById('log-list').innerHTML = data.logs.map(l => `
+    <div class="log-item">
+      <div>
+        <div class="reason">${l.reason}</div>
+        <div class="time">${l.created_at}</div>
+      </div>
+      <div class="${l.amount > 0 ? 'amount-pos' : 'amount-neg'}">${l.amount > 0 ? '+' : ''}${l.amount}</div>
+    </div>
+  `).join('');
+})();
+</script>
+{{ end }}

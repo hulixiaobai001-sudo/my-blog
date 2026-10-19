@@ -12,8 +12,14 @@
   const { id, status } = await request.json();
   await env.DB.prepare('UPDATE reports SET status = ? WHERE id = ?').bind(status, id).run();
   if (status === 'approved') {
-    const report = await env.DB.prepare('SELECT user_id FROM reports WHERE id = ?').bind(id).first();
-    if (report) await env.DB.prepare('UPDATE users SET points = points + 5 WHERE id = ?').bind(report.user_id).run();
+    const report = await env.DB.prepare('SELECT user_id, caption FROM reports WHERE id = ?').bind(id).first();
+    if (report) {
+      await env.DB.prepare('UPDATE users SET points = points + 5 WHERE id = ?').bind(report.user_id).run();
+      try {
+        await env.DB.exec('CREATE TABLE IF NOT EXISTS points_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, amount INTEGER, reason TEXT, created_at TEXT DEFAULT (datetime(\'now\',\'localtime\')))');
+        await env.DB.prepare('INSERT INTO points_log (user_id, amount, reason) VALUES (?, ?, ?)').bind(report.user_id, 5, '返图审核通过：' + (report.caption || '')).run();
+      } catch(e) {}
+    }
   }
   return new Response(JSON.stringify({ ok: true }));
 }

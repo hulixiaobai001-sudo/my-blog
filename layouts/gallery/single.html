@@ -43,17 +43,17 @@
 </style>
 
 <div class="gallery-wrap">
-  <h1 class="gallery-title">返图墙</h1>
-  <div style="text-align:center;margin-bottom:16px;">
-    <span class="points-badge" id="points-badge">积分：--</span>
-  </div>
-  <div style="text-align:center;margin-bottom:20px;">
-    <a href="/report/" class="upload-btn">提交返图</a>
+  <div class="col-panel" style="text-align:center;padding:24px;margin-bottom:20px;">
+    <h1 style="color:#fff;font-size:24px;margin:0 0 14px;">返图墙</h1>
+    <span class="points-badge" id="points-badge" style="margin-bottom:14px;display:inline-block;">积分：--</span>
+    <div>
+      <a href="/report/" class="upload-btn">提交返图</a>
+    </div>
   </div>
 
   <div class="rules-card">
-    <h3>积分规则</h3>
-    <div class="rule-line">
+    <h3 onclick="this.parentElement.querySelector('.rule-line').style.display = this.parentElement.querySelector('.rule-line').style.display === 'none' ? 'block' : 'none'" style="cursor:pointer;">积分规则 ▸</h3>
+    <div class="rule-line" style="display:none;">
       <div>每上传一张返图并通过审核：+5 分</div>
       <div>每提交一条工单：-10 分</div>
       <div style="margin-top:8px;color:#8ab4ff;">积分兑换：1000 分 = 一杯奶茶 · 1500 分 = 一份周边物料</div>

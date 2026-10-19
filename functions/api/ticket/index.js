@@ -12,7 +12,13 @@
   if (!title || !content) return new Response(JSON.stringify({ error: '标题和内容不能为空' }), { status: 400 });
 
   await env.DB.prepare('INSERT INTO tickets (user_id, title, content) VALUES (?, ?, ?)').bind(userId, title, content).run();
-  await env.DB.prepare('UPDATE users SET points = points - 10 WHERE id = ?').bind(userId).run();
+  try {
+    await env.DB.exec('CREATE TABLE IF NOT EXISTS points_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, amount INTEGER, reason TEXT, created_at TEXT DEFAULT (datetime(\'now\',\'localtime\')))');
+    await env.DB.prepare('UPDATE users SET points = points - 10 WHERE id = ?').bind(userId).run();
+    await env.DB.prepare('INSERT INTO points_log (user_id, amount, reason) VALUES (?, ?, ?)').bind(userId, -10, '提交工单：' + title).run();
+  } catch(e) {
+    await env.DB.prepare('UPDATE users SET points = points - 10 WHERE id = ?').bind(userId).run();
+  }
   return new Response(JSON.stringify({ ok: true }));
 }
 

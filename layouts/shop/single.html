@@ -1,0 +1,61 @@
+{{ define "main" }}
+<style>
+  .shop-wrap { max-width: 600px; margin: 20px auto; padding: 0 20px; position: relative; z-index: 1; }
+  .shop-wrap h1 { color: #fff; font-size: 24px; margin: 20px 0; text-align: center; }
+  .shop-item {
+    background: rgba(255,255,255,.06); backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,.12); border-radius: 16px;
+    padding: 24px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;
+  }
+  .shop-item .name { color: #fff; font-size: 16px; }
+  .shop-item .cost { color: #f0ad4e; font-size: 14px; margin-top: 4px; }
+  .shop-item .desc { color: #999; font-size: 12px; margin-top: 6px; }
+  .redeem-btn {
+    padding: 10px 20px; border: none; border-radius: 10px;
+    background: linear-gradient(135deg, #667eea, #764ba2); color: #fff;
+    cursor: pointer; font-size: 14px; white-space: nowrap;
+  }
+  .redeem-btn:hover { opacity: .9; }
+  .result-msg { text-align: center; margin-top: 16px; font-size: 14px; }
+</style>
+
+<div class="shop-wrap">
+  <h1>积分商店</h1>
+  <div class="shop-item">
+    <div>
+      <div class="name">一杯奶茶</div>
+      <div class="cost">1000 分</div>
+      <div class="desc">站长看到后会联系你发红包</div>
+    </div>
+    <button class="redeem-btn" onclick="redeem('一杯奶茶', 1000)">立即兑换</button>
+  </div>
+  <div class="shop-item">
+    <div>
+      <div class="name">周边物料</div>
+      <div class="cost">1500 分</div>
+      <div class="desc">名片/贴纸/徽章等小周边，邮寄给你</div>
+    </div>
+    <button class="redeem-btn" onclick="redeem('周边物料', 1500)">立即兑换</button>
+  </div>
+  <div class="result-msg" id="msg"></div>
+</div>
+
+<script>
+async function redeem(name, cost) {
+  if (!confirm('确定兑换「' + name + '」？需要 ' + cost + ' 分')) return;
+  const res = await fetch('/api/shop/redeem', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ itemName: name, cost: cost })
+  });
+  const data = await res.json();
+  if (data.ok) {
+    document.getElementById('msg').textContent = '兑换成功，等待站长发货！';
+    document.getElementById('msg').style.color = '#2ecc71';
+  } else {
+    document.getElementById('msg').textContent = data.error || '兑换失败';
+    document.getElementById('msg').style.color = '#e74c3c';
+  }
+}
+</script>
+{{ end }}
