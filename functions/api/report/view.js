@@ -8,6 +8,6 @@ export async function onRequestGet(context) {
   if (!image) return new Response('Not found', { status: 404 });
 
   return new Response(image, {
-    headers: { 'Content-Type': 'image/jpeg', 'Cache-Control': 'public, max-age=86400' }
+    headers: { 'Content-Type': 'image/jpeg', 'Cache-Control': 'public, max-age=31536000, immutable' }
   });
 }
