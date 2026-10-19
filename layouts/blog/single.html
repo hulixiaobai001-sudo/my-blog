@@ -10,12 +10,12 @@
   .post-card .preview { color: #ccc; font-size: 14px; margin-top: 8px; }
   .empty { color: #888; text-align: center; padding: 40px 0; font-size: 14px; }
   .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 100; overflow-y: auto; padding-bottom: 80px; }
-  .modal.open { display: flex; justify-content: center; align-items: flex-start; padding: 80px 20px 120px; }
-  .modal-content { background: rgba(30,30,50,.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,.15); border-radius: 16px; max-width: 700px; width: 100%; padding: 30px; max-height: none; overflow: visible; }
+  .modal.open { display: flex; justify-content: center; align-items: flex-start; padding: 140px 20px 120px; }
+  .modal-content { background: rgba(30,30,50,.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,.15); border-radius: 16px; max-width: 700px; width: 100%; padding: 30px; max-height: none; overflow: visible; position: relative; }
   .modal-content h2 { color: #fff; font-size: 22px; margin: 0 0 8px; }
   .modal-content .date { color: #999; font-size: 12px; margin-bottom: 16px; }
   .modal-content .body { color: #ddd; font-size: 15px; line-height: 1.8; white-space: pre-wrap; }
-  .close-btn { float: right; background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; }
+  .close-btn { position: absolute; top: 12px; right: 16px; background: rgba(255,255,255,.1); border: none; color: #fff; font-size: 20px; cursor: pointer; width: 32px; height: 32px; border-radius: 50%; line-height: 1; z-index: 10; }
   .copy-link-btn { margin-top: 20px; padding: 8px 16px; background: rgba(138,180,255,.2); color: #8ab4ff; border: 1px solid rgba(138,180,255,.3); border-radius: 8px; cursor: pointer; font-size: 13px; }
   .copy-link-btn:hover { background: rgba(138,180,255,.3); }
   .comments { margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,.1); }
