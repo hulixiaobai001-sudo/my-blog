@@ -10,12 +10,13 @@
 
   const { title, content } = await request.json();
   if (!title || !content) return new Response(JSON.stringify({ error: '标题和内容不能为空' }), { status: 400 });
-
-  await env.DB.prepare('INSERT INTO tickets (user_id, title, content) VALUES (?, ?, ?)').bind(userId, title, content).run();
+  const cleanTitle = title.replace(/<script[\s\S]*?<\/script>/gi, '').slice(0, 100);
+  const cleanContent = content.replace(/<script[\s\S]*?<\/script>/gi, '').replace(/<iframe[^>]*>/gi, '').slice(0, 2000);
+  await env.DB.prepare('INSERT INTO tickets (user_id, title, content) VALUES (?, ?, ?)').bind(userId, cleanTitle, cleanContent).run();
   try {
     await env.DB.exec('CREATE TABLE IF NOT EXISTS points_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, amount INTEGER, reason TEXT, created_at TEXT DEFAULT (datetime(\'now\',\'localtime\')))');
     await env.DB.prepare('UPDATE users SET points = points - 10 WHERE id = ?').bind(userId).run();
-    await env.DB.prepare('INSERT INTO points_log (user_id, amount, reason) VALUES (?, ?, ?)').bind(userId, -10, '提交工单：' + title).run();
+    await env.DB.prepare('INSERT INTO points_log (user_id, amount, reason) VALUES (?, ?, ?)').bind(userId, -10, '提交工单：' + cleanTitle).run();
   } catch(e) {
     await env.DB.prepare('UPDATE users SET points = points - 10 WHERE id = ?').bind(userId).run();
   }

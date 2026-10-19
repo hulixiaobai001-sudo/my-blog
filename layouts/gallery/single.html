@@ -98,7 +98,7 @@ async function loadGallery() {
         <img src="/api/report/view?key=${r.image_key}" />
         <div class="tl-info">
           <div class="tl-date">${r.created_at}</div>
-          <div class="tl-caption">${r.caption || ''}</div>
+          <div class="tl-caption">${escapeHtml(r.caption || '')}</div>
         </div>
       </div>
     `).join('');
@@ -119,8 +119,8 @@ async function loadGallery() {
       <img src="/api/report/view?key=${s.image_key}" />
       ${isAdmin ? `<button onclick="delReport(${s.id})" style="position:absolute;top:12px;right:12px;padding:6px 14px;background:rgba(217,83,79,.8);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:12px;">删除</button>` : ''}
       <div class="caption">
-        <div class="who">@${s.username}</div>
-        <div class="what">${s.caption || ''}</div>
+        <div class="who">@${escapeHtml(s.username)}</div>
+        <div class="what">${escapeHtml(s.caption || '')}</div>
         <div class="when">${s.created_at}</div>
       </div>
     </div>

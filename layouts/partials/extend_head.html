@@ -206,5 +206,16 @@ document.addEventListener('DOMContentLoaded', function() {
     footer.appendChild(a);
   }
 });
+
+// 全局XSS转义函数
+window.escapeHtml = function(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+};
 </script>
 {{ end }}

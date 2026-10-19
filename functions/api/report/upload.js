@@ -24,7 +24,7 @@ export async function onRequestPost(context) {
   await env.IMAGES_KV.put(imageKey, bytes.buffer, { httpMetadata: { contentType: 'image/jpeg' } });
 
   await env.DB.prepare('INSERT INTO reports (user_id, image_key, caption) VALUES (?, ?, ?)')
-    .bind(userId, imageKey, caption || '').run();
+    .bind(userId, imageKey, (caption || '').replace(/<script[\s\S]*?<\/script>/gi, '').slice(0, 200)).run();
 
   return new Response(JSON.stringify({ ok: true, key: imageKey }));
 }

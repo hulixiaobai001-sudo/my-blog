@@ -135,8 +135,8 @@ async function loadComments(postId) {
   }
   el.innerHTML = data.comments.map(c => `
     <div class="comment-item">
-      <span class="c-user">@${c.username}</span><span class="c-time">${fmtTime(c.created_at)}</span>
-      <div class="c-body">${c.content}</div>
+      <span class="c-user">@${escapeHtml(c.username)}</span><span class="c-time">${fmtTime(c.created_at)}</span>
+      <div class="c-body">${escapeHtml(c.content)}</div>
     </div>
   `).join('');
 }

@@ -25,11 +25,12 @@ export async function onRequestPost(context) {
   const { userId } = JSON.parse(session);
   const { post_id, content } = await request.json();
   if (!post_id || !content) return new Response(JSON.stringify({ error: '内容不能为空' }), { status: 400 });
+  const clean = content.replace(/<script[\s\S]*?<\/script>/gi, '').replace(/<iframe[^>]*>/gi, '').slice(0, 500);
   try {
-    await env.DB.prepare('INSERT INTO comments (post_id, user_id, content) VALUES (?, ?, ?)').bind(post_id, userId, content).run();
+    await env.DB.prepare('INSERT INTO comments (post_id, user_id, content) VALUES (?, ?, ?)').bind(post_id, userId, clean).run();
   } catch (e) {
     await env.DB.exec('CREATE TABLE IF NOT EXISTS comments (id INTEGER PRIMARY KEY AUTOINCREMENT, post_id INTEGER, user_id INTEGER, content TEXT, created_at TEXT DEFAULT (datetime(\'now\',\'localtime\')))');
-    await env.DB.prepare('INSERT INTO comments (post_id, user_id, content) VALUES (?, ?, ?)').bind(post_id, userId, content).run();
+    await env.DB.prepare('INSERT INTO comments (post_id, user_id, content) VALUES (?, ?, ?)').bind(post_id, userId, clean).run();
   }
   return new Response(JSON.stringify({ ok: true }));
 }
