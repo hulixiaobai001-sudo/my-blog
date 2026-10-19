@@ -313,7 +313,6 @@ async function uploadCover(input) {
   if (!file) return;
   const reader = new FileReader();
   reader.onload = async function(e) {
-    // 自动压缩：canvas缩放到最大800宽，质量0.7
     const img = new Image();
     img.onload = async function() {
       const canvas = document.createElement('canvas');
@@ -321,8 +320,14 @@ async function uploadCover(input) {
       const maxW = 800;
       if (w > maxW) { h = h * maxW / w; w = maxW; }
       canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, w, h);
+      ctx.drawImage(img, 0, 0, w, h);
       const compressed = canvas.toDataURL('image/jpeg', 0.7);
+      const pimg = document.getElementById('cover-preview');
+      pimg.src = compressed;
+      pimg.style.display = 'block';
       const res = await fetch('/api/upload/image', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
@@ -331,9 +336,6 @@ async function uploadCover(input) {
       const data = await res.json();
       if (data.ok) {
         window._coverUrl = data.url;
-        const pimg = document.getElementById('cover-preview');
-        pimg.src = data.url;
-        pimg.style.display = 'block';
       } else {
         alert(data.error || '上传失败');
       }
