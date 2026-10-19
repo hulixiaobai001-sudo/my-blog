@@ -11,13 +11,21 @@
   .empty { color: #888; text-align: center; padding: 40px 0; font-size: 14px; }
   .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 100; overflow-y: auto; }
   .modal.open { display: flex; justify-content: center; padding: 40px 20px; }
-  .modal-content { background: rgba(30,30,50,.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,.15); border-radius: 16px; max-width: 700px; width: 100%; padding: 30px; }
+  .modal-content { background: rgba(30,30,50,.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,.15); border-radius: 16px; max-width: 700px; width: 100%; padding: 30px; max-height: 85vh; overflow-y: auto; }
   .modal-content h2 { color: #fff; font-size: 22px; margin: 0 0 8px; }
   .modal-content .date { color: #999; font-size: 12px; margin-bottom: 16px; }
   .modal-content .body { color: #ddd; font-size: 15px; line-height: 1.8; white-space: pre-wrap; }
   .close-btn { float: right; background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; }
   .copy-link-btn { margin-top: 20px; padding: 8px 16px; background: rgba(138,180,255,.2); color: #8ab4ff; border: 1px solid rgba(138,180,255,.3); border-radius: 8px; cursor: pointer; font-size: 13px; }
   .copy-link-btn:hover { background: rgba(138,180,255,.3); }
+  .comments { margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,.1); }
+  .comments h3 { color: #fff; font-size: 16px; margin-bottom: 12px; }
+  .comment-item { padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.06); }
+  .comment-item .c-user { color: #8ab4ff; font-size: 13px; }
+  .comment-item .c-time { color: #666; font-size: 11px; margin-left: 8px; }
+  .comment-item .c-body { color: #ddd; font-size: 14px; margin-top: 4px; }
+  .comment-input { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,.15); background: rgba(255,255,255,.05); color: #fff; margin: 8px 0; box-sizing: border-box; }
+  .comment-btn { padding: 8px 16px; border-radius: 8px; background: rgba(102,126,234,.3); color: #fff; border: none; cursor: pointer; font-size: 13px; }
 </style>
 
 <div class="blog-wrap">
@@ -37,6 +45,12 @@
     <div style="margin-top:20px;display:flex;gap:10px;align-items:center;">
       <button class="copy-link-btn" onclick="likePost()">点赞 <span id="like-count">0</span></button>
       <button class="copy-link-btn" onclick="copyPostLink()">复制文章链接</button>
+    </div>
+    <div class="comments">
+      <h3>评论</h3>
+      <div id="comment-list"><p style="color:#666;font-size:13px;">加载中...</p></div>
+      <input class="comment-input" id="comment-text" placeholder="写下你的评论..." />
+      <button class="comment-btn" onclick="submitComment()">发送</button>
     </div>
   </div>
 </div>
@@ -101,7 +115,34 @@ async function openPost(id) {
     const sr = await fetch('/api/stats/?post_id=' + id);
     const sd = await sr.json();
     document.getElementById('like-count').textContent = sd.likes;
+    loadComments(id);
   }
+}
+
+async function loadComments(postId) {
+  const res = await fetch('/api/comments/?post_id=' + postId);
+  const data = await res.json();
+  const el = document.getElementById('comment-list');
+  if (!data.comments || data.comments.length === 0) {
+    el.innerHTML = '<p style="color:#666;font-size:13px;">还没有评论，来抢沙发</p>';
+    return;
+  }
+  el.innerHTML = data.comments.map(c => `
+    <div class="comment-item">
+      <span class="c-user">@${c.username}</span><span class="c-time">${c.created_at}</span>
+      <div class="c-body">${c.content}</div>
+    </div>
+  `).join('');
+}
+
+async function submitComment() {
+  const content = document.getElementById('comment-text').value.trim();
+  if (!content) return;
+  const res = await fetch('/api/comments', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ post_id: currentPostId, content }) });
+  const data = await res.json();
+  if (data.error) { alert(data.error); return; }
+  document.getElementById('comment-text').value = '';
+  loadComments(currentPostId);
 }
 
 async function likePost() {
