@@ -9,8 +9,9 @@ export async function onRequestPost(context) {
 
   const { username, password } = await request.json();
 
+  let user;
   try {
-    const user = await env.DB.prepare('SELECT id, username, password_hash, is_admin FROM users WHERE username = ?').bind(username).first();
+    user = await env.DB.prepare('SELECT id, username, password_hash, is_admin FROM users WHERE username = ?').bind(username).first();
     if (!user) {
       await env.AUTH_KV.put(failKey, String(fails + 1), { expirationTtl: 900 });
       return new Response(JSON.stringify({ error: '用户名或密码错误' }), { status: 401 });
