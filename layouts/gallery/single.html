@@ -2,6 +2,18 @@
 <style>
   .gallery-wrap { max-width: 1100px; margin: 20px auto; padding: 0 20px; position: relative; z-index: 1; }
   .gallery-title { color: #fff; font-size: 24px; margin: 20px 0; text-align: center; }
+  .points-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(240,173,78,.15); border: 1px solid rgba(240,173,78,.3);
+    border-radius: 20px; padding: 6px 18px; font-size: 14px; color: #f0ad4e;
+  }
+  .upload-btn {
+    display: inline-block; padding: 10px 24px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff; border-radius: 12px; text-decoration: none;
+    font-size: 14px; transition: transform .2s, box-shadow .2s;
+  }
+  .upload-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(102,126,234,.4); color: #fff !important; }
   .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
   @media (max-width: 768px) { .two-col { grid-template-columns: 1fr; } }
   .col-panel { background: rgba(255,255,255,.06); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,.12); border-radius: 16px; padding: 16px; }
@@ -21,26 +33,30 @@
   .timeline { display: flex; flex-direction: column; gap: 12px; max-height: 600px; overflow-y: auto; }
   .timeline::-webkit-scrollbar { display: none; }
   .tl-item { background: rgba(255,255,255,.05); border-radius: 12px; overflow: hidden; }
-  .tl-item img { width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block; }
+  .tl-item img { width: 100%; max-height: 300px; object-fit: cover; display: block; }
   .tl-item .tl-info { padding: 10px 12px; }
   .tl-item .tl-date { color: #8ab4ff; font-size: 11px; }
   .tl-item .tl-caption { color: #ccc; font-size: 12px; margin-top: 3px; }
+  .rules-card { background: rgba(255,255,255,.05); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,.1); border-radius: 16px; padding: 16px; margin-bottom: 20px; }
+  .rules-card h3 { color: #fff; font-size: 15px; margin: 0 0 10px; }
+  .rules-card .rule-line { color: #ccc; font-size: 13px; line-height: 1.8; }
 </style>
 
 <div class="gallery-wrap">
   <h1 class="gallery-title">返图墙</h1>
   <div style="text-align:center;margin-bottom:16px;">
-    <a href="/report/" style="display:inline-block;padding:8px 20px;background:rgba(138,180,255,.2);color:#8ab4ff;border-radius:10px;text-decoration:none;font-size:13px;">上传我的返图</a>
+    <span class="points-badge" id="points-badge">积分：--</span>
   </div>
-  <div style="background:rgba(255,255,255,.06);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:16px;margin-bottom:20px;">
-    <h3 style="color:#fff;font-size:15px;margin:0 0 10px;">积分规则</h3>
-    <div style="color:#ccc;font-size:13px;line-height:1.8;">
+  <div style="text-align:center;margin-bottom:20px;">
+    <a href="/report/" class="upload-btn">提交返图</a>
+  </div>
+
+  <div class="rules-card">
+    <h3>积分规则</h3>
+    <div class="rule-line">
       <div>每上传一张返图并通过审核：+5 分</div>
       <div>每提交一条工单：-10 分</div>
-      <div style="margin-top:8px;color:#8ab4ff;">积分兑换：</div>
-      <div>· 1000 分 = 一杯奶茶</div>
-      <div>· 1500 分 = 一份周边物料</div>
-      <div id="my-points" style="margin-top:12px;color:#f0ad4e;font-size:14px;"></div>
+      <div style="margin-top:8px;color:#8ab4ff;">积分兑换：1000 分 = 一杯奶茶 · 1500 分 = 一份周边物料</div>
     </div>
   </div>
 
@@ -67,7 +83,9 @@ async function loadGallery() {
   const meData = await me.json();
   isAdmin = !!(meData.user && meData.user.is_admin);
   if (meData.user) {
-    document.getElementById('my-points').textContent = '我的当前积分：' + (meData.user.points || 0) + ' 分';
+    document.getElementById('points-badge').textContent = '我的积分：' + (meData.user.points || 0) + ' 分';
+  } else {
+    document.getElementById('points-badge').textContent = '登录后查看积分';
   }
 
   const res = await fetch('/api/report/gallery');

@@ -1,86 +1,58 @@
 {{ define "main" }}
 <style>
-  .about-scroll {
-    display: flex;
-    overflow-x: auto;
-    scroll-snap-type: x proximity;
-    -webkit-overflow-scrolling: touch;
-    gap: 20px;
-    padding: 20px;
-    max-width: 100vw;
-    height: calc(100vh - 120px);
-    align-items: stretch;
+  .about-wrap {
+    max-width: 640px; margin: 20px auto; padding: 0 20px;
+    position: relative; z-index: 1;
   }
-  .nav-arrow {
-    position: fixed; top: 50%; transform: translateY(-50%);
-    width: 44px; height: 44px; border-radius: 50%;
-    background: rgba(255,255,255,.15); backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,.2);
-    color: #fff; font-size: 20px; cursor: pointer;
-    z-index: 100; display: flex; align-items: center; justify-content: center;
-  }
-  .nav-arrow:hover { background: rgba(255,255,255,.3); }
-  .nav-left { left: 10px; }
-  .nav-right { right: 10px; }
-  .about-scroll::-webkit-scrollbar { display: none; }
-  .panel {
-    flex: 0 0 85vw;
-    max-width: 420px;
-    scroll-snap-align: start;
-    border-radius: 20px;
-    padding: 32px 28px;
-    display: flex;
-    flex-direction: column;
-    background: rgba(255,255,255,.08);
+  .about-card {
+    background: rgba(255,255,255,.06);
     backdrop-filter: blur(20px) saturate(140%);
     -webkit-backdrop-filter: blur(20px) saturate(140%);
     border: 1px solid rgba(255,255,255,.12);
-    overflow-y: auto;
+    border-radius: 20px;
+    padding: 36px 28px;
+    margin-bottom: 16px;
   }
-  .panel::-webkit-scrollbar { display: none; }
-  .hero-panel {
-    background: linear-gradient(135deg, rgba(102,126,234,.5) 0%, rgba(118,75,162,.5) 100%);
-    text-align: center;
-    justify-content: center;
-  }
-  .hero-panel .avatar {
+  .hero { text-align: center; }
+  .hero .avatar {
     width: 110px; height: 110px; border-radius: 50%;
-    background: rgba(255,255,255,.2); margin: 0 auto 16px;
-    overflow: hidden; border: 3px solid rgba(255,255,255,.4);
+    background: rgba(255,255,255,.1); margin: 0 auto 16px;
+    overflow: hidden; border: 3px solid rgba(255,255,255,.25);
+    box-shadow: 0 0 30px rgba(102,126,234,.3);
   }
-  .hero-panel .avatar img { width: 100%; height: 100%; object-fit: cover; }
-  .hero-panel h1 { font-size: 28px; margin: 0 0 8px; color: #fff; }
-  .badges { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 16px; }
-  .badge { background: rgba(255,255,255,.2); padding: 4px 14px; border-radius: 20px; font-size: 13px; color: #fff; }
-  .panel h2 { font-size: 18px; margin: 0 0 16px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,.1); color: #fff; }
+  .hero .avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .hero h1 { font-size: 26px; margin: 0 0 10px; color: #fff; }
+  .badges { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 14px; }
+  .badge { background: rgba(255,255,255,.1); padding: 4px 14px; border-radius: 20px; font-size: 13px; color: #ddd; border: 1px solid rgba(255,255,255,.1); }
+  .status-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(39,174,96,.15); border: 1px solid rgba(39,174,96,.3); border-radius: 20px; padding: 4px 14px; font-size: 12px; color: #2ecc71; margin-bottom: 16px; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #2ecc71; animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+  h2 { font-size: 17px; margin: 0 0 16px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,.08); color: #fff; }
   .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .info-item { padding: 10px 14px; background: rgba(255,255,255,.06); border-radius: 10px; font-size: 13px; color: #ddd; }
-  .info-item b { color: #aaa; display: block; font-size: 11px; letter-spacing: 1px; margin-bottom: 3px; }
+  .info-item { padding: 10px 14px; background: rgba(255,255,255,.05); border-radius: 10px; font-size: 13px; color: #ddd; }
+  .info-item b { color: #888; display: block; font-size: 11px; letter-spacing: 1px; margin-bottom: 3px; }
   .social-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
-  .social-btn { display: block; padding: 12px 14px; background: rgba(255,255,255,.06); border-radius: 12px; text-decoration: none; color: #eee; font-size: 14px; }
-  .social-btn small { display: block; color: #999; font-size: 12px; margin-top: 2px; }
+  .social-btn { display: block; padding: 12px 14px; background: rgba(255,255,255,.05); border-radius: 12px; text-decoration: none; color: #eee; font-size: 14px; }
+  .social-btn small { display: block; color: #888; font-size: 12px; margin-top: 2px; }
   .gallery { display: grid; grid-template-columns: 1fr; gap: 10px; }
   .gallery img { width: 100%; border-radius: 12px; aspect-ratio: 4/3; object-fit: cover; }
   .timeline { padding-left: 20px; position: relative; }
-  .timeline::before { content: ''; position: absolute; left: 5px; top: 6px; bottom: 6px; width: 2px; background: rgba(255,255,255,.15); }
+  .timeline::before { content: ''; position: absolute; left: 5px; top: 6px; bottom: 6px; width: 2px; background: rgba(255,255,255,.1); }
   .tl-item { position: relative; padding-bottom: 18px; }
   .tl-item::before { content: ''; position: absolute; left: -19px; top: 5px; width: 10px; height: 10px; border-radius: 50%; background: #8ab4ff; }
   .tl-item .date { font-size: 12px; color: #888; }
   .tl-item .event { font-size: 14px; color: #eee; margin-top: 2px; }
-  .donate { text-align: center; justify-content: center; }
+  .donate { text-align: center; }
   .donate img { width: 100%; max-width: 240px; border-radius: 12px; margin: 10px auto; }
   .donate p { color: #aaa; font-size: 13px; }
-  .quote { background: rgba(138,180,255,.1); border-left: 3px solid #8ab4ff; padding: 12px 16px; border-radius: 0 10px 10px 0; font-size: 13px; color: #ccc; margin-top: 14px; }
-  .hint { text-align: center; color: rgba(255,255,255,.3); font-size: 12px; margin-top: 4px; }
-  .status-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(39,174,96,.2); border: 1px solid rgba(39,174,96,.4); border-radius: 20px; padding: 4px 14px; font-size: 12px; color: #2ecc71; margin-bottom: 16px; }
-  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #2ecc71; animation: pulse 1.5s infinite; }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+  .quote { background: rgba(138,180,255,.08); border-left: 3px solid #8ab4ff; padding: 12px 16px; border-radius: 0 10px 10px 0; font-size: 13px; color: #ccc; margin-top: 14px; }
 </style>
 
-<div class="about-scroll">
+<div class="about-wrap">
 
-  <div class="panel hero-panel">
-    <div style="margin-bottom:16px;"><span class="status-badge"><span class="status-dot"></span>{{ .Params.status | default "狐狸正在潜伏" }}</span></div>
+  <div class="about-card hero">
+    <div><span class="status-badge"><span class="status-dot"></span>{{ .Params.status | default "狐狸正在潜伏" }}</span></div>
     <div class="avatar"><img src="/images/avatar.jpg" alt="白沁"></div>
     <h1>白沁</h1>
     <div class="badges">
@@ -90,12 +62,10 @@
       <span class="badge">福瑞</span>
       <span class="badge">二次元</span>
       <span class="badge">摄影</span>
-      <span class="badge">出展爽！</span>
     </div>
-    <div class="hint" style="margin-top:24px;">← 左右滑动 →</div>
   </div>
 
-  <div class="panel">
+  <div class="about-card">
     <h2>基本信息</h2>
     <div class="info-grid">
       <div class="info-item"><b>名字</b>白沁（小白/白狐/狐狐）</div>
@@ -106,7 +76,7 @@
     <p style="font-size:13px;color:#aaa;margin-top:14px;">一名苦命的电商学生，24h 在线。短期出毛的神，非常爱喝酒的狐狸。</p>
   </div>
 
-  <div class="panel">
+  <div class="about-card">
     <h2>平时在干嘛</h2>
     <div class="info-grid">
       <div class="info-item"><b>业余无线电</b>BA3PKZ，欢迎换 QSL 卡</div>
@@ -117,7 +87,7 @@
     <div class="quote">避雷：快手、特定称呼、NPD 人格。</div>
   </div>
 
-  <div class="panel">
+  <div class="about-card">
     <h2>联系方式</h2>
     <div class="social-grid">
       <a class="social-btn" href="https://b23.tv/j6Bfvnq" target="_blank">哔哩哔哩<small>狐狸不想营业</small></a>
@@ -130,7 +100,7 @@
     </div>
   </div>
 
-  <div class="panel">
+  <div class="about-card">
     <h2>兽装相册</h2>
     <div class="gallery">
       <img src="/images/fursuit-1.jpg" alt="兽聚合照">
@@ -139,7 +109,7 @@
     </div>
   </div>
 
-  <div class="panel">
+  <div class="about-card">
     <h2>接下来去哪</h2>
     <div class="timeline">
       <div class="tl-item">
@@ -153,31 +123,11 @@
     </div>
   </div>
 
-  <div class="panel donate">
+  <div class="about-card donate">
     <h2>请我喝奶茶</h2>
     <p>如果这个小站让你开心到了，可以请我喝杯奶茶。</p>
     <img src="/images/donate.jpg" alt="赞赏码">
   </div>
 
 </div>
-
-<button class="nav-arrow nav-left" onclick="scrollAbout(-1)">&#8249;</button>
-<button class="nav-arrow nav-right" onclick="scrollAbout(1)">&#8250;</button>
-
-<script>
-function scrollAbout(dir) {
-  document.querySelector('.about-scroll').scrollBy({ left: dir * 400, behavior: 'smooth' });
-}
-document.addEventListener('DOMContentLoaded', () => {
-  const scroller = document.querySelector('.about-scroll');
-  if (scroller) {
-    scroller.addEventListener('wheel', (e) => {
-      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-        e.preventDefault();
-        scroller.scrollLeft += e.deltaY;
-      }
-    }, { passive: false });
-  }
-});
-</script>
 {{ end }}
