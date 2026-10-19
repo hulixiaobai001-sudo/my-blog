@@ -270,6 +270,7 @@ async function loadTickets() {
       <div class="content">${t.content}</div>
       ${t.reply ? `<div style="color:#8ab4ff;font-size:12px;margin-top:6px;">回复：${t.reply}</div>` : ''}
       <textarea style="margin-top:8px;height:70px;" id="reply-${t.id}" placeholder="回复内容...">${t.reply || ''}</textarea>
+      <input type="number" id="refund-${t.id}" placeholder="采纳返还积分（0=不返还）" style="margin-top:6px;width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:#fff;font-size:13px;">
       <div>
         <button class="btn-ok" onclick="replyTicket(${t.id},false)">回复</button>
         <button class="btn-danger" onclick="replyTicket(${t.id},true)">关闭工单</button>
@@ -280,7 +281,8 @@ async function loadTickets() {
 
 async function replyTicket(id, close) {
   const reply = document.getElementById('reply-' + id).value;
-  await fetch('/api/ticket/reply', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id, reply, close }) });
+  const refund = document.getElementById('refund-' + id).value;
+  await fetch('/api/ticket/reply', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id, reply, close, refund_points: refund }) });
   loadTickets();
 }
 

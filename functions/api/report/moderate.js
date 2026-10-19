@@ -14,10 +14,14 @@
   if (status === 'approved') {
     const report = await env.DB.prepare('SELECT user_id, caption FROM reports WHERE id = ?').bind(id).first();
     if (report) {
-      await env.DB.prepare('UPDATE users SET points = points + 5 WHERE id = ?').bind(report.user_id).run();
+      // 第一张+5，之后每张+10
+      const { results } = await env.DB.prepare("SELECT COUNT(*) as cnt FROM reports WHERE user_id = ? AND status = 'approved'").bind(report.user_id).all();
+      const approvedCount = results[0]?.cnt || 0;
+      const reward = approvedCount === 0 ? 5 : 10;
+      await env.DB.prepare('UPDATE users SET points = points + ? WHERE id = ?').bind(reward, report.user_id).run();
       try {
         await env.DB.exec('CREATE TABLE IF NOT EXISTS points_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, amount INTEGER, reason TEXT, created_at TEXT DEFAULT (datetime(\'now\',\'localtime\')))');
-        await env.DB.prepare('INSERT INTO points_log (user_id, amount, reason) VALUES (?, ?, ?)').bind(report.user_id, 5, '返图审核通过：' + (report.caption || '')).run();
+        await env.DB.prepare('INSERT INTO points_log (user_id, amount, reason) VALUES (?, ?, ?)').bind(report.user_id, reward, '返图审核通过（第' + (approvedCount + 1) + '张）：' + (report.caption || '')).run();
       } catch(e) {}
     }
   }
