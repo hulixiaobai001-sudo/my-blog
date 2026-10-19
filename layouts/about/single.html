@@ -52,7 +52,7 @@
 <div class="about-wrap">
 
   <div class="about-card hero">
-    <div><span class="status-badge"><span class="status-dot"></span>{{ .Params.status | default "狐狸正在潜伏" }}</span></div>
+    <div><span class="status-badge"><span class="status-dot"></span><span id="about-status">加载中...</span></span></div>
     <div class="avatar"><img src="/images/avatar.jpg" alt="白沁"></div>
     <h1>白沁</h1>
     <div class="badges">
@@ -130,4 +130,11 @@
   </div>
 
 </div>
+<script>
+(async () => {
+  const res = await fetch('/api/about-status');
+  const data = await res.json();
+  document.getElementById('about-status').textContent = data.status || '在线';
+})();
+</script>
 {{ end }}

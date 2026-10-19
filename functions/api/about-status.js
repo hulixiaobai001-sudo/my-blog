@@ -1,0 +1,19 @@
+export async function onRequestGet(context) {
+  const { env } = context;
+  const status = await env.AUTH_KV.get('about_status') || '在线';
+  return new Response(JSON.stringify({ status }));
+}
+
+export async function onRequestPost(context) {
+  const { request, env } = context;
+  const cookie = request.headers.get('Cookie') || '';
+  const token = cookie.match(/session=([^;]+)/)?.[1];
+  if (!token) return new Response(JSON.stringify({ error: '未登录' }), { status: 401 });
+  const session = await env.AUTH_KV.get(`session:${token}`);
+  if (!session) return new Response(JSON.stringify({ error: '登录已过期' }), { status: 401 });
+  const { isAdmin } = JSON.parse(session);
+  if (!isAdmin) return new Response(JSON.stringify({ error: '仅站长可操作' }), { status: 403 });
+  const { status } = await request.json();
+  await env.AUTH_KV.put('about_status', status || '在线');
+  return new Response(JSON.stringify({ ok: true }));
+}

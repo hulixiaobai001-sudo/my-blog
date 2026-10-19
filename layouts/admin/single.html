@@ -119,6 +119,7 @@
     <button class="nav-btn" data-panel="panel-tickets" onclick="switchPanel('panel-tickets', this)">工单处理</button>
     <button class="nav-btn" data-panel="panel-redemptions" onclick="switchPanel('panel-redemptions', this)">兑换处理</button>
     <button class="nav-btn" data-panel="panel-users" onclick="switchPanel('panel-users', this)">用户管理</button>
+    <button class="nav-btn" data-panel="panel-status" onclick="switchPanel('panel-status', this)">个人状态</button>
   </aside>
 
   <main class="content">
@@ -184,6 +185,14 @@
       <div id="user-list">
         <p class="empty">加载中...</p>
       </div>
+    </div>
+
+    <div class="panel" id="panel-status">
+      <h2>个人页状态</h2>
+      <p style="color:#999;font-size:13px;margin-bottom:10px;">设置 /about 页面显示的当前状态（如：在线、离线、休息中、摸鱼）</p>
+      <input id="status-input" placeholder="输入状态文字" style="width:100%;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:#fff;margin-bottom:10px;">
+      <button class="btn-primary" onclick="saveStatus()">保存</button>
+      <div class="result-msg" id="status-result"></div>
     </div>
   </main>
 </div>
@@ -438,6 +447,13 @@ async function givePts(userId) {
   const reason = prompt('备注原因：', '站长手动调整');
   await fetch('/api/admin/users', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId, amount: val, reason }) });
   loadUsers();
+}
+
+async function saveStatus() {
+  const status = document.getElementById('status-input').value.trim();
+  if (!status) { alert('请输入状态'); return; }
+  await fetch('/api/about-status', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ status }) });
+  document.getElementById('status-result').textContent = '已保存！';
 }
 </script>
 {{ end }}
