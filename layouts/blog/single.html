@@ -43,7 +43,7 @@ async function loadPosts() {
   el.innerHTML = data.posts.map(p => `
     <div class="post-card" onclick="openPost(${p.id})">
       <h2>${p.title}</h2>
-      <div class="date">${p.created_at}</div>
+      <div class="date">${p.created_at} ${p.category ? '<span style="color:#8ab4ff;margin-left:8px;">[' + p.category + ']</span>' : ''}</div>
     </div>
   `).join('');
 }

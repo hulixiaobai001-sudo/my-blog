@@ -9,15 +9,21 @@ export async function onRequestPost(context) {
   const { isAdmin } = JSON.parse(session);
   if (!isAdmin) return new Response(JSON.stringify({ error: '仅站长可访问' }), { status: 403 });
 
-  const { title, content, type } = await request.json();
+  const { title, content, type, category } = await request.json();
   if (!title || !content) return new Response(JSON.stringify({ error: '标题和内容不能为空' }), { status: 400 });
   const t = type || 'blog';
+  const cat = category || '';
 
   try {
-    await env.DB.prepare('INSERT INTO posts (title, content, type) VALUES (?, ?, ?)').bind(title, content, t).run();
+    await env.DB.prepare('INSERT INTO posts (title, content, type, category) VALUES (?, ?, ?, ?)').bind(title, content, t, cat).run();
   } catch (e) {
     await env.DB.exec('ALTER TABLE posts ADD COLUMN type TEXT DEFAULT \'blog\'');
-    await env.DB.prepare('INSERT INTO posts (title, content, type) VALUES (?, ?, ?)').bind(title, content, t).run();
+    try {
+      await env.DB.prepare('INSERT INTO posts (title, content, type, category) VALUES (?, ?, ?, ?)').bind(title, content, t, cat).run();
+    } catch (e2) {
+      await env.DB.exec('ALTER TABLE posts ADD COLUMN category TEXT DEFAULT \'\'');
+      await env.DB.prepare('INSERT INTO posts (title, content, type, category) VALUES (?, ?, ?, ?)').bind(title, content, t, cat).run();
+    }
   }
   return new Response(JSON.stringify({ ok: true }));
 }
@@ -27,7 +33,7 @@ export async function onRequestGet(context) {
   const url = new URL(request.url);
   const type = url.searchParams.get('type') || 'blog';
   try {
-    const { results } = await env.DB.prepare('SELECT id, title, created_at FROM posts WHERE published = 1 AND type = ? ORDER BY id DESC').bind(type).all();
+    const { results } = await env.DB.prepare('SELECT id, title, category, created_at FROM posts WHERE published = 1 AND type = ? ORDER BY id DESC').bind(type).all();
     return new Response(JSON.stringify({ posts: results }), { headers: { 'Content-Type': 'application/json; charset=utf-8' } });
   } catch (e) {
     return new Response(JSON.stringify({ posts: [] }), { headers: { 'Content-Type': 'application/json; charset=utf-8' } });

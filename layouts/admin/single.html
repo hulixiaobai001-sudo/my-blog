@@ -3,7 +3,7 @@
   .admin-scroll {
     display: flex;
     overflow-x: auto;
-    scroll-snap-type: x mandatory;
+    scroll-snap-type: x proximity;
     -webkit-overflow-scrolling: touch;
     gap: 20px;
     padding: 20px;
@@ -11,6 +11,17 @@
     height: calc(100vh - 120px);
     align-items: stretch;
   }
+  .nav-arrow {
+    position: fixed; top: 50%; transform: translateY(-50%);
+    width: 44px; height: 44px; border-radius: 50%;
+    background: rgba(255,255,255,.15); backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,.2);
+    color: #fff; font-size: 20px; cursor: pointer;
+    z-index: 100; display: flex; align-items: center; justify-content: center;
+  }
+  .nav-arrow:hover { background: rgba(255,255,255,.3); }
+  .nav-left { left: 10px; }
+  .nav-right { right: 10px; }
   .admin-scroll::-webkit-scrollbar { display: none; }
   .panel {
     flex: 0 0 85vw;
@@ -54,10 +65,10 @@
   .hint { color: rgba(255,255,255,.3); font-size: 11px; text-align: center; margin-top: 8px; }
 </style>
 
-<div class="admin-scroll">
+<div class="admin-scroll" id="adminScroll">
   <div class="panel">
     <h1>站长后台</h1>
-    <p style="color:#aaa;font-size:13px;">左右滑动切换返图审核和工单处理。</p>
+    <p style="color:#aaa;font-size:13px;">左右滑动切换功能，电脑端点箭头或用鼠标滚轮。</p>
   </div>
 
   <div class="panel">
@@ -73,6 +84,7 @@
   <div class="panel">
     <h2>写博客</h2>
     <input id="blog-title" placeholder="文章标题" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff;font-size:14px;box-sizing:border-box;margin-bottom:10px;" />
+    <input id="blog-category" placeholder="分类（如：技术、日常、无线电）" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff;font-size:14px;box-sizing:border-box;margin-bottom:10px;" />
     <textarea id="blog-content" placeholder="正文内容..." style="width:100%;height:200px;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff;font-size:13px;box-sizing:border-box;resize:vertical;"></textarea>
     <button onclick="publishBlog('blog')" style="margin-top:10px;padding:10px 20px;border:none;border-radius:10px;background:#667eea;color:#fff;cursor:pointer;font-size:14px;">发布文章</button>
     <div id="blog-result" style="margin-top:10px;font-size:13px;"></div>
@@ -86,6 +98,26 @@
     <div id="notice-result" style="margin-top:10px;font-size:13px;"></div>
   </div>
 </div>
+
+<button class="nav-arrow nav-left" onclick="scrollAdmin(-1)">&#8249;</button>
+<button class="nav-arrow nav-right" onclick="scrollAdmin(1)">&#8250;</button>
+
+<script>
+function scrollAdmin(dir) {
+  document.getElementById('adminScroll').scrollBy({ left: dir * 400, behavior: 'smooth' });
+}
+document.addEventListener('DOMContentLoaded', () => {
+  const scroller = document.getElementById('adminScroll');
+  if (scroller) {
+    scroller.addEventListener('wheel', (e) => {
+      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+        e.preventDefault();
+        scroller.scrollLeft += e.deltaY;
+      }
+    }, { passive: false });
+  }
+});
+</script>
 
 <script>
 async function checkAdmin() {
@@ -158,10 +190,13 @@ async function replyTicket(id, close) {
 async function publishBlog(type) {
   const title = document.getElementById(type === 'blog' ? 'blog-title' : 'notice-title').value;
   const content = document.getElementById(type === 'blog' ? 'blog-content' : 'notice-content').value;
+  const category = type === 'blog' ? document.getElementById('blog-category').value : '';
   const result = document.getElementById(type === 'blog' ? 'blog-result' : 'notice-result');
   if (!title || !content) { result.textContent = '标题和内容不能为空'; return; }
   result.textContent = '发布中...';
-  const res = await fetch('/api/blog/', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ title, content, type }) });
+  const body = { title, content, type };
+  if (category) body.category = category;
+  const res = await fetch('/api/blog/', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
   if (res.ok) {
     result.textContent = '发布成功！';
     document.getElementById(type === 'blog' ? 'blog-title' : 'notice-title').value = '';
