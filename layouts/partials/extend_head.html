@@ -19,30 +19,39 @@
     position: relative; z-index: 1;
   }
 
-  /* 顶部导航：全宽固定，半透明黑毛玻璃，不要大黑条 */
+  /* 顶部导航：全宽固定，半透明黑毛玻璃 */
   .header {
-    position: fixed !important; top: 0; left: 0; right: 0;
+    position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important;
     background: rgba(0,0,0,.4) !important;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
     border: none !important;
     border-radius: 0 !important;
     padding: 14px 24px !important;
     margin: 0 !important;
-    z-index: 50;
+    z-index: 50 !important;
+    width: 100% !important;
   }
   .header .header-nav {
-    max-width: 900px; margin: 0 auto;
-    display: flex; align-items: center; justify-content: space-between;
+    max-width: 900px !important;
+    margin: 0 auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
   }
-  .header a { color: #fff !important; text-decoration: none; }
-  .header .logo a { font-size: 16px; font-weight: 600; }
+  .header a { color: #fff !important; text-decoration: none !important; }
+  .header .logo { display: flex !important; align-items: center !important; }
+  .header .logo a { font-size: 16px !important; font-weight: 600 !important; }
 
   /* 主菜单 */
-  #menu.menu { display: flex; gap: 20px; list-style: none; margin: 0; padding: 0; }
-  #menu.menu li { display: none; }
-  #menu.menu li.nav-keep { display: inline-block; }
-  #menu.menu li a { font-size: 14px; color: #e5e7eb !important; transition: color .2s; }
+  #menu.menu {
+    display: flex !important; gap: 24px !important;
+    list-style: none !important; margin: 0 !important; padding: 0 !important;
+  }
+  #menu.menu li { display: none !important; }
+  #menu.menu li.nav-keep { display: inline-block !important; }
+  #menu.menu li a { font-size: 14px !important; color: #e5e7eb !important; text-decoration: none !important; transition: color .2s !important; }
   #menu.menu li a:hover { color: #fff !important; }
 
   /* 给body顶部留导航高度 */
