@@ -40,6 +40,11 @@ buildFuture = true
     pageRef = '/gallery'
     weight = 45
   [[menu.main]]
+    identifier = 'expand'
+    name = '扩列墙'
+    pageRef = '/expand'
+    weight = 46
+  [[menu.main]]
     identifier = 'tickets'
     name = '工单'
     pageRef = '/tickets'

@@ -1,0 +1,95 @@
+{{ define "main" }}
+<style>
+  .me-wrap { max-width: 500px; margin: 20px auto; padding: 0 20px; position: relative; z-index: 1; }
+  .me-card { background: rgba(255,255,255,.06); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,.1); border-radius: 16px; padding: 24px; }
+  .me-card h1 { color: #fff; font-size: 20px; margin: 0 0 20px; }
+  .me-card label { display: block; color: #aaa; font-size: 13px; margin: 14px 0 6px; }
+  .me-card input, .me-card textarea { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,.15); background: rgba(255,255,255,.05); color: #fff; font-size: 14px; box-sizing: border-box; }
+  .me-card textarea { min-height: 80px; resize: vertical; }
+  .avatar-preview { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; margin: 10px 0; }
+  .toggle-row { display: flex; align-items: center; gap: 10px; margin: 14px 0; }
+  .toggle-row input[type=checkbox] { width: 18px; height: 18px; }
+  .toggle-row span { color: #ddd; font-size: 14px; }
+  .save-btn { width: 100%; padding: 12px; border: none; border-radius: 10px; background: linear-gradient(135deg,#667eea,#764ba2); color: #fff; font-size: 15px; cursor: pointer; margin-top: 16px; }
+  .msg { text-align: center; margin-top: 12px; font-size: 13px; }
+</style>
+
+<div class="me-wrap">
+  <div class="me-card">
+    <h1>个人资料</h1>
+    <label>头像（上传后自动压缩）</label>
+    <button onclick="document.getElementById('avatar-input').click()" style="padding:8px 16px;border-radius:8px;border:1px dashed rgba(255,255,255,.3);background:rgba(255,255,255,.05);color:#ddd;cursor:pointer;">选择头像</button>
+    <input type="file" id="avatar-input" accept="image/*" style="display:none;" onchange="uploadAvatar(this)">
+    <img id="avatar-preview" class="avatar-preview" style="display:none;">
+    <input type="hidden" id="avatar-url">
+
+    <label>个性签名</label>
+    <textarea id="bio" placeholder="一句话介绍自己..."></textarea>
+
+    <div class="toggle-row">
+      <input type="checkbox" id="show-qq">
+      <span>允许在扩列墙展示我的QQ（点击直接跳转加好友，不暴露号码）</span>
+    </div>
+
+    <button class="save-btn" onclick="save()">保存</button>
+    <div class="msg" id="msg"></div>
+  </div>
+</div>
+
+<script>
+(async () => {
+  const res = await fetch('/api/me');
+  const data = await res.json();
+  if (data.error) { location.href = '/login/'; return; }
+  document.getElementById('bio').value = data.bio || '';
+  document.getElementById('show-qq').checked = !!data.show_qq;
+  if (data.avatar) {
+    document.getElementById('avatar-preview').src = data.avatar;
+    document.getElementById('avatar-preview').style.display = 'block';
+    document.getElementById('avatar-url').value = data.avatar;
+  }
+})();
+
+async function uploadAvatar(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async function(e) {
+    const img = new Image();
+    img.onload = async function() {
+      const canvas = document.createElement('canvas');
+      const size = 100;
+      canvas.width = size; canvas.height = size;
+      canvas.getContext('2d').drawImage(img, 0, 0, size, size);
+      const compressed = canvas.toDataURL('image/jpeg', 0.8);
+      const res = await fetch('/api/upload/image', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ imageBase64: compressed })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        document.getElementById('avatar-url').value = data.url;
+        document.getElementById('avatar-preview').src = data.url;
+        document.getElementById('avatar-preview').style.display = 'block';
+      }
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function save() {
+  const res = await fetch('/api/me', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({
+      bio: document.getElementById('bio').value,
+      avatar: document.getElementById('avatar-url').value,
+      show_qq: document.getElementById('show-qq').checked
+    })
+  });
+  const data = await res.json();
+  document.getElementById('msg').textContent = data.ok ? '保存成功！' : '保存失败';
+  document.getElementById('msg').style.color = data.ok ? '#2ecc71' : '#e74c3c';
+}
+</script>
+{{ end }}

@@ -1,0 +1,44 @@
+{{ define "main" }}
+<style>
+  .expand-wrap { max-width: 800px; margin: 20px auto; padding: 0 20px; position: relative; z-index: 1; }
+  .expand-wrap h1 { color: #fff; font-size: 24px; margin: 20px 0 8px; text-align: center; }
+  .expand-wrap .sub { color: #888; text-align: center; font-size: 13px; margin-bottom: 24px; }
+  .expand-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+  .user-card { background: rgba(255,255,255,.06); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,.1); border-radius: 16px; padding: 20px; text-align: center; }
+  .user-card .avatar { width: 60px; height: 60px; border-radius: 50%; margin: 0 auto 10px; background: linear-gradient(135deg,#667eea,#764ba2); display: flex; align-items: center; justify-content: center; font-size: 24px; color: #fff; }
+  .user-card .avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+  .user-card .name { color: #fff; font-size: 15px; margin-bottom: 6px; }
+  .user-card .bio { color: #999; font-size: 12px; margin-bottom: 14px; min-height: 32px; }
+  .add-btn { display: block; padding: 8px 16px; border-radius: 10px; background: rgba(102,126,234,.2); border: 1px solid rgba(102,126,234,.3); color: #8ab4ff; text-decoration: none; font-size: 13px; transition: background .2s; }
+  .add-btn:hover { background: rgba(102,126,234,.3); }
+  .empty { color: #666; text-align: center; padding: 40px 0; }
+</style>
+
+<div class="expand-wrap">
+  <h1>扩列墙</h1>
+  <p class="sub">找到同好，点击卡片直接发起QQ加好友（不展示QQ号）</p>
+  <div class="expand-grid" id="grid">
+    <p class="empty">加载中...</p>
+  </div>
+</div>
+
+<script>
+(async () => {
+  const res = await fetch('/api/expand');
+  const data = await res.json();
+  const grid = document.getElementById('grid');
+  if (!data.users || data.users.length === 0) {
+    grid.innerHTML = '<p class="empty">还没有小伙伴上墙，登录后去 <a href="/me/" style="color:#8ab4ff;">个人资料</a> 开启展示吧</p>';
+    return;
+  }
+  grid.innerHTML = data.users.map(u => `
+    <div class="user-card">
+      <div class="avatar">${u.avatar ? '<img src="' + u.avatar + '">' : u.username.charAt(0).toUpperCase()}</div>
+      <div class="name">${u.username}</div>
+      <div class="bio">${u.bio || '这个人很懒，什么都没写'}</div>
+      <a class="add-btn" href="https://user.qzone.qq.com/${u.qq}" target="_blank">加好友</a>
+    </div>
+  `).join('');
+})();
+</script>
+{{ end }}

@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', function() {
   items.forEach(li => {
     const a = li.querySelector('a span, a');
     const text = (a.textContent || '').trim();
-    if (['博客','个人','返图墙','工单'].includes(text)) {
+    if (['博客','个人','返图墙','工单','扩列墙'].includes(text)) {
       li.classList.add('nav-keep');
     }
   });
@@ -161,6 +161,7 @@ document.addEventListener('DOMContentLoaded', function() {
         '<span class="dropdown-arrow">▾</span>' +
         '<div id="user-menu-content">' +
         adminLink +
+        '<a href="/me/">个人资料</a>' +
         '<a href="/links/">友链</a>' +
         '<a href="/notice/">公告</a>' +
         '<a href="/profile/">我的积分</a>' +
