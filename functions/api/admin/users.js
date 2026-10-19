@@ -10,7 +10,7 @@ export async function onRequestGet(context) {
   if (!isAdmin) return new Response(JSON.stringify({ error: '仅站长可访问' }), { status: 403 });
 
   try {
-    const { results } = await env.DB.prepare('SELECT id, username, points, created_at, is_admin FROM users ORDER BY id ASC').all();
+    const { results } = await env.DB.prepare('SELECT id, username, points, qq, created_at, is_admin FROM users ORDER BY id ASC').all();
     return new Response(JSON.stringify({ users: results }));
   } catch (e) {
     return new Response(JSON.stringify({ users: [] }));

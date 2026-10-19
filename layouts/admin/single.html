@@ -423,7 +423,7 @@ async function loadUsers() {
   el.innerHTML = data.users.map(u => `
     <div class="list-item">
       <div class="title">@${u.username} ${u.is_admin ? '<span style="color:#f0ad4e;font-size:11px;">[站长]</span>' : ''}</div>
-      <div class="content">积分：${u.points} · 注册：${u.created_at}</div>
+      <div class="content">积分：${u.points} ${u.qq ? ' · QQ：' + u.qq : ''} · 注册：${u.created_at}</div>
       <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
         <input type="number" id="pts-${u.id}" placeholder="±分数" style="width:90px;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:#fff;font-size:13px;">
         <button class="btn-ok" onclick="givePts(${u.id})">发放/扣减</button>

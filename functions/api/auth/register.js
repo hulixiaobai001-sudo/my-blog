@@ -1,7 +1,7 @@
 export async function onRequestPost(context) {
   const { request, env } = context;
   try {
-    const { username, password } = await request.json();
+    const { username, password, qq } = await request.json();
 
     if (!username || !password || username.length < 2 || password.length < 6) {
       return new Response(JSON.stringify({ error: '用户名至少2字符，密码至少6位' }), { status: 400 });
@@ -13,7 +13,12 @@ export async function onRequestPost(context) {
     }
 
     const hash = await sha256(password);
-    await env.DB.prepare('INSERT INTO users (username, password_hash) VALUES (?, ?)').bind(username, hash).run();
+    try {
+      await env.DB.prepare('INSERT INTO users (username, password_hash, qq) VALUES (?, ?, ?)').bind(username, hash, qq || '').run();
+    } catch (e) {
+      await env.DB.exec('ALTER TABLE users ADD COLUMN qq TEXT DEFAULT \'\'');
+      await env.DB.prepare('INSERT INTO users (username, password_hash, qq) VALUES (?, ?, ?)').bind(username, hash, qq || '').run();
+    }
     const user = await env.DB.prepare('SELECT id, username, is_admin FROM users WHERE username = ?').bind(username).first();
 
     const token = crypto.randomUUID() + crypto.randomUUID();

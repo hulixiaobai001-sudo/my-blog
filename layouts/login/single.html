@@ -27,6 +27,7 @@
     <input type="text" id="username" placeholder="用户名" />
     <input type="password" id="password" placeholder="密码（至少6位）" />
     <div id="register-fields" class="hidden">
+      <input type="text" id="qq" placeholder="QQ号（方便联系）" />
       <div class="captcha-row">
         <span id="captcha-q"></span>
         <input type="text" id="captcha" placeholder="答案" />
@@ -69,6 +70,8 @@ async function submit() {
   if (p.length < 6) { document.getElementById('msg').textContent = '密码至少6位'; return; }
   let body = { username: u, password: p };
   if (mode === 'register') {
+    const qq = document.getElementById('qq').value.trim();
+    if (qq) body.qq = qq;
     const ans = parseInt(document.getElementById('captcha').value.trim());
     if (ans !== captchaA + captchaB) { document.getElementById('msg').textContent = '验证答案错误'; genCaptcha(); return; }
   }
