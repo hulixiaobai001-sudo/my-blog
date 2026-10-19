@@ -15,6 +15,8 @@
   .modal-content .date { color: #999; font-size: 12px; margin-bottom: 16px; }
   .modal-content .body { color: #ddd; font-size: 15px; line-height: 1.8; white-space: pre-wrap; }
   .close-btn { float: right; background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; }
+  .copy-link-btn { margin-top: 20px; padding: 8px 16px; background: rgba(138,180,255,.2); color: #8ab4ff; border: 1px solid rgba(138,180,255,.3); border-radius: 8px; cursor: pointer; font-size: 13px; }
+  .copy-link-btn:hover { background: rgba(138,180,255,.3); }
 </style>
 
 <div class="blog-wrap">
@@ -28,10 +30,13 @@
     <h2 id="modal-title"></h2>
     <div class="date" id="modal-date"></div>
     <div class="body" id="modal-body"></div>
+    <button class="copy-link-btn" onclick="copyPostLink()">复制文章链接</button>
   </div>
 </div>
 
 <script>
+let currentPostId = null;
+
 async function loadPosts() {
   const res = await fetch('/api/blog/');
   const data = await res.json();
@@ -46,21 +51,37 @@ async function loadPosts() {
       <div class="date">${p.created_at} ${p.category ? '<span style="color:#8ab4ff;margin-left:8px;">[' + p.category + ']</span>' : ''}</div>
     </div>
   `).join('');
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const postId = urlParams.get('post');
+  if (postId) openPost(parseInt(postId));
 }
 
 async function openPost(id) {
   const res = await fetch('/api/blog/' + id);
   const data = await res.json();
   if (data.post) {
+    currentPostId = id;
     document.getElementById('modal-title').textContent = data.post.title;
     document.getElementById('modal-date').textContent = data.post.created_at;
     document.getElementById('modal-body').textContent = data.post.content;
     document.getElementById('modal').classList.add('open');
+    history.replaceState(null, '', '/blog/?post=' + id);
   }
 }
 
 function closeModal() {
   document.getElementById('modal').classList.remove('open');
+  currentPostId = null;
+  history.replaceState(null, '', '/blog/');
+}
+
+function copyPostLink() {
+  if (!currentPostId) return;
+  const url = window.location.origin + '/blog/?post=' + currentPostId;
+  navigator.clipboard.writeText(url).then(() => {
+    alert('链接已复制：' + url);
+  });
 }
 
 loadPosts();
