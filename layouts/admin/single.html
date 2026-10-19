@@ -192,7 +192,7 @@ function switchPanel(id, btn) {
 async function checkAdmin() {
   const res = await fetch('/api/auth/me/');
   const data = await res.json();
-  if (!data.user || !data.user.isAdmin) {
+  if (!data.user || !data.user.is_admin) {
     document.querySelector('.content').innerHTML = '<p class="empty">仅站长可访问</p>';
     return;
   }
