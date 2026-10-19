@@ -19,8 +19,20 @@ export async function onRequestPost(context) {
   const key = 'admin-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
   await env.IMAGES_KV.put(key, file.stream(), { httpMetadata: { contentType: file.type } });
 
-  await env.DB.prepare('INSERT INTO reports (user_id, image_key, caption, status, type, admin_date) VALUES (?, ?, ?, ?, ?, ?)')
-    .bind(userId, key, caption, 'approved', 'admin', adminDate).run();
+  try {
+    await env.DB.prepare('INSERT INTO reports (user_id, image_key, caption, status, type, admin_date) VALUES (?, ?, ?, ?, ?, ?)')
+      .bind(userId, key, caption, 'approved', 'admin', adminDate).run();
+  } catch (e) {
+    await env.DB.exec('ALTER TABLE reports ADD COLUMN type TEXT DEFAULT \'user\'');
+    try {
+      await env.DB.prepare('INSERT INTO reports (user_id, image_key, caption, status, type, admin_date) VALUES (?, ?, ?, ?, ?, ?)')
+        .bind(userId, key, caption, 'approved', 'admin', adminDate).run();
+    } catch (e2) {
+      await env.DB.exec('ALTER TABLE reports ADD COLUMN admin_date TEXT');
+      await env.DB.prepare('INSERT INTO reports (user_id, image_key, caption, status, type, admin_date) VALUES (?, ?, ?, ?, ?, ?)')
+        .bind(userId, key, caption, 'approved', 'admin', adminDate).run();
+    }
+  }
 
   return new Response(JSON.stringify({ ok: true }));
 }
