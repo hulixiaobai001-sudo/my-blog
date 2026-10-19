@@ -16,20 +16,12 @@ export async function onRequestPost(context) {
   const cover = cover_url || '';
 
   try {
+    await env.DB.exec('ALTER TABLE posts ADD COLUMN cover_url TEXT DEFAULT \'\'');
+  } catch(e) {}
+  try {
     await env.DB.prepare('INSERT INTO posts (title, content, type, category, cover_url) VALUES (?, ?, ?, ?, ?)').bind(title, content, t, cat, cover).run();
   } catch (e) {
-    await env.DB.exec('ALTER TABLE posts ADD COLUMN type TEXT DEFAULT \'blog\'');
-    try {
-      await env.DB.prepare('INSERT INTO posts (title, content, type, category, cover_url) VALUES (?, ?, ?, ?, ?)').bind(title, content, t, cat, cover).run();
-    } catch (e2) {
-      await env.DB.exec('ALTER TABLE posts ADD COLUMN category TEXT DEFAULT \'\'');
-      try {
-        await env.DB.prepare('INSERT INTO posts (title, content, type, category, cover_url) VALUES (?, ?, ?, ?, ?)').bind(title, content, t, cat, cover).run();
-      } catch (e3) {
-        await env.DB.exec('ALTER TABLE posts ADD COLUMN cover_url TEXT DEFAULT \'\'');
-        await env.DB.prepare('INSERT INTO posts (title, content, type, category, cover_url) VALUES (?, ?, ?, ?, ?)').bind(title, content, t, cat, cover).run();
-      }
-    }
+    return new Response(JSON.stringify({ error: '发布失败: ' + e.message }), { status: 500 });
   }
   return new Response(JSON.stringify({ ok: true }));
 }
