@@ -23,6 +23,12 @@ export async function onRequestPost(context) {
   const session = await env.AUTH_KV.get(`session:${token}`);
   if (!session) return new Response(JSON.stringify({ error: '登录已过期' }), { status: 401 });
   const { userId } = JSON.parse(session);
+
+  // 频率限制：1分钟1条
+  const rateKey = `rate:comment:${userId}`;
+  const last = await env.AUTH_KV.get(rateKey);
+  if (last) return new Response(JSON.stringify({ error: '发言太频繁，1分钟后再试' }), { status: 429 });
+
   const { post_id, content } = await request.json();
   if (!post_id || !content) return new Response(JSON.stringify({ error: '内容不能为空' }), { status: 400 });
   const clean = content.replace(/<script[\s\S]*?<\/script>/gi, '').replace(/<iframe[^>]*>/gi, '').slice(0, 500);
@@ -32,5 +38,6 @@ export async function onRequestPost(context) {
     await env.DB.exec('CREATE TABLE IF NOT EXISTS comments (id INTEGER PRIMARY KEY AUTOINCREMENT, post_id INTEGER, user_id INTEGER, content TEXT, created_at TEXT DEFAULT (datetime(\'now\',\'localtime\')))');
     await env.DB.prepare('INSERT INTO comments (post_id, user_id, content) VALUES (?, ?, ?)').bind(post_id, userId, clean).run();
   }
+  await env.AUTH_KV.put(rateKey, '1', { expirationTtl: 60 });
   return new Response(JSON.stringify({ ok: true }));
 }

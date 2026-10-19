@@ -8,6 +8,12 @@ export async function onRequestPost(context) {
   if (!session) return new Response(JSON.stringify({ error: '登录已过期' }), { status: 401 });
   const { userId } = JSON.parse(session);
 
+  // 频率限制：每天5次
+  const today = new Date().toISOString().slice(0, 10);
+  const rateKey = `rate:report:${userId}:${today}`;
+  const todayCount = parseInt(await env.AUTH_KV.get(rateKey) || '0');
+  if (todayCount >= 5) return new Response(JSON.stringify({ error: '今天返图已达5次上限，明天再来' }), { status: 429 });
+
   const { imageBase64, caption } = await request.json();
   if (!imageBase64) return new Response(JSON.stringify({ error: '缺少图片' }), { status: 400 });
 
@@ -25,6 +31,7 @@ export async function onRequestPost(context) {
 
   await env.DB.prepare('INSERT INTO reports (user_id, image_key, caption) VALUES (?, ?, ?)')
     .bind(userId, imageKey, (caption || '').replace(/<script[\s\S]*?<\/script>/gi, '').slice(0, 200)).run();
+  await env.AUTH_KV.put(rateKey, String(todayCount + 1), { expirationTtl: 86400 * 2 });
 
   return new Response(JSON.stringify({ ok: true, key: imageKey }));
 }
