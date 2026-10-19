@@ -118,6 +118,7 @@
     <button class="nav-btn" data-panel="panel-admin-img" onclick="switchPanel('panel-admin-img', this)">站长返图上传</button>
     <button class="nav-btn" data-panel="panel-tickets" onclick="switchPanel('panel-tickets', this)">工单处理</button>
     <button class="nav-btn" data-panel="panel-redemptions" onclick="switchPanel('panel-redemptions', this)">兑换处理</button>
+    <button class="nav-btn" data-panel="panel-users" onclick="switchPanel('panel-users', this)">用户管理</button>
   </aside>
 
   <main class="content">
@@ -177,6 +178,13 @@
         <p class="empty">加载中...</p>
       </div>
     </div>
+
+    <div class="panel" id="panel-users">
+      <h2>用户管理 / 发放积分</h2>
+      <div id="user-list">
+        <p class="empty">加载中...</p>
+      </div>
+    </div>
   </main>
 </div>
 
@@ -216,6 +224,7 @@ async function checkAdmin() {
   loadTickets();
   loadPostsAdmin();
   loadRedemptions();
+  loadUsers();
 }
 
 async function loadPendingReports() {
@@ -295,20 +304,32 @@ async function uploadCover(input) {
   if (!file) return;
   const reader = new FileReader();
   reader.onload = async function(e) {
-    const res = await fetch('/api/upload/image', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ imageBase64: e.target.result })
-    });
-    const data = await res.json();
-    if (data.ok) {
-      window._coverUrl = data.url;
-      const img = document.getElementById('cover-preview');
-      img.src = data.url;
-      img.style.display = 'block';
-    } else {
-      alert(data.error || '上传失败');
-    }
+    // 自动压缩：canvas缩放到最大800宽，质量0.7
+    const img = new Image();
+    img.onload = async function() {
+      const canvas = document.createElement('canvas');
+      let w = img.width, h = img.height;
+      const maxW = 800;
+      if (w > maxW) { h = h * maxW / w; w = maxW; }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const compressed = canvas.toDataURL('image/jpeg', 0.7);
+      const res = await fetch('/api/upload/image', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ imageBase64: compressed })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        window._coverUrl = data.url;
+        const pimg = document.getElementById('cover-preview');
+        pimg.src = data.url;
+        pimg.style.display = 'block';
+      } else {
+        alert(data.error || '上传失败');
+      }
+    };
+    img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
@@ -392,6 +413,31 @@ async function loadRedemptions() {
 async function completeRedeem(id) {
   await fetch('/api/shop/list', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id }) });
   loadRedemptions();
+}
+
+async function loadUsers() {
+  const res = await fetch('/api/admin/users');
+  const data = await res.json();
+  const el = document.getElementById('user-list');
+  if (!data.users || data.users.length === 0) { el.innerHTML = '<p class="empty">暂无用户</p>'; return; }
+  el.innerHTML = data.users.map(u => `
+    <div class="list-item">
+      <div class="title">@${u.username} ${u.is_admin ? '<span style="color:#f0ad4e;font-size:11px;">[站长]</span>' : ''}</div>
+      <div class="content">积分：${u.points} · 注册：${u.created_at}</div>
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+        <input type="number" id="pts-${u.id}" placeholder="±分数" style="width:90px;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:#fff;font-size:13px;">
+        <button class="btn-ok" onclick="givePts(${u.id})">发放/扣减</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function givePts(userId) {
+  const val = parseInt(document.getElementById('pts-' + userId).value);
+  if (!val) { alert('请输入分数'); return; }
+  const reason = prompt('备注原因：', '站长手动调整');
+  await fetch('/api/admin/users', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId, amount: val, reason }) });
+  loadUsers();
 }
 </script>
 {{ end }}
