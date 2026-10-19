@@ -13,7 +13,7 @@
   await env.DB.prepare('UPDATE reports SET status = ? WHERE id = ?').bind(status, id).run();
   if (status === 'approved') {
     const report = await env.DB.prepare('SELECT user_id FROM reports WHERE id = ?').bind(id).first();
-    if (report) await env.DB.prepare('UPDATE users SET points = points + 10 WHERE id = ?').bind(report.user_id).run();
+    if (report) await env.DB.prepare('UPDATE users SET points = points + 5 WHERE id = ?').bind(report.user_id).run();
   }
   return new Response(JSON.stringify({ ok: true }));
 }
