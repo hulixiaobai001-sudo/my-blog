@@ -40,14 +40,14 @@
   .rules-card { background: rgba(255,255,255,.05); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,.1); border-radius: 16px; padding: 16px; margin-bottom: 20px; }
   .rules-card h3 { color: #fff; font-size: 15px; margin: 0 0 10px; }
   .rules-card .rule-line { color: #ccc; font-size: 13px; line-height: 1.8; }
-  .detail-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.8); z-index: 200; overflow-y: auto; padding: 60px 16px 140px; }
+  .detail-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.8); z-index: 200; overflow-y: auto; padding: 140px 16px 140px; }
   .detail-modal.open { display: block; }
   .detail-box { max-width: 600px; margin: 0 auto; background: rgba(30,30,50,.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,.15); border-radius: 16px; padding: 24px; position: relative; }
   .detail-box img.main-img { width: 100%; border-radius: 12px; margin-bottom: 16px; }
   .detail-box h3 { color: #fff; font-size: 18px; margin: 0 0 8px; }
   .detail-meta { color: #999; font-size: 12px; line-height: 2; }
   .detail-meta b { color: #ccc; }
-  .close-detail { position: absolute; top: 12px; right: 16px; background: rgba(255,255,255,.1); border: none; color: #fff; font-size: 20px; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; }
+  .close-detail { position: absolute; top: 16px; right: 16px; background: rgba(255,255,255,.15); border: none; color: #fff; font-size: 20px; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; z-index: 10; }
   .detail-comments { margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,.1); }
   .detail-comments h4 { color: #fff; font-size: 14px; margin: 0 0 10px; }
   .c-item { padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.05); }
@@ -110,6 +110,18 @@ let current = 0;
 let isAdmin = false;
 let currentDetailId = null;
 
+function fmtTime(t) {
+  if (!t) return '';
+  const d = new Date(t.replace(' ', 'T') + '+08:00');
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+
+function fmtTime(t) {
+  if (!t) return '';
+  const d = new Date(t.replace(' ', 'T') + '+08:00');
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0') + ':' + String(d.getSeconds()).padStart(2,'0');
+}
+
 function openDetail(i) {
   const s = slides[i];
   currentDetailId = s.id;
@@ -117,7 +129,7 @@ function openDetail(i) {
   document.getElementById('d-title').textContent = escapeHtml(s.caption || '无配文');
   document.getElementById('d-meta').innerHTML = `
     <div><b>上传人：</b>@${escapeHtml(s.username)}</div>
-    <div><b>上传时间：</b>${s.created_at}</div>
+    <div><b>上传时间：</b>${fmtTime(s.created_at)}</div>
     <div><b>状态：</b>${s.status === 'approved' ? '已通过审核' : s.status === 'pending' ? '审核中' : '未通过'}</div>
     <div><b>图片标识：</b><code style="font-size:11px;color:#8ab4ff;">${s.image_key}</code></div>
   `;
@@ -136,7 +148,7 @@ function openAdminDetail(r) {
   document.getElementById('d-title').textContent = escapeHtml(r.caption || '无配文');
   document.getElementById('d-meta').innerHTML = `
     <div><b>上传人：</b>站长</div>
-    <div><b>上传时间：</b>${r.created_at}</div>
+    <div><b>上传时间：</b>${fmtTime(r.created_at)}</div>
     <div><b>类型：</b>站长返图</div>
     <div><b>图片标识：</b><code style="font-size:11px;color:#8ab4ff;">${r.image_key}</code></div>
   `;
@@ -155,7 +167,7 @@ async function loadDetailComments(reportId) {
   }
   el.innerHTML = data.comments.map(c => `
     <div class="c-item">
-      <span class="c-u">@${escapeHtml(c.username)}</span><span class="c-t">${c.created_at}</span>
+      <span class="c-u">@${escapeHtml(c.username)}</span><span class="c-t">${fmtTime(c.created_at)}</span>
       <div class="c-b">${escapeHtml(c.content)}</div>
     </div>
   `).join('');
@@ -190,7 +202,7 @@ async function loadGallery() {
       <div class="tl-item" style="cursor:pointer;" onclick="openAdminDetail(${JSON.stringify(r).replace(/"/g, '&quot;')})">
         <img src="/api/report/view?key=${r.image_key}" />
         <div class="tl-info">
-          <div class="tl-date">${r.created_at}</div>
+          <div class="tl-date">${fmtTime(r.created_at)}</div>
           <div class="tl-caption">${escapeHtml(r.caption || '')}</div>
         </div>
       </div>
@@ -214,7 +226,7 @@ async function loadGallery() {
       <div class="caption">
         <div class="who">@${escapeHtml(s.username)}</div>
         <div class="what">${escapeHtml(s.caption || '')}</div>
-        <div class="when">${s.created_at}</div>
+        <div class="when">${fmtTime(s.created_at)}</div>
       </div>
     </div>
   `).join('');
