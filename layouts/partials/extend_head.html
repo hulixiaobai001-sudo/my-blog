@@ -94,9 +94,9 @@
     if (data.user) {
       const pts = data.user.points || 0;
       if (data.user.is_admin) {
-        wrap.innerHTML = '<a href="/admin/" style="color:#8ab4ff;text-decoration:none;margin-right:10px;">站长后台</a><span style="color:#f0ad4e;font-size:12px;margin-right:10px;">' + pts + '分</span><a href="javascript:void(0)" id="logout-link" style="color:#fff;text-decoration:none;">' + data.user.username + '</a>';
+        wrap.innerHTML = '<a href="/admin/" style="color:#8ab4ff;text-decoration:none;margin-right:10px;">站长后台</a><a href="javascript:void(0)" id="logout-link" style="color:#fff;text-decoration:none;">' + data.user.username + '</a>';
       } else {
-        wrap.innerHTML = '<span style="color:#f0ad4e;font-size:12px;margin-right:8px;">' + pts + '分</span><a href="javascript:void(0)" id="logout-link" style="color:#fff;text-decoration:none;">' + data.user.username + '</a>';
+        wrap.innerHTML = '<a href="javascript:void(0)" id="logout-link" style="color:#fff;text-decoration:none;">' + data.user.username + '</a>';
       }
       wrap.querySelector('#logout-link').onclick = async () => {
         await fetch('/api/auth/logout', { method: 'POST' });
