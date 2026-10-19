@@ -74,8 +74,16 @@
     <h2>写博客</h2>
     <input id="blog-title" placeholder="文章标题" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff;font-size:14px;box-sizing:border-box;margin-bottom:10px;" />
     <textarea id="blog-content" placeholder="正文内容..." style="width:100%;height:200px;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff;font-size:13px;box-sizing:border-box;resize:vertical;"></textarea>
-    <button onclick="publishBlog()" style="margin-top:10px;padding:10px 20px;border:none;border-radius:10px;background:#667eea;color:#fff;cursor:pointer;font-size:14px;">发布文章</button>
+    <button onclick="publishBlog('blog')" style="margin-top:10px;padding:10px 20px;border:none;border-radius:10px;background:#667eea;color:#fff;cursor:pointer;font-size:14px;">发布文章</button>
     <div id="blog-result" style="margin-top:10px;font-size:13px;"></div>
+  </div>
+
+  <div class="panel">
+    <h2>发公告</h2>
+    <input id="notice-title" placeholder="公告标题" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff;font-size:14px;box-sizing:border-box;margin-bottom:10px;" />
+    <textarea id="notice-content" placeholder="公告内容..." style="width:100%;height:200px;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff;font-size:13px;box-sizing:border-box;resize:vertical;"></textarea>
+    <button onclick="publishBlog('notice')" style="margin-top:10px;padding:10px 20px;border:none;border-radius:10px;background:#e67e22;color:#fff;cursor:pointer;font-size:14px;">发布公告</button>
+    <div id="notice-result" style="margin-top:10px;font-size:13px;"></div>
   </div>
 </div>
 
@@ -147,17 +155,17 @@ async function replyTicket(id, close) {
   loadTickets();
 }
 
-async function publishBlog() {
-  const title = document.getElementById('blog-title').value;
-  const content = document.getElementById('blog-content').value;
-  const result = document.getElementById('blog-result');
+async function publishBlog(type) {
+  const title = document.getElementById(type === 'blog' ? 'blog-title' : 'notice-title').value;
+  const content = document.getElementById(type === 'blog' ? 'blog-content' : 'notice-content').value;
+  const result = document.getElementById(type === 'blog' ? 'blog-result' : 'notice-result');
   if (!title || !content) { result.textContent = '标题和内容不能为空'; return; }
   result.textContent = '发布中...';
-  const res = await fetch('/api/blog/', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ title, content }) });
+  const res = await fetch('/api/blog/', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ title, content, type }) });
   if (res.ok) {
     result.textContent = '发布成功！';
-    document.getElementById('blog-title').value = '';
-    document.getElementById('blog-content').value = '';
+    document.getElementById(type === 'blog' ? 'blog-title' : 'notice-title').value = '';
+    document.getElementById(type === 'blog' ? 'blog-content' : 'notice-content').value = '';
   } else {
     result.textContent = '发布失败';
   }

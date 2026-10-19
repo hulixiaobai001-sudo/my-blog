@@ -1,0 +1,38 @@
+{{ define "main" }}
+<style>
+  .notice-wrap { max-width: 700px; margin: 30px auto; padding: 0 16px; position: relative; z-index: 1; }
+  .notice-item { background: rgba(255,255,255,.08); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,.12); border-radius: 16px; padding: 20px; margin-bottom: 16px; }
+  .notice-item h2 { color: #fff; font-size: 18px; margin: 0 0 8px; }
+  .notice-item .time { color: #999; font-size: 12px; margin-bottom: 10px; }
+  .notice-item .content { color: #ddd; font-size: 14px; line-height: 1.7; white-space: pre-wrap; }
+  .empty { color: #888; text-align: center; padding: 60px 0; font-size: 15px; }
+</style>
+
+<div class="notice-wrap">
+  <div id="notice-list"></div>
+</div>
+
+<script>
+(async () => {
+  const res = await fetch('/api/blog/?type=notice');
+  const data = await res.json();
+  const el = document.getElementById('notice-list');
+  if (!data.posts || data.posts.length === 0) {
+    el.innerHTML = '<p class="empty">暂无公告</p>';
+    return;
+  }
+  el.innerHTML = data.posts.map(p => `
+    <div class="notice-item">
+      <h2>${p.title}</h2>
+      <div class="time">${p.created_at}</div>
+      <div class="content" id="content-${p.id}"></div>
+    </div>
+  `).join('');
+  for (const p of data.posts) {
+    const r = await fetch('/api/blog/' + p.id);
+    const d = await r.json();
+    document.getElementById('content-' + p.id).textContent = d.post.content;
+  }
+})();
+</script>
+{{ end }}

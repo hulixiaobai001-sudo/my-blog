@@ -13,7 +13,12 @@ export async function onRequestPost(context) {
   if (!title || !content) return new Response(JSON.stringify({ error: '标题和内容不能为空' }), { status: 400 });
   const t = type || 'blog';
 
-  await env.DB.prepare('INSERT INTO posts (title, content, type) VALUES (?, ?, ?)').bind(title, content, t).run();
+  try {
+    await env.DB.prepare('INSERT INTO posts (title, content, type) VALUES (?, ?, ?)').bind(title, content, t).run();
+  } catch (e) {
+    await env.DB.exec('ALTER TABLE posts ADD COLUMN type TEXT DEFAULT \'blog\'');
+    await env.DB.prepare('INSERT INTO posts (title, content, type) VALUES (?, ?, ?)').bind(title, content, t).run();
+  }
   return new Response(JSON.stringify({ ok: true }));
 }
 
@@ -21,6 +26,10 @@ export async function onRequestGet(context) {
   const { request, env } = context;
   const url = new URL(request.url);
   const type = url.searchParams.get('type') || 'blog';
-  const { results } = await env.DB.prepare('SELECT id, title, created_at FROM posts WHERE published = 1 AND type = ? ORDER BY id DESC').bind(type).all();
-  return new Response(JSON.stringify({ posts: results }), { headers: { 'Content-Type': 'application/json; charset=utf-8' } });
+  try {
+    const { results } = await env.DB.prepare('SELECT id, title, created_at FROM posts WHERE published = 1 AND type = ? ORDER BY id DESC').bind(type).all();
+    return new Response(JSON.stringify({ posts: results }), { headers: { 'Content-Type': 'application/json; charset=utf-8' } });
+  } catch (e) {
+    return new Response(JSON.stringify({ posts: [] }), { headers: { 'Content-Type': 'application/json; charset=utf-8' } });
+  }
 }
