@@ -25,11 +25,6 @@ buildFuture = true
     pageRef = '/about'
     weight = 20
   [[menu.main]]
-    identifier = 'links'
-    name = '友链'
-    pageRef = '/links'
-    weight = 30
-  [[menu.main]]
     identifier = 'announcements'
     name = '公告'
     pageRef = '/announcements'
