@@ -128,7 +128,7 @@
   }
 </style>
 <script>
-(function() {
+document.addEventListener('DOMContentLoaded', function() {
   const menu = document.getElementById('menu');
   if (!menu) return;
   const items = menu.querySelectorAll('li');
@@ -139,7 +139,7 @@
       li.classList.add('nav-keep');
     }
   });
-})();
+});
 </script>
 <script>
 (async function() {
