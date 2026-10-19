@@ -2,203 +2,226 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
 <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
 <style>
-  .admin-scroll {
-    display: flex;
-    overflow-x: auto;
-    scroll-snap-type: x proximity;
-    -webkit-overflow-scrolling: touch;
-    gap: 20px;
-    padding: 20px;
-    max-width: 100vw;
-    height: calc(100vh - 120px);
-    align-items: stretch;
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: url('/images/bg.jpg') center/cover fixed;
+    min-height: 100vh;
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #f3f4f6;
   }
-  .nav-arrow {
-    position: fixed; top: 50%; transform: translateY(-50%);
-    width: 44px; height: 44px; border-radius: 50%;
-    background: rgba(255,255,255,.15); backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,.2);
-    color: #fff; font-size: 20px; cursor: pointer;
-    z-index: 100; display: flex; align-items: center; justify-content: center;
+  body::before { content:''; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:0; }
+
+  .admin-root {
+    position: relative; z-index: 1;
+    display: flex; min-height: 100vh;
   }
-  .nav-arrow:hover { background: rgba(255,255,255,.3); }
-  .nav-left { left: 10px; }
-  .nav-right { right: 10px; }
-  .admin-scroll::-webkit-scrollbar { display: none; }
-  .panel {
-    flex: 0 0 85vw;
-    max-width: 420px;
-    scroll-snap-align: start;
-    border-radius: 20px;
-    padding: 28px 24px;
-    background: rgba(255,255,255,.08);
-    backdrop-filter: blur(20px) saturate(140%);
-    -webkit-backdrop-filter: blur(20px) saturate(140%);
-    border: 1px solid rgba(255,255,255,.12);
-    overflow-y: auto;
+
+  .sidebar {
+    width: 210px; flex-shrink: 0;
+    background: rgba(20,22,35,.75);
+    backdrop-filter: blur(20px);
+    border-right: 1px solid rgba(255,255,255,.1);
+    padding: 24px 14px;
   }
-  .panel::-webkit-scrollbar { display: none; }
-  .panel h1 { font-size: 22px; color: #fff; margin: 0 0 16px; }
-  .panel h2 { font-size: 16px; color: #fff; margin: 0 0 14px; }
-  .report-item { display: flex; gap: 12px; align-items: flex-start; background: rgba(255,255,255,.05); border-radius: 12px; padding: 12px; margin-bottom: 10px; }
-  .report-item img { width: 70px; height: 70px; object-fit: cover; border-radius: 8px; }
-  .report-item .info { flex: 1; }
-  .report-item .caption { color: #fff; font-size: 13px; }
-  .report-item .meta { color: #999; font-size: 11px; margin-top: 3px; }
-  .report-item .actions { margin-top: 8px; display: flex; gap: 8px; }
-  .report-item .actions button { padding: 5px 12px; border: none; border-radius: 8px; cursor: pointer; font-size: 12px; color: #fff; }
-  .btn-approve { background: #5cb85c; }
-  .btn-reject { background: #d9534f; }
-  .ticket-item { background: rgba(255,255,255,.05); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
-  .ticket-item .title { color: #fff; font-size: 14px; font-weight: 500; }
-  .ticket-item .content { color: #ccc; font-size: 13px; margin: 6px 0; }
-  .ticket-item .reply-box { width: 100%; padding: 8px; margin-top: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,.15); background: rgba(255,255,255,.08); color: #fff; font-size: 13px; box-sizing: border-box; }
-  .ticket-item .btn-row { margin-top: 8px; display: flex; gap: 8px; }
-  .ticket-item .btn-row button { padding: 6px 12px; border: none; border-radius: 8px; cursor: pointer; font-size: 12px; color: #fff; }
-  .btn-reply { background: #667eea; }
-  .btn-close { background: #888; }
-  .status-open { color: #f0ad4e; font-size: 11px; }
-  .status-done { color: #8ab4ff; font-size: 11px; }
-  .status-closed { color: #666; font-size: 11px; }
-  .status-pending { color: #f0ad4e; font-size: 11px; }
-  .status-approved { color: #5cb85c; font-size: 11px; }
-  .status-rejected { color: #d9534f; font-size: 11px; }
-  .empty { color: #888; font-size: 13px; text-align: center; padding: 20px 0; }
-  .hint { color: rgba(255,255,255,.3); font-size: 11px; text-align: center; margin-top: 8px; }
+  .sidebar-title { font-size: 18px; font-weight: 700; padding: 0 8px 20px; border-bottom: 1px solid rgba(255,255,255,.1); margin-bottom: 16px; }
+  .nav-btn {
+    display: block; width: 100%; text-align: left;
+    background: transparent; border: none; color: #cbd5e1;
+    padding: 11px 14px; border-radius: 10px; margin: 3px 0;
+    cursor: pointer; font-size: 14px; transition: all .2s;
+  }
+  .nav-btn:hover { background: rgba(255,255,255,.08); color: #fff; }
+  .nav-btn.active { background: rgba(102,126,234,.25); color: #a5b4fc; }
+
+  .content { flex: 1; padding: 28px; max-width: 900px; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .panel h2 { font-size: 20px; margin-bottom: 18px; color: #fff; }
+
+  input, textarea, select {
+    width: 100%; padding: 11px 14px; margin-bottom: 12px;
+    border-radius: 10px; border: 1px solid rgba(255,255,255,.15);
+    background: rgba(255,255,255,.08); color: #f3f4f6;
+    font-size: 14px; outline: none; transition: border .2s;
+  }
+  input:focus, textarea:focus { border-color: rgba(102,126,234,.5); }
+  input::placeholder, textarea::placeholder { color: #6b7280; }
+
+  .btn-primary {
+    padding: 11px 24px; border: none; border-radius: 10px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff; cursor: pointer; font-size: 14px; transition: transform .2s, box-shadow .2s;
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(102,126,234,.4); }
+  .btn-danger {
+    padding: 5px 12px; border: none; border-radius: 8px;
+    background: rgba(220,53,69,.8); color: #fff; cursor: pointer; font-size: 12px;
+  }
+  .btn-warn {
+    padding: 5px 12px; border: none; border-radius: 8px;
+    background: rgba(255,193,7,.8); color: #333; cursor: pointer; font-size: 12px; margin-right: 6px;
+  }
+  .btn-ok {
+    padding: 5px 12px; border: none; border-radius: 8px;
+    background: rgba(40,167,69,.8); color: #fff; cursor: pointer; font-size: 12px;
+  }
+
+  .list-item {
+    background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08);
+    border-radius: 12px; padding: 14px 16px; margin-bottom: 10px;
+  }
+  .list-item .title { color: #fff; font-size: 14px; margin-bottom: 4px; }
+  .list-item .meta { color: #888; font-size: 12px; }
+  .list-item .content { color: #ccc; font-size: 13px; margin-top: 6px; }
+  .empty { color: #6b7280; text-align: center; padding: 30px 0; font-size: 13px; }
+  .result-msg { margin-top: 10px; font-size: 13px; color: #8ab4ff; }
+
+  .EasyMDEContainer .CodeMirror, .EasyMDEContainer .editor-toolbar, .EasyMDEContainer .editor-preview {
+    background: rgba(255,255,255,.06) !important;
+    color: #f3f4f6 !important;
+    border: 1px solid rgba(255,255,255,.12) !important;
+  }
+  .EasyMDEContainer .CodeMirror-code { color: #f3f4f6 !important; }
+  .EasyMDEContainer .editor-toolbar button { color: #cbd5e1 !important; }
+  .EasyMDEContainer .editor-toolbar button:hover { background: rgba(255,255,255,.1) !important; }
+
+  .hamburger {
+    display: none; position: fixed; top: 14px; left: 14px; z-index: 100;
+    background: rgba(20,22,35,.8); border: 1px solid rgba(255,255,255,.15);
+    color: #fff; border-radius: 10px; padding: 8px 12px; font-size: 18px; cursor: pointer;
+  }
+
+  @media (max-width: 768px) {
+    .hamburger { display: block; }
+    .sidebar {
+      position: fixed; top: 0; left: 0; bottom: 0; z-index: 90;
+      transform: translateX(-100%); transition: transform .3s;
+      width: 240px;
+    }
+    .sidebar.open { transform: translateX(0); }
+    .content { padding: 60px 16px 30px; }
+  }
 </style>
 
-<div class="admin-scroll" id="adminScroll">
-  <div class="panel">
-    <h1>站长后台</h1>
-    <p style="color:#aaa;font-size:13px;">左右滑动切换功能，电脑端点箭头或用鼠标滚轮。</p>
-  </div>
+<button class="hamburger" onclick="toggleSidebar()">☰</button>
 
-  <div class="panel">
-    <h2>返图审核（待处理）</h2>
-    <div id="reports"></div>
-  </div>
+<div class="admin-root">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-title">站长后台</div>
+    <button class="nav-btn active" data-panel="panel-blog" onclick="switchPanel('panel-blog', this)">写博客</button>
+    <button class="nav-btn" data-panel="panel-notice" onclick="switchPanel('panel-notice', this)">发公告</button>
+    <button class="nav-btn" data-panel="panel-posts" onclick="switchPanel('panel-posts', this)">文章管理</button>
+    <button class="nav-btn" data-panel="panel-reports" onclick="switchPanel('panel-reports', this)">返图审核</button>
+    <button class="nav-btn" data-panel="panel-admin-img" onclick="switchPanel('panel-admin-img', this)">站长返图上传</button>
+    <button class="nav-btn" data-panel="panel-tickets" onclick="switchPanel('panel-tickets', this)">工单处理</button>
+  </aside>
 
-  <div class="panel">
-    <h2>工单处理</h2>
-    <div id="tickets"></div>
-  </div>
+  <main class="content">
+    <div class="panel active" id="panel-blog">
+      <h2>写博客</h2>
+      <input id="blog-title" placeholder="文章标题" />
+      <input id="blog-category" placeholder="分类（如：技术、日常、无线电）" />
+      <textarea id="blog-content" placeholder="正文内容..."></textarea>
+      <button class="btn-primary" onclick="publishBlog('blog')">发布文章</button>
+      <div class="result-msg" id="blog-result"></div>
+    </div>
 
-  <div class="panel">
-    <h2>写博客</h2>
-    <input id="blog-title" placeholder="文章标题" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff;font-size:14px;box-sizing:border-box;margin-bottom:10px;" />
-    <input id="blog-category" placeholder="分类（如：技术、日常、无线电）" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff;font-size:14px;box-sizing:border-box;margin-bottom:10px;" />
-    <textarea id="blog-content" placeholder="正文内容..." style="width:100%;height:200px;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff;font-size:13px;box-sizing:border-box;resize:vertical;"></textarea>
-    <button onclick="publishBlog('blog')" style="margin-top:10px;padding:10px 20px;border:none;border-radius:10px;background:#667eea;color:#fff;cursor:pointer;font-size:14px;">发布文章</button>
-    <div id="blog-result" style="margin-top:10px;font-size:13px;"></div>
-  </div>
+    <div class="panel" id="panel-notice">
+      <h2>发公告</h2>
+      <input id="notice-title" placeholder="公告标题" />
+      <textarea id="notice-content" placeholder="公告内容..."></textarea>
+      <button class="btn-primary" onclick="publishBlog('notice')">发布公告</button>
+      <div class="result-msg" id="notice-result"></div>
+    </div>
 
-  <div class="panel">
-    <h2>发公告</h2>
-    <input id="notice-title" placeholder="公告标题" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff;font-size:14px;box-sizing:border-box;margin-bottom:10px;" />
-    <textarea id="notice-content" placeholder="公告内容..." style="width:100%;height:200px;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff;font-size:13px;box-sizing:border-box;resize:vertical;"></textarea>
-    <button onclick="publishBlog('notice')" style="margin-top:10px;padding:10px 20px;border:none;border-radius:10px;background:#e67e22;color:#fff;cursor:pointer;font-size:14px;">发布公告</button>
-    <div id="notice-result" style="margin-top:10px;font-size:13px;"></div>
-  </div>
+    <div class="panel" id="panel-posts">
+      <h2>文章管理</h2>
+      <div id="post-list-admin"></div>
+    </div>
 
-  <div class="panel">
-    <h2>文章管理</h2>
-    <div id="post-list-admin" style="display:flex;flex-direction:column;gap:8px;"></div>
-  </div>
+    <div class="panel" id="panel-reports">
+      <h2>返图审核</h2>
+      <div id="pending-reports">
+        <p class="empty">加载中...</p>
+      </div>
+    </div>
 
-  <div class="panel">
-    <h2>站长返图上传</h2>
-    <input type="file" id="admin-img" accept="image/*" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff;font-size:13px;box-sizing:border-box;margin-bottom:10px;" />
-    <input type="date" id="admin-date" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff;font-size:13px;box-sizing:border-box;margin-bottom:10px;" />
-    <textarea id="admin-caption" placeholder="配文（比如：绒兽汇 2026）" style="width:100%;height:80px;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff;font-size:13px;box-sizing:border-box;resize:vertical;"></textarea>
-    <button onclick="uploadAdminImg()" style="margin-top:10px;padding:10px 20px;border:none;border-radius:10px;background:#27ae60;color:#fff;cursor:pointer;font-size:14px;">上传到时间线</button>
-    <div id="admin-img-result" style="margin-top:10px;font-size:13px;"></div>
-  </div>
+    <div class="panel" id="panel-admin-img">
+      <h2>站长返图上传</h2>
+      <input type="file" id="admin-img" accept="image/*" />
+      <input type="date" id="admin-date" />
+      <input id="admin-caption" placeholder="配文说明" />
+      <button class="btn-primary" onclick="uploadAdminImg()">上传返图</button>
+      <div id="admin-img-result" class="result-msg"></div>
+    </div>
+
+    <div class="panel" id="panel-tickets">
+      <h2>工单处理</h2>
+      <div id="tickets">
+        <p class="empty">加载中...</p>
+      </div>
+    </div>
+  </main>
 </div>
 
-<button class="nav-arrow nav-left" onclick="scrollAdmin(-1)">&#8249;</button>
-<button class="nav-arrow nav-right" onclick="scrollAdmin(1)">&#8250;</button>
-
 <script>
-function scrollAdmin(dir) {
-  document.getElementById('adminScroll').scrollBy({ left: dir * 400, behavior: 'smooth' });
-}
+let mde = null;
+
 document.addEventListener('DOMContentLoaded', () => {
-  const scroller = document.getElementById('adminScroll');
-  if (scroller) {
-    scroller.addEventListener('wheel', (e) => {
-      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-        e.preventDefault();
-        scroller.scrollLeft += e.deltaY;
-      }
-    }, { passive: false });
-  }
   if (window.EasyMDE) {
-    window.mde = new EasyMDE({ element: document.getElementById('blog-content'), toolbar: ['bold','italic','heading','|','quote','unordered-list','ordered-list','|','link','image','|','preview','guide'] });
+    mde = new EasyMDE({
+      element: document.getElementById('blog-content'),
+      toolbar: ['bold','italic','heading','|','quote','unordered-list','ordered-list','|','link','image','|','preview','guide']
+    });
   }
+  checkAdmin();
 });
-</script>
 
-<script>
-async function checkAdmin() {
-  const res = await fetch('/api/auth/me');
-  const data = await res.json();
-  if (!data.user || !data.user.is_admin) {
-    document.querySelector('.admin-scroll').innerHTML = '<div class="panel" style="flex:0 0 85vw;max-width:420px;text-align:center;justify-content:center;display:flex;flex-direction:column;"><h1 style="font-size:20px;">仅站长可访问</h1><p style="color:#aaa;font-size:14px;margin-top:12px;">你没有权限查看此页面。</p></div>';
-    return false;
-  }
-  return true;
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
 }
 
-(async () => {
-  if (await checkAdmin()) {
-    loadReports();
-    loadTickets();
-    loadPostsAdmin();
-  }
-})();
+function switchPanel(id, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+  if (window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('open');
+}
 
-async function loadReports() {
-  const res = await fetch('/api/report/moderate');
+async function checkAdmin() {
+  const res = await fetch('/api/auth/me/');
   const data = await res.json();
-  const el = document.getElementById('reports');
+  if (!data.user || !data.user.isAdmin) {
+    document.querySelector('.content').innerHTML = '<p class="empty">仅站长可访问</p>';
+    return;
+  }
+  loadPendingReports();
+  loadTickets();
+  loadPostsAdmin();
+}
+
+async function loadPendingReports() {
+  const res = await fetch('/api/report/pending/');
+  const data = await res.json();
+  const el = document.getElementById('pending-reports');
   if (!data.reports || data.reports.length === 0) { el.innerHTML = '<p class="empty">没有待审核的返图</p>'; return; }
   el.innerHTML = data.reports.map(r => `
-    <div class="report-item">
-      <img src="/api/report/view?key=${r.image_key}" />
-      <div class="info">
-        <div class="caption">${r.caption || '无配文'}</div>
-        <div class="meta">${r.username} · ${r.created_at}</div>
-        <div class="actions">
-          <button class="btn-approve" onclick="moderate(${r.id},'approved')">通过</button>
-          <button class="btn-reject" onclick="moderate(${r.id},'rejected')">拒绝</button>
-        </div>
+    <div class="list-item">
+      <img src="/api/report/view?key=${r.image_key}" style="max-width:150px;border-radius:8px;margin-bottom:8px;" />
+      <div class="meta">${r.created_at}</div>
+      <div class="content">${r.caption || '无配文'}</div>
+      <div style="margin-top:10px;">
+        <button class="btn-ok" onclick="moderate(${r.id}, true)">通过 (+5分)</button>
+        <button class="btn-danger" onclick="moderate(${r.id}, false)">拒绝</button>
       </div>
     </div>
   `).join('');
 }
 
-async function moderate(id, status) {
-  await fetch('/api/report/moderate', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id, status }) });
-  loadReports();
-}
-
-async function loadPostsAdmin() {
-  const res = await fetch('/api/blog/');
-  const data = await res.json();
-  const el = document.getElementById('post-list-admin');
-  if (!data.posts || data.posts.length === 0) { el.innerHTML = '<p class="empty">还没有文章</p>'; return; }
-  el.innerHTML = data.posts.map(p => `
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:rgba(255,255,255,.05);border-radius:10px;">
-      <div style="color:#eee;font-size:13px;">${p.title} <span style="color:#888;font-size:11px;">[${p.category || '未分类'}]</span></div>
-      <button onclick="delPost(${p.id})" style="padding:4px 12px;background:rgba(217,83,79,.8);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;">删除</button>
-    </div>
-  `).join('');
-}
-
-async function delPost(id) {
-  if (!confirm('确定删除这篇文章？')) return;
-  await fetch('/api/blog/' + id, { method: 'DELETE' });
-  loadPostsAdmin();
+async function moderate(id, pass) {
+  await fetch('/api/report/moderate', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id, pass }) });
+  loadPendingReports();
 }
 
 async function loadTickets() {
@@ -207,14 +230,14 @@ async function loadTickets() {
   const el = document.getElementById('tickets');
   if (!data.tickets || data.tickets.length === 0) { el.innerHTML = '<p class="empty">没有待处理的工单</p>'; return; }
   el.innerHTML = data.tickets.map(t => `
-    <div class="ticket-item">
-      <div class="title">${t.title} <span class="status-${t.status}">${t.status === 'open' ? '处理中' : t.status === 'done' ? '已回复' : '已关闭'}</span></div>
+    <div class="list-item">
+      <div class="title">${t.title} <span style="color:#8ab4ff;font-size:11px;">[${t.status === 'open' ? '处理中' : t.status === 'done' ? '已回复' : '已关闭'}]</span></div>
       <div class="content">${t.content}</div>
       ${t.reply ? `<div style="color:#8ab4ff;font-size:12px;margin-top:6px;">回复：${t.reply}</div>` : ''}
-      <textarea class="reply-box" id="reply-${t.id}" placeholder="回复内容...">${t.reply || ''}</textarea>
-      <div class="btn-row">
-        <button class="btn-reply" onclick="replyTicket(${t.id},false)">回复</button>
-        <button class="btn-close" onclick="replyTicket(${t.id},true)">关闭工单</button>
+      <textarea style="margin-top:8px;height:70px;" id="reply-${t.id}" placeholder="回复内容...">${t.reply || ''}</textarea>
+      <div>
+        <button class="btn-ok" onclick="replyTicket(${t.id},false)">回复</button>
+        <button class="btn-danger" onclick="replyTicket(${t.id},true)">关闭工单</button>
       </div>
     </div>
   `).join('');
@@ -229,11 +252,8 @@ async function replyTicket(id, close) {
 async function publishBlog(type) {
   const title = document.getElementById(type === 'blog' ? 'blog-title' : 'notice-title').value;
   let content;
-  if (type === 'blog' && window.mde) {
-    content = window.mde.value();
-  } else {
-    content = document.getElementById(type === 'blog' ? 'blog-content' : 'notice-content').value;
-  }
+  if (type === 'blog' && mde) { content = mde.value(); }
+  else { content = document.getElementById(type === 'blog' ? 'blog-content' : 'notice-content').value; }
   const category = type === 'blog' ? document.getElementById('blog-category').value : '';
   const result = document.getElementById(type === 'blog' ? 'blog-result' : 'notice-result');
   if (!title || !content) { result.textContent = '标题和内容不能为空'; return; }
@@ -244,54 +264,69 @@ async function publishBlog(type) {
   if (res.ok) {
     result.textContent = '发布成功！';
     document.getElementById(type === 'blog' ? 'blog-title' : 'notice-title').value = '';
-    if (type === 'blog' && window.mde) { window.mde.value(''); } else { document.getElementById(type === 'blog' ? 'blog-content' : 'notice-content').value = ''; }
-  } else {
-    result.textContent = '发布失败';
-  }
+    if (type === 'blog' && mde) mde.value('');
+    else document.getElementById(type === 'blog' ? 'blog-content' : 'notice-content').value = '';
+  } else { result.textContent = '发布失败'; }
 }
 
 async function uploadAdminImg() {
-  const file = document.getElementById('admin-img').files[0];
-  if (!file) { document.getElementById('admin-img-result').textContent = '请先选图片'; return; }
+  const fileInput = document.getElementById('admin-img');
   const date = document.getElementById('admin-date').value;
   const caption = document.getElementById('admin-caption').value;
   const result = document.getElementById('admin-img-result');
-  result.textContent = '压缩中...';
-  let blob = file;
-  if (file.size > 20 * 1024 * 1024) {
-    result.textContent = '图片太大，自动压缩中...';
-    blob = await compressImage(file, 0.7);
-  }
+  if (!fileInput.files[0]) { result.textContent = '请选择图片'; return; }
   result.textContent = '上传中...';
-  const fd = new FormData();
-  fd.append('file', blob, 'admin.jpg');
-  fd.append('admin_date', date);
-  fd.append('caption', caption);
-  const res = await fetch('/api/report/upload-admin', { method: 'POST', body: fd });
-  const data = await res.json();
-  if (res.ok && data.ok) {
-    result.textContent = '上传成功！';
-    document.getElementById('admin-img').value = '';
-    document.getElementById('admin-caption').value = '';
-  } else {
-    result.textContent = '上传失败：' + (data.error || res.status);
-  }
+  try {
+    const compressed = await compressImage(fileInput.files[0]);
+    const res = await fetch('/api/report/upload-admin', { method: 'POST', body: compressed });
+    if (res.ok) {
+      result.textContent = '上传成功！';
+      fileInput.value = '';
+      document.getElementById('admin-caption').value = '';
+    } else { result.textContent = '上传失败'; }
+  } catch (e) { result.textContent = '压缩失败：' + e.message; }
 }
 
-function compressImage(file, quality) {
-  return new Promise(resolve => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const maxW = 1920;
-      const scale = Math.min(1, maxW / img.width);
-      canvas.width = img.width * scale;
-      canvas.height = img.height * scale;
-      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-      canvas.toBlob(resolve, 'image/jpeg', quality);
+function compressImage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let w = img.width, h = img.height;
+        const maxW = 1920;
+        if (w > maxW) { h = h * maxW / w; w = maxW; }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.7);
+      };
+      img.src = e.target.result;
     };
-    img.src = URL.createObjectURL(file);
+    reader.readAsDataURL(file);
   });
+}
+
+async function loadPostsAdmin() {
+  const res = await fetch('/api/blog/');
+  const data = await res.json();
+  const el = document.getElementById('post-list-admin');
+  if (!data.posts || data.posts.length === 0) { el.innerHTML = '<p class="empty">还没有文章</p>'; return; }
+  el.innerHTML = data.posts.map(p => `
+    <div class="list-item" style="display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <div class="title">${p.title} <span style="color:#888;font-size:11px;">[${p.category || '未分类'}]</span></div>
+        <div class="meta">${p.created_at}</div>
+      </div>
+      <button class="btn-danger" onclick="delPost(${p.id})">删除</button>
+    </div>
+  `).join('');
+}
+
+async function delPost(id) {
+  if (!confirm('确定删除这篇文章？')) return;
+  await fetch('/api/blog/' + id, { method: 'DELETE' });
+  loadPostsAdmin();
 }
 </script>
 {{ end }}
