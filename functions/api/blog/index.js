@@ -35,7 +35,7 @@ export async function onRequestGet(context) {
   const offset = parseInt(url.searchParams.get('offset') || '0');
   const limit = 10;
   try {
-    const { results } = await env.DB.prepare('SELECT id, title, category, created_at FROM posts WHERE published = 1 AND type = ? ORDER BY id DESC LIMIT ? OFFSET ?').bind(type, limit, offset).all();
+    const { results } = await env.DB.prepare('SELECT id, title, category, created_at FROM posts WHERE published = 1 AND (type = ? OR type IS NULL) ORDER BY id DESC LIMIT ? OFFSET ?').bind(type, limit, offset).all();
     return new Response(JSON.stringify({ posts: results, has_more: results.length === limit }), { headers: { 'Content-Type': 'application/json; charset=utf-8' } });
   } catch (e) {
     return new Response(JSON.stringify({ posts: [], has_more: false }), { headers: { 'Content-Type': 'application/json; charset=utf-8' } });
