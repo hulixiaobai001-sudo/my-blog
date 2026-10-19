@@ -22,6 +22,9 @@
 <div class="blog-wrap">
   <h1>博客</h1>
   <div id="post-list"></div>
+  <div style="text-align:center;margin:20px 0;">
+    <button id="load-more" onclick="loadMore()" style="padding:10px 24px;background:rgba(138,180,255,.2);color:#8ab4ff;border:1px solid rgba(138,180,255,.3);border-radius:10px;cursor:pointer;font-size:14px;display:none;">加载更多</button>
+  </div>
 </div>
 
 <div class="modal" id="modal">
@@ -30,19 +33,26 @@
     <h2 id="modal-title"></h2>
     <div class="date" id="modal-date"></div>
     <div class="body" id="modal-body"></div>
-    <button class="copy-link-btn" onclick="copyPostLink()">复制文章链接</button>
+    <div style="margin-top:20px;display:flex;gap:10px;align-items:center;">
+      <button class="copy-link-btn" onclick="likePost()">点赞 <span id="like-count">0</span></button>
+      <button class="copy-link-btn" onclick="copyPostLink()">复制文章链接</button>
+    </div>
   </div>
 </div>
 
 <script>
 let currentPostId = null;
+let offset = 0;
+let hasMore = false;
 
 async function loadPosts() {
-  const res = await fetch('/api/blog/');
+  offset = 0;
+  const res = await fetch('/api/blog/?offset=0');
   const data = await res.json();
   const el = document.getElementById('post-list');
   if (!data.posts || data.posts.length === 0) {
     el.innerHTML = '<p class="empty">还没有文章</p>';
+    document.getElementById('load-more').style.display = 'none';
     return;
   }
   el.innerHTML = data.posts.map(p => `
@@ -51,10 +61,28 @@ async function loadPosts() {
       <div class="date">${p.created_at} ${p.category ? '<span style="color:#8ab4ff;margin-left:8px;">[' + p.category + ']</span>' : ''}</div>
     </div>
   `).join('');
+  offset = data.posts.length;
+  hasMore = data.has_more;
+  document.getElementById('load-more').style.display = hasMore ? 'inline-block' : 'none';
 
   const urlParams = new URLSearchParams(window.location.search);
   const postId = urlParams.get('post');
   if (postId) openPost(parseInt(postId));
+}
+
+async function loadMore() {
+  const res = await fetch('/api/blog/?offset=' + offset);
+  const data = await res.json();
+  const el = document.getElementById('post-list');
+  el.innerHTML += data.posts.map(p => `
+    <div class="post-card" onclick="openPost(${p.id})">
+      <h2>${p.title}</h2>
+      <div class="date">${p.created_at} ${p.category ? '<span style="color:#8ab4ff;margin-left:8px;">[' + p.category + ']</span>' : ''}</div>
+    </div>
+  `).join('');
+  offset += data.posts.length;
+  hasMore = data.has_more;
+  document.getElementById('load-more').style.display = hasMore ? 'inline-block' : 'none';
 }
 
 async function openPost(id) {
@@ -67,6 +95,20 @@ async function openPost(id) {
     document.getElementById('modal-body').textContent = data.post.content;
     document.getElementById('modal').classList.add('open');
     history.replaceState(null, '', '/blog/?post=' + id);
+    const sr = await fetch('/api/stats/?post_id=' + id);
+    const sd = await sr.json();
+    document.getElementById('like-count').textContent = sd.likes;
+  }
+}
+
+async function likePost() {
+  if (!currentPostId) return;
+  const res = await fetch('/api/stats/', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ postId: currentPostId }) });
+  const data = await res.json();
+  if (data.likes !== undefined) {
+    document.getElementById('like-count').textContent = data.likes;
+  } else {
+    alert(data.error || '点赞失败');
   }
 }
 

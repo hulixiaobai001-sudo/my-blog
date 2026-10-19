@@ -75,16 +75,22 @@
       <a href="/gallery">返图墙</a>
       <a href="/tickets">工单</a>
     </div>
-    <div class="foot">© 2026 白沁 BA3PKZ · Powered by Hugo & Cloudflare</div>
+    <div class="foot">© 2026 白沁 BA3PKZ · Powered by Hugo & Cloudflare<br>全站浏览量：<span id="views">...</span></div>
   </div>
   <script>
-    const msg = "你好！我是白沁！欢迎光临我的网站！";
+    const hour = new Date().getHours();
+    let msg;
+    if (hour >= 6 && hour < 12) msg = "早上好！我是白沁，欢迎光临！";
+    else if (hour >= 12 && hour < 18) msg = "下午好！我是白沁，欢迎光临！";
+    else if (hour >= 18 && hour < 24) msg = "晚上好！我是白沁，欢迎光临！";
+    else msg = "夜深了，我是白沁，还没睡呢。";
     const el = document.getElementById('text');
     let i = 0;
     function type() {
       if (i <= msg.length) { el.textContent = msg.slice(0, i++); setTimeout(type, 120); }
     }
     type();
+    fetch('/api/stats/views').then(r => r.json()).then(d => { document.getElementById('views').textContent = d.views; });
   </script>
 </body>
 </html>

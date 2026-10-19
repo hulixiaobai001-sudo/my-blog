@@ -1,4 +1,6 @@
 {{ define "main" }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
+<script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
 <style>
   .admin-scroll {
     display: flex;
@@ -130,6 +132,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }, { passive: false });
   }
+  if (window.EasyMDE) {
+    window.mde = new EasyMDE({ element: document.getElementById('blog-content'), toolbar: ['bold','italic','heading','|','quote','unordered-list','ordered-list','|','link','image','|','preview','guide'] });
+  }
 });
 </script>
 
@@ -223,7 +228,12 @@ async function replyTicket(id, close) {
 
 async function publishBlog(type) {
   const title = document.getElementById(type === 'blog' ? 'blog-title' : 'notice-title').value;
-  const content = document.getElementById(type === 'blog' ? 'blog-content' : 'notice-content').value;
+  let content;
+  if (type === 'blog' && window.mde) {
+    content = window.mde.value();
+  } else {
+    content = document.getElementById(type === 'blog' ? 'blog-content' : 'notice-content').value;
+  }
   const category = type === 'blog' ? document.getElementById('blog-category').value : '';
   const result = document.getElementById(type === 'blog' ? 'blog-result' : 'notice-result');
   if (!title || !content) { result.textContent = '标题和内容不能为空'; return; }
@@ -234,7 +244,7 @@ async function publishBlog(type) {
   if (res.ok) {
     result.textContent = '发布成功！';
     document.getElementById(type === 'blog' ? 'blog-title' : 'notice-title').value = '';
-    document.getElementById(type === 'blog' ? 'blog-content' : 'notice-content').value = '';
+    if (type === 'blog' && window.mde) { window.mde.value(''); } else { document.getElementById(type === 'blog' ? 'blog-content' : 'notice-content').value = ''; }
   } else {
     result.textContent = '发布失败';
   }
