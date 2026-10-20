@@ -164,6 +164,35 @@
     opacity: 0; transition: opacity .3s; pointer-events: none;
   }
   #music-progress.show { opacity: 1; }
+
+  /* 隐私政策弹窗 */
+  #privacy-modal {
+    display: none; position: fixed; inset: 0; z-index: 300;
+    background: rgba(0,0,0,.7); backdrop-filter: blur(8px);
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  #privacy-modal.open { display: flex; }
+  #privacy-box {
+    max-width: 480px; background: rgba(30,30,50,.95);
+    border: 1px solid rgba(255,255,255,.15); border-radius: 16px;
+    padding: 28px; animation: fadeUp .4s ease;
+  }
+  #privacy-box h3 { color: #fff; font-size: 18px; margin: 0 0 14px; }
+  #privacy-box p { color: #ccc; font-size: 13px; line-height: 1.8; margin: 0 0 16px; }
+  #privacy-box .privacy-btns { display: flex; gap: 10px; margin-top: 20px; }
+  #privacy-box .privacy-btns button {
+    flex: 1; padding: 12px; border-radius: 10px; border: none;
+    cursor: pointer; font-size: 14px;
+  }
+  #privacy-agree { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; }
+  #privacy-view { background: rgba(255,255,255,.1); color: #ccc; }
+
+  /* 页面过渡 */
+  body { animation: pageIn .4s ease; }
+  @keyframes pageIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 </style>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -268,7 +297,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   const audio = new Audio('/music/bgm.wav');
   audio.loop = true;
-  audio.volume = 0.5;
+  audio.volume = 0.4;
   let playing = false;
 
   player.onclick = function() {
@@ -284,6 +313,31 @@ document.addEventListener('DOMContentLoaded', function() {
     playing = !playing;
     progress.classList.add('show');
     setTimeout(() => progress.classList.remove('show'), 2000);
+  };
+});
+
+// 隐私政策更新弹窗
+document.addEventListener('DOMContentLoaded', function() {
+  const PRIVACY_VER = '2026-10-20';
+  const agreed = localStorage.getItem('privacy_ver');
+  if (agreed === PRIVACY_VER) return;
+
+  const modal = document.createElement('div');
+  modal.id = 'privacy-modal';
+  modal.innerHTML =
+    '<div id="privacy-box">' +
+    '<h3>隐私政策更新通知</h3>' +
+    '<p>我们的《隐私政策》已更新。主要变更：明确数据处理主体为<b>狐狸小白工作室</b>，负责人为<b>狐狸白沁</b>，并完善了第三方信息共享说明。请您仔细阅读并同意后继续使用。</p>' +
+    '<p>更新日期：2026年10月20日</p>' +
+    '<div class="privacy-btns">' +
+    '<button id="privacy-view" onclick="window.open(\'https://my.feishu.cn/docx/PhKsdqFqMoPWxwxQ6wHc5Po0ndh\',\'_blank\')">查看全文</button>' +
+    '<button id="privacy-agree">同意并继续</button>' +
+    '</div></div>';
+  document.body.appendChild(modal);
+  setTimeout(() => modal.classList.add('open'), 500);
+  modal.querySelector('#privacy-agree').onclick = function() {
+    localStorage.setItem('privacy_ver', PRIVACY_VER);
+    modal.classList.remove('open');
   };
 });
 </script>
