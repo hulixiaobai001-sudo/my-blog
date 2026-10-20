@@ -434,11 +434,13 @@ async function loadUsers() {
   if (!data.users || data.users.length === 0) { el.innerHTML = '<p class="empty">暂无用户</p>'; return; }
   el.innerHTML = data.users.map(u => `
     <div class="list-item">
-      <div class="title">@${u.username} ${u.is_admin ? '<span style="color:#f0ad4e;font-size:11px;">[站长]</span>' : ''}</div>
+      <div class="title">@${u.username} ${u.is_admin ? '<span style="color:#f0ad4e;font-size:11px;">[站长]</span>' : ''} ${u.banned ? '<span style="color:#dc3545;font-size:11px;">[已封禁]</span>' : ''}</div>
       <div class="content">积分：${u.points} ${u.qq ? ' · QQ：' + u.qq : ''} · 注册：${u.created_at}</div>
-      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
         <input type="number" id="pts-${u.id}" placeholder="±分数" style="width:90px;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:#fff;font-size:13px;">
         <button class="btn-ok" onclick="givePts(${u.id})">发放/扣减</button>
+        ${u.is_admin ? '' : `<button class="${u.banned ? 'btn-ok' : 'btn-danger'}" onclick="banUser(${u.id}, ${u.banned ? 0 : 1})">${u.banned ? '解禁' : '封禁'}</button>`}
+        ${u.is_admin ? '' : `<button class="btn-warn" onclick="sendMsg(${u.id}, '${u.username}')">发站内信</button>`}
       </div>
     </div>
   `).join('');
@@ -450,6 +452,21 @@ async function givePts(userId) {
   const reason = prompt('备注原因：', '站长手动调整');
   await fetch('/api/admin/users', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId, amount: val, reason }) });
   loadUsers();
+}
+
+async function banUser(userId, ban) {
+  if (!confirm(ban ? '确定封禁该用户？' : '确定解禁该用户？')) return;
+  await fetch('/api/admin/users', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId, action: ban ? 'ban' : 'unban' }) });
+  loadUsers();
+}
+
+async function sendMsg(userId, username) {
+  const title = prompt('站内信标题：', '系统通知');
+  if (!title) return;
+  const content = prompt('站内信内容：');
+  if (!content) return;
+  await fetch('/api/admin/users', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId, action: 'message', title, content }) });
+  alert('已发送给 @' + username);
 }
 
 async function saveStatus() {

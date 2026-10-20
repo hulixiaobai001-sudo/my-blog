@@ -11,7 +11,7 @@ export async function onRequestGet(context) {
   if (!dbUser || !dbUser.is_admin) return new Response(JSON.stringify({ error: '仅站长可访问' }), { status: 403 });
 
   try {
-    const { results } = await env.DB.prepare('SELECT id, username, points, qq, bio, avatar, show_qq, created_at, is_admin FROM users ORDER BY is_admin DESC, id ASC').all();
+    const { results } = await env.DB.prepare('SELECT id, username, points, qq, bio, avatar, show_qq, created_at, is_admin, banned FROM users ORDER BY is_admin DESC, id ASC').all();
     return new Response(JSON.stringify({ users: results }));
   } catch (e) {
     return new Response(JSON.stringify({ users: [] }));
@@ -30,7 +30,22 @@ export async function onRequestPost(context) {
   const dbAdmin = await env.DB.prepare('SELECT is_admin FROM users WHERE id = ?').bind(adminId).first();
   if (!dbAdmin || !dbAdmin.is_admin) return new Response(JSON.stringify({ error: '仅站长可操作' }), { status: 403 });
 
-  const { userId, amount, reason } = await request.json();
+  const body = await request.json();
+
+  // 封禁/解禁
+  if (body.action === 'ban' || body.action === 'unban') {
+    const banned = body.action === 'ban' ? 1 : 0;
+    await env.DB.prepare('UPDATE users SET banned = ? WHERE id = ? AND is_admin = 0').bind(banned, body.userId).run();
+    return new Response(JSON.stringify({ ok: true }));
+  }
+
+  // 发站内信
+  if (body.action === 'message') {
+    await env.DB.prepare('INSERT INTO messages (user_id, title, content, created_at) VALUES (?, ?, ?, datetime(\'now\'))').bind(body.userId, body.title, body.content).run();
+    return new Response(JSON.stringify({ ok: true }));
+  }
+
+  const { userId, amount, reason } = body;
   if (!userId || amount === undefined) return new Response(JSON.stringify({ error: '参数错误' }), { status: 400 });
   const pts = parseInt(amount);
   if (isNaN(pts) || pts < -10000 || pts > 10000) return new Response(JSON.stringify({ error: '积分范围异常' }), { status: 400 });
