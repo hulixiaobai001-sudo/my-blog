@@ -72,6 +72,7 @@
       <a href="/about">个人</a>
       <a href="/announcements">公告</a>
       <a href="/gallery">返图墙</a>
+      <a href="/expand">扩列墙</a>
       <a href="/tickets">工单</a>
     </div>
     <div class="foot">© 2026 白沁 BA3PKZ · Powered by Hugo & Cloudflare<br>全站浏览量：<span id="views">...</span></div>
@@ -90,6 +91,27 @@
     }
     type();
     fetch('/api/stats/views').then(r => r.json()).then(d => { document.getElementById('views').textContent = d.views; });
+
+    // 隐私政策弹窗
+    const PRIVACY_VER = '2026-10-20';
+    if (localStorage.getItem('privacy_ver') !== PRIVACY_VER) {
+      setTimeout(() => {
+        const modal = document.createElement('div');
+        modal.style.cssText = 'position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px;';
+        modal.innerHTML = '<div style="max-width:440px;background:rgba(30,30,50,.95);border:1px solid rgba(255,255,255,.15);border-radius:16px;padding:28px;">' +
+          '<h3 style="color:#fff;font-size:18px;margin:0 0 14px;">隐私政策更新通知</h3>' +
+          '<p style="color:#ccc;font-size:13px;line-height:1.8;">我们的《隐私政策》已更新。主要变更：明确数据处理主体为<b>狐狸小白工作室</b>，负责人为<b>狐狸白沁</b>，并完善了第三方信息共享说明。请您仔细阅读并同意后继续使用。</p>' +
+          '<div style="display:flex;gap:10px;margin-top:20px;">' +
+          '<button onclick="window.open(\'https://my.feishu.cn/docx/PhKsdqFqMoPWxwxQ6wHc5Po0ndh\',\'_blank\')" style="flex:1;padding:12px;border-radius:10px;border:none;background:rgba(255,255,255,.1);color:#ccc;cursor:pointer;">查看全文</button>' +
+          '<button id="pa" style="flex:1;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;cursor:pointer;">同意并继续</button>' +
+          '</div></div>';
+        document.body.appendChild(modal);
+        modal.querySelector('#pa').onclick = function() {
+          localStorage.setItem('privacy_ver', PRIVACY_VER);
+          modal.remove();
+        };
+      }, 800);
+    }
   </script>
 </body>
 </html>
