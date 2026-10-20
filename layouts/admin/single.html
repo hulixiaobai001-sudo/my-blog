@@ -120,6 +120,7 @@
     <button class="nav-btn" data-panel="panel-redemptions" onclick="switchPanel('panel-redemptions', this)">兑换处理</button>
     <button class="nav-btn" data-panel="panel-users" onclick="switchPanel('panel-users', this)">用户管理</button>
     <button class="nav-btn" data-panel="panel-status" onclick="switchPanel('panel-status', this)">个人状态</button>
+    <button class="nav-btn" data-panel="panel-privacy" onclick="switchPanel('panel-privacy', this)">隐私更新弹窗</button>
   </aside>
 
   <main class="content">
@@ -193,6 +194,15 @@
       <input id="status-input" placeholder="输入状态文字" style="width:100%;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:#fff;margin-bottom:10px;">
       <button class="btn-primary" onclick="saveStatus()">保存</button>
       <div class="result-msg" id="status-result"></div>
+    </div>
+
+    <div class="panel" id="panel-privacy">
+      <h2>隐私政策更新弹窗</h2>
+      <p style="color:#999;font-size:13px;margin-bottom:10px;">修改版本号后，所有用户下次访问都会弹出更新提示。版本号随便填个日期或数字就行。</p>
+      <input id="pv-ver" placeholder="版本号（如 2026-10-21）" />
+      <textarea id="pv-note" placeholder="更新说明（用户会看到这段文字）" style="height:80px;"></textarea>
+      <button class="btn-primary" onclick="savePrivacyVer()">保存并推送弹窗</button>
+      <div class="result-msg" id="pv-result"></div>
     </div>
   </main>
 </div>
@@ -458,6 +468,15 @@ async function saveStatus() {
   if (!status) { alert('请输入状态'); return; }
   await fetch('/api/about-status', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ status }) });
   document.getElementById('status-result').textContent = '已保存！';
+}
+
+async function savePrivacyVer() {
+  const version = document.getElementById('pv-ver').value.trim();
+  const note = document.getElementById('pv-note').value.trim();
+  if (!version) { alert('请填版本号'); return; }
+  const res = await fetch('/api/privacy-version', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ version, note }) });
+  const data = await res.json();
+  document.getElementById('pv-result').textContent = data.ok ? '已保存！所有用户下次访问会收到弹窗。' : '失败：' + (data.error || '');
 }
 </script>
 {{ end }}
