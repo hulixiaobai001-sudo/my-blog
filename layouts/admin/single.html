@@ -180,8 +180,16 @@
       <div class="result-msg" id="status-result"></div>
 
       <h3 style="color:#bbb;font-size:15px;margin:24px 0 10px;">个人页内容编辑</h3>
-      <p style="color:#999;font-size:12px;margin-bottom:10px;">JSON格式，改完点保存。改坏了删内容就恢复默认。</p>
-      <textarea id="about-cfg" style="height:200px;font-family:monospace;font-size:11px;"></textarea>
+      <input id="cfg-name" placeholder="名字（如：白沁）" />
+      <input id="cfg-badges" placeholder="标签（逗号分隔，如：涿州,ENFP-T,福瑞）" />
+      <textarea id="cfg-bio" placeholder="一句话简介" style="height:50px;"></textarea>
+      <input id="cfg-quote" placeholder="避雷语/个性签名" />
+      <p style="color:#888;font-size:12px;margin:10px 0 4px;">基本信息（标签|内容，每行一条）：</p>
+      <textarea id="cfg-info" placeholder="名字|白沁&#10;坐标|涿州&#10;属性|18岁 ENFP-T" style="height:80px;font-family:monospace;font-size:12px;"></textarea>
+      <p style="color:#888;font-size:12px;margin:10px 0 4px;">爱好（标签|内容，每行一条）：</p>
+      <textarea id="cfg-activities" placeholder="业余无线电|BA3PKZ&#10;摄影|大疆" style="height:80px;font-family:monospace;font-size:12px;"></textarea>
+      <p style="color:#888;font-size:12px;margin:10px 0 4px;">联系方式（名称|链接|说明，每行一条）：</p>
+      <textarea id="cfg-contacts" placeholder="哔哩哔哩|https://...|狐狸不想营业&#10;QQ|#|3441972628" style="height:100px;font-family:monospace;font-size:12px;"></textarea>
       <button class="btn-primary" onclick="saveAboutCfg()">保存个人页</button>
       <div class="result-msg" id="about-cfg-result"></div>
 
@@ -510,17 +518,37 @@ async function loadTrips() {
 async function loadAboutCfg() {
   const res = await fetch('/api/about-config');
   const data = await res.json();
-  document.getElementById('about-cfg').value = JSON.stringify(data.config, null, 2);
+  const c = data.config;
+  document.getElementById('cfg-name').value = c.name || '';
+  document.getElementById('cfg-badges').value = (c.badges || []).join(',');
+  document.getElementById('cfg-bio').value = c.bio || '';
+  document.getElementById('cfg-quote').value = c.quote || '';
+  document.getElementById('cfg-info').value = (c.info || []).map(i => i.label + '|' + i.value).join('\n');
+  document.getElementById('cfg-activities').value = (c.activities || []).map(i => i.label + '|' + i.value).join('\n');
+  document.getElementById('cfg-contacts').value = (c.contacts || []).map(x => x.name + '|' + x.url + '|' + x.sub).join('\n');
 }
 
 async function saveAboutCfg() {
-  try {
-    const config = JSON.parse(document.getElementById('about-cfg').value);
-    await fetch('/api/about-config', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ config }) });
-    document.getElementById('about-cfg-result').textContent = '已保存！';
-  } catch(e) {
-    document.getElementById('about-cfg-result').textContent = 'JSON格式错误：' + e.message;
-  }
+  const config = {
+    name: document.getElementById('cfg-name').value.trim(),
+    badges: document.getElementById('cfg-badges').value.split(',').map(s => s.trim()).filter(Boolean),
+    bio: document.getElementById('cfg-bio').value.trim(),
+    quote: document.getElementById('cfg-quote').value.trim(),
+    info: document.getElementById('cfg-info').value.trim().split('\n').filter(l => l.trim()).map(l => {
+      const [label, value] = l.split('|');
+      return { label: (label || '').trim(), value: (value || '').trim() };
+    }),
+    activities: document.getElementById('cfg-activities').value.trim().split('\n').filter(l => l.trim()).map(l => {
+      const [label, value] = l.split('|');
+      return { label: (label || '').trim(), value: (value || '').trim() };
+    }),
+    contacts: document.getElementById('cfg-contacts').value.trim().split('\n').filter(l => l.trim()).map(l => {
+      const parts = l.split('|');
+      return { name: (parts[0] || '').trim(), url: (parts[1] || '#').trim(), sub: (parts[2] || '').trim() };
+    })
+  };
+  await fetch('/api/about-config', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ config }) });
+  document.getElementById('about-cfg-result').textContent = '已保存！';
 }
 
 async function savePrivacyVer() {
