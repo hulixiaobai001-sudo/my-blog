@@ -271,6 +271,14 @@ document.addEventListener('DOMContentLoaded', function() {
     a.textContent = '萌ICP备20260855号';
     footer.appendChild(document.createElement('br'));
     footer.appendChild(a);
+    footer.appendChild(document.createElement('br'));
+    const t = document.createElement('a');
+    t.href = 'https://travel.moe/go.html';
+    t.target = '_blank';
+    t.title = '异次元之旅-跃迁';
+    t.style.cssText = 'display:inline-block;margin-top:8px;opacity:.7;text-decoration:none;';
+    t.innerHTML = '<img src="https://travel.moe/images/icon/icon64pink.png" style="width:18px;height:18px;vertical-align:middle;"> <span style="font-size:12px;color:#888;">异次元之旅</span>';
+    footer.appendChild(t);
   }
 });
 
