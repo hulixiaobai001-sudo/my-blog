@@ -179,6 +179,18 @@
       <button class="btn-primary" onclick="saveStatus()">保存状态</button>
       <div class="result-msg" id="status-result"></div>
 
+      <h3 style="color:#bbb;font-size:15px;margin:24px 0 10px;">个人页内容编辑</h3>
+      <p style="color:#999;font-size:12px;margin-bottom:10px;">JSON格式，改完点保存。改坏了删内容就恢复默认。</p>
+      <textarea id="about-cfg" style="height:200px;font-family:monospace;font-size:11px;"></textarea>
+      <button class="btn-primary" onclick="saveAboutCfg()">保存个人页</button>
+      <div class="result-msg" id="about-cfg-result"></div>
+
+      <h3 style="color:#bbb;font-size:15px;margin:24px 0 10px;">行程安排（"接下来去哪"）</h3>
+      <p style="color:#999;font-size:12px;margin-bottom:10px;">每行一条，格式：日期|事件（如：2027.2.10|绒兽汇）</p>
+      <textarea id="trips-input" style="height:100px;" placeholder="2026.10.19 — 待定|上学中&#10;2027.2.10|绒兽汇"></textarea>
+      <button class="btn-primary" onclick="saveTrips()">保存行程</button>
+      <div class="result-msg" id="trips-result"></div>
+
       <h3 style="color:#bbb;font-size:15px;margin:24px 0 10px;">隐私政策更新弹窗</h3>
       <p style="color:#999;font-size:12px;margin-bottom:10px;">改版本号后所有用户下次访问自动弹窗。</p>
       <input id="pv-ver" placeholder="版本号（如 2026-10-21）" />
@@ -233,6 +245,9 @@ async function checkAdmin() {
   loadPostsAdmin();
   loadRedemptions();
   loadUsers();
+  loadAboutCfg();
+  loadTrips();
+  loadTrips();
 }
 
 async function loadPendingReports() {
@@ -474,6 +489,38 @@ async function saveStatus() {
   if (!status) { alert('请输入状态'); return; }
   await fetch('/api/about-status', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ status }) });
   document.getElementById('status-result').textContent = '已保存！';
+}
+
+async function saveTrips() {
+  const lines = document.getElementById('trips-input').value.trim().split('\n').filter(l => l.trim());
+  const trips = lines.map(l => {
+    const [date, event] = l.split('|');
+    return { date: (date || '').trim(), event: (event || '').trim() };
+  });
+  await fetch('/api/about-trips', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ trips }) });
+  document.getElementById('trips-result').textContent = '已保存！';
+}
+
+async function loadTrips() {
+  const res = await fetch('/api/about-trips');
+  const data = await res.json();
+  document.getElementById('trips-input').value = data.trips.map(t => t.date + '|' + t.event).join('\n');
+}
+
+async function loadAboutCfg() {
+  const res = await fetch('/api/about-config');
+  const data = await res.json();
+  document.getElementById('about-cfg').value = JSON.stringify(data.config, null, 2);
+}
+
+async function saveAboutCfg() {
+  try {
+    const config = JSON.parse(document.getElementById('about-cfg').value);
+    await fetch('/api/about-config', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ config }) });
+    document.getElementById('about-cfg-result').textContent = '已保存！';
+  } catch(e) {
+    document.getElementById('about-cfg-result').textContent = 'JSON格式错误：' + e.message;
+  }
 }
 
 async function savePrivacyVer() {

@@ -53,51 +53,26 @@
 
   <div class="about-card hero">
     <div><span class="status-badge"><span class="status-dot"></span><span id="about-status">加载中...</span></span></div>
-    <div class="avatar"><img src="/images/avatar.jpg" alt="白沁"></div>
-    <h1>白沁</h1>
-    <div class="badges">
-      <span class="badge">涿州</span>
-      <span class="badge">ENFP-T</span>
-      <span class="badge">业余无线电</span>
-      <span class="badge">福瑞</span>
-      <span class="badge">二次元</span>
-      <span class="badge">摄影</span>
-    </div>
+    <div class="avatar"><img src="/images/avatar.jpg" alt="头像"></div>
+    <h1 id="cfg-name">加载中...</h1>
+    <div class="badges" id="cfg-badges"></div>
   </div>
 
   <div class="about-card">
     <h2>基本信息</h2>
-    <div class="info-grid">
-      <div class="info-item"><b>名字</b>白沁（小白/白狐/狐狐）</div>
-      <div class="info-item"><b>坐标</b>来自东北，现居涿州</div>
-      <div class="info-item"><b>属性</b>18岁 · 处女座 · ENFP-T</div>
-      <div class="info-item"><b>性向</b>狐性恋</div>
-    </div>
-    <p style="font-size:13px;color:#aaa;margin-top:14px;">一名苦命的电商学生，24h 在线。短期出毛的神，非常爱喝酒的狐狸。</p>
+    <div class="info-grid" id="cfg-info"></div>
+    <p style="font-size:13px;color:#aaa;margin-top:14px;" id="cfg-bio"></p>
   </div>
 
   <div class="about-card">
     <h2>平时在干嘛</h2>
-    <div class="info-grid">
-      <div class="info-item"><b>业余无线电</b>BA3PKZ，欢迎换 QSL 卡</div>
-      <div class="info-item"><b>摄影</b>大疆重度发烧友</div>
-      <div class="info-item"><b>印刷</b>名片印刷狂魔</div>
-      <div class="info-item"><b>日常</b>上学、旅游、兽聚</div>
-    </div>
-    <div class="quote">避雷：快手、特定称呼、NPD 人格。</div>
+    <div class="info-grid" id="cfg-activities"></div>
+    <div class="quote" id="cfg-quote"></div>
   </div>
 
   <div class="about-card">
     <h2>联系方式</h2>
-    <div class="social-grid">
-      <a class="social-btn" href="https://b23.tv/j6Bfvnq" target="_blank">哔哩哔哩<small>狐狸不想营业</small></a>
-      <a class="social-btn" href="https://www.qrz.com/db/BA3PKZ" target="_blank">QRZ.com<small>BA3PKZ</small></a>
-      <a class="social-btn" href="https://github.com/hulixiaobai001-sudo" target="_blank">GitHub<small>hulixiaobai001-sudo</small></a>
-      <a class="social-btn" href="#">抖音<small>狐狸不想干电商</small></a>
-      <a class="social-btn" href="#">QQ<small>3441972628</small></a>
-      <a class="social-btn" href="#">微信<small>HLBQBA3PKZ</small></a>
-      <a class="social-btn" href="mailto:3441972628@qq.com">邮箱<small>3441972628@qq.com</small></a>
-    </div>
+    <div class="social-grid" id="cfg-contacts"></div>
   </div>
 
   <div class="about-card">
@@ -111,15 +86,8 @@
 
   <div class="about-card">
     <h2>接下来去哪</h2>
-    <div class="timeline">
-      <div class="tl-item">
-        <div class="date">2026.10.19 — 待定</div>
-        <div class="event">上学中</div>
-      </div>
-      <div class="tl-item">
-        <div class="date">2027.2.10</div>
-        <div class="event">绒兽汇</div>
-      </div>
+    <div class="timeline" id="trips-list">
+      <p style="color:#888;font-size:13px;">加载中...</p>
     </div>
   </div>
 
@@ -135,6 +103,23 @@
   const res = await fetch('/api/about-status');
   const data = await res.json();
   document.getElementById('about-status').textContent = data.status || '在线';
+
+  const tr = await fetch('/api/about-trips');
+  const td = await tr.json();
+  document.getElementById('trips-list').innerHTML = td.trips.map(t =>
+    '<div class="tl-item"><div class="date">' + t.date + '</div><div class="event">' + t.event + '</div></div>'
+  ).join('');
+
+  const cr = await fetch('/api/about-config');
+  const cd = await cr.json();
+  const c = cd.config;
+  document.getElementById('cfg-name').textContent = c.name;
+  document.getElementById('cfg-badges').innerHTML = c.badges.map(b => '<span class="badge">' + b + '</span>').join('');
+  document.getElementById('cfg-info').innerHTML = c.info.map(i => '<div class="info-item"><b>' + i.label + '</b>' + i.value + '</div>').join('');
+  document.getElementById('cfg-bio').textContent = c.bio;
+  document.getElementById('cfg-activities').innerHTML = c.activities.map(i => '<div class="info-item"><b>' + i.label + '</b>' + i.value + '</div>').join('');
+  document.getElementById('cfg-quote').textContent = c.quote;
+  document.getElementById('cfg-contacts').innerHTML = c.contacts.map(x => '<a class="social-btn" href="' + x.url + '" target="_blank">' + x.name + '<small>' + x.sub + '</small></a>').join('');
 })();
 </script>
 {{ end }}
