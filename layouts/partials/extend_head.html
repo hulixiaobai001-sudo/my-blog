@@ -299,22 +299,43 @@ document.addEventListener('DOMContentLoaded', function() {
   const audio = new Audio('/music/bgm.wav');
   audio.loop = true;
   audio.volume = 0.4;
-  let playing = false;
+
+  // 恢复上次播放状态
+  const wasPlaying = sessionStorage.getItem('bgm_playing') === '1';
+  const savedTime = parseFloat(sessionStorage.getItem('bgm_time') || '0');
+
+  function showMsg(t) {
+    progress.textContent = t;
+    progress.classList.add('show');
+    setTimeout(() => progress.classList.remove('show'), 2000);
+  }
+
+  if (wasPlaying && savedTime > 0) {
+    audio.currentTime = savedTime;
+    audio.play().then(() => {
+      player.classList.add('playing');
+      showMsg('播放中');
+    }).catch(() => {});
+  }
 
   player.onclick = function() {
-    if (playing) {
+    if (!audio.paused) {
       audio.pause();
       player.classList.remove('playing');
-      progress.textContent = '已暂停';
+      sessionStorage.setItem('bgm_playing', '0');
+      showMsg('已暂停');
     } else {
       audio.play();
       player.classList.add('playing');
-      progress.textContent = '播放中';
+      sessionStorage.setItem('bgm_playing', '1');
+      showMsg('播放中');
     }
-    playing = !playing;
-    progress.classList.add('show');
-    setTimeout(() => progress.classList.remove('show'), 2000);
   };
+
+  // 定时保存播放位置
+  setInterval(() => {
+    if (!audio.paused) sessionStorage.setItem('bgm_time', audio.currentTime);
+  }, 2000);
 });
 
 // 隐私政策更新弹窗
