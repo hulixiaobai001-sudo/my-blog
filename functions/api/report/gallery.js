@@ -1,13 +1,20 @@
+let migrated = false;
+
 export async function onRequestGet({ env }) {
   try {
+    if (!migrated) {
+      try { await env.DB.exec("ALTER TABLE reports ADD COLUMN note TEXT DEFAULT ''"); } catch(e) {}
+      try { await env.DB.exec("ALTER TABLE reports ADD COLUMN featured INTEGER DEFAULT 0"); } catch(e) {}
+      migrated = true;
+    }
     const allUser = await env.DB.prepare(`
-      SELECT r.id, r.image_key, r.caption, r.created_at, u.username
+      SELECT r.id, r.image_key, r.caption, r.created_at, r.note, r.featured, u.username
       FROM reports r JOIN users u ON r.user_id = u.id
       WHERE r.status = 'approved' AND (r.type = 'user' OR r.type IS NULL)
       ORDER BY r.id DESC
     `).all();
     const allAdmin = await env.DB.prepare(`
-      SELECT r.id, r.image_key, r.caption, r.created_at
+      SELECT r.id, r.image_key, r.caption, r.created_at, r.note, r.featured, r.type as rtype
       FROM reports r
       WHERE r.status = 'approved' AND r.type = 'admin'
       ORDER BY r.admin_date DESC
