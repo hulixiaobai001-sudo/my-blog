@@ -53,6 +53,10 @@
 
       <button class="save-btn" onclick="save()">保存</button>
       <div class="msg" id="msg"></div>
+      <div id="admin-online" style="display:none;margin-top:16px;padding:12px;background:rgba(102,126,234,.1);border-radius:10px;text-align:center;">
+        <div style="color:#aaa;font-size:12px;margin-bottom:8px;">运营在线状态（游客可见）</div>
+        <button onclick="toggleOnline()" style="padding:8px 20px;border:none;border-radius:8px;background:#2ecc71;color:#fff;cursor:pointer;font-size:13px;" id="online-btn">设为在线</button>
+      </div>
     </div>
 
     <div id="tab-msgs" style="display:none;">
@@ -107,7 +111,33 @@ async function loadMyMsgs() {
     document.getElementById('avatar-preview').style.display = 'block';
     document.getElementById('avatar-url').value = data.avatar;
   }
+  if (data.is_admin || (data.role === 'admin' || data.role === 'super_admin')) {
+    document.getElementById('admin-online').style.display = 'block';
+    updateOnlineBtn(data.online_status);
+  }
 })();
+
+function updateOnlineBtn(status) {
+  var btn = document.getElementById('online-btn');
+  if (status) {
+    btn.textContent = '在线中（点击下线）';
+    btn.style.background = '#2ecc71';
+  } else {
+    btn.textContent = '设为在线';
+    btn.style.background = '#667eea';
+  }
+  btn.dataset.status = status ? '1' : '0';
+}
+
+async function toggleOnline() {
+  var btn = document.getElementById('online-btn');
+  var goingOnline = btn.dataset.status !== '1';
+  await fetch('/api/team-status', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ online: goingOnline })
+  });
+  updateOnlineBtn(goingOnline);
+}
 
 async function uploadAvatar(input) {
   const file = input.files[0];

@@ -280,30 +280,100 @@ document.addEventListener('DOMContentLoaded', function() {
 document.addEventListener('DOMContentLoaded', function() {
   const footer = document.querySelector('.footer');
   if (footer) {
-    const a = document.createElement('a');
-    a.href = 'https://icp.gov.moe/?keyword=20260855';
-    a.target = '_blank';
-    a.className = 'icp-beian';
-    a.textContent = '萌ICP备20260855号';
-    footer.appendChild(document.createElement('br'));
-    footer.appendChild(a);
-    footer.appendChild(document.createElement('br'));
+    footer.innerHTML = '';
+    footer.style.cssText = 'max-width:900px;margin:60px auto 0;padding:40px 20px 20px;';
+
+    const grid = document.createElement('div');
+    grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:30px;text-align:left;';
+
+    // 左列：站点信息
+    const left = document.createElement('div');
+    left.innerHTML =
+      '<div style="color:#fff;font-size:15px;font-weight:600;margin-bottom:10px;">狐狸白沁个人站</div>' +
+      '<div style="color:#888;font-size:12px;line-height:1.7;margin-bottom:12px;">一只话唠狐狸的小站，记录生活与折腾。<br>呼号 BA3PKZ · QQ 3441972628</div>' +
+      '<a href="https://icp.gov.moe/?keyword=20260855" target="_blank" style="color:#8ab4ff;font-size:12px;text-decoration:none;">萌ICP备20260855号</a>';
+
+    // 中列：快捷导航
+    const mid = document.createElement('div');
+    mid.innerHTML =
+      '<div style="color:#fff;font-size:15px;font-weight:600;margin-bottom:10px;">快捷导航</div>' +
+      '<div style="display:flex;flex-direction:column;gap:6px;font-size:13px;">' +
+      '<a href="/blog/" style="color:#aaa;text-decoration:none;">博客</a>' +
+      '<a href="/gallery/" style="color:#aaa;text-decoration:none;">返图区</a>' +
+      '<a href="/expand/" style="color:#aaa;text-decoration:none;">扩列区</a>' +
+      '<a href="/guestbook/" style="color:#aaa;text-decoration:none;">留言墙</a>' +
+      '<a href="/tickets/" style="color:#aaa;text-decoration:none;">工单</a>' +
+      '</div>';
+
+    // 右列：运营成员
+    const right = document.createElement('div');
+    right.innerHTML =
+      '<div style="color:#fff;font-size:15px;font-weight:600;margin-bottom:10px;">运营成员</div>' +
+      '<div id="team-list"></div>';
+
+    grid.appendChild(left);
+    grid.appendChild(mid);
+    grid.appendChild(right);
+    footer.appendChild(grid);
+
+    // 异次元之旅
     const t = document.createElement('a');
     t.href = 'https://travel.moe/go.html';
     t.target = '_blank';
     t.title = '异次元之旅-跃迁';
-    t.style.cssText = 'display:inline-block;margin-top:8px;opacity:.7;text-decoration:none;';
-    t.innerHTML = '<img src="https://travel.moe/images/icon/icon64pink.png" style="width:18px;height:18px;vertical-align:middle;"> <span style="font-size:12px;color:#888;">异次元之旅</span>';
+    t.style.cssText = 'display:inline-block;margin-top:24px;opacity:.6;text-decoration:none;';
+    t.innerHTML = '<img src="https://travel.moe/images/icon/icon64pink.png" style="width:16px;height:16px;vertical-align:middle;"> <span style="font-size:11px;color:#888;">异次元之旅</span>';
     footer.appendChild(t);
-    footer.appendChild(document.createElement('br'));
-    const team = document.createElement('div');
-    team.style.cssText = 'margin-top:12px;font-size:12px;color:#888;line-height:1.8;';
-    team.innerHTML = '<div style="color:#aaa;margin-bottom:4px;">本站运营</div>' +
-      '<div>站长：白沁（QQ：3441972628）</div>' +
-      '<div>管理员：虚位以待，有意向请发工单</div>';
-    footer.appendChild(team);
+
+    // 底部版权
+    const copy = document.createElement('div');
+    copy.style.cssText = 'margin-top:12px;font-size:11px;color:#666;';
+    copy.textContent = '© 2026 狐狸白沁个人站 · Powered by Hugo & Cloudflare';
+    footer.appendChild(copy);
+
+    // 手机端垂直排列
+    if (window.innerWidth <= 600) {
+      grid.style.gridTemplateColumns = '1fr';
+      left.style.textAlign = 'center';
+      mid.style.textAlign = 'center';
+      mid.querySelectorAll('a').forEach(a => a.style.display = 'block');
+      right.style.textAlign = 'center';
+    }
+
+    // 加载运营成员在线状态
+    loadTeam();
   }
 });
+
+async function loadTeam() {
+  var teamEl = document.getElementById('team-list');
+  if (!teamEl) return;
+  var members = [
+    { name: '白沁', role: '站长', qq: '3441972628', avatar: '/images/team/baixin.jpg', desc: '代码、服务器、全站核心' },
+    { name: '凌泷', role: '管理员', qq: '2046134395', avatar: 'https://q1.qlogo.cn/g?b=qq&nk=2046134395&s=100', desc: '内容审核与日常管理' }
+  ];
+  var status = {};
+  try {
+    var res = await fetch('/api/team-status');
+    var data = await res.json();
+    if (data.members) data.members.forEach(function(m) { status[m.username] = m.online; });
+  } catch(e) {}
+  teamEl.innerHTML = members.map(function(m) {
+    var online = status[m.name] !== undefined ? status[m.name] : false;
+    var dotColor = online ? '#2ecc71' : '#666';
+    var dotText = online ? '在线' : '离线';
+    return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;' + (window.innerWidth <= 600 ? 'justify-content:center;' : '') + '">' +
+      '<div style="position:relative;">' +
+        '<img src="' + m.avatar + '" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.1);">' +
+        '<span style="position:absolute;bottom:0;right:0;width:10px;height:10px;border-radius:50%;background:' + dotColor + ';border:2px solid #1a1a2e;"></span>' +
+      '</div>' +
+      '<div>' +
+        '<div style="color:#ddd;font-size:13px;">@' + m.name + ' <span style="color:#f0ad4e;font-size:11px;">[' + m.role + ']</span></div>' +
+        '<div style="color:#777;font-size:11px;">' + m.desc + ' · ' + dotText + '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
 
 // 全局XSS转义函数
 window.escapeHtml = function(str) {
