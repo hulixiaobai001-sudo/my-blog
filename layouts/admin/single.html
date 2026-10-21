@@ -508,19 +508,33 @@ async function loadUsers() {
   const data = await res.json();
   const el = document.getElementById('user-list');
   if (!data.users || data.users.length === 0) { el.innerHTML = '<p class="empty">暂无用户</p>'; return; }
-  el.innerHTML = data.users.map(u => `
-    <div class="list-item">
-      <div class="title">@${u.username} ${u.is_admin ? '<span style="color:#f0ad4e;font-size:11px;">[站长]</span>' : ''} ${u.banned ? '<span style="color:#dc3545;font-size:11px;">[已封禁]</span>' : ''}</div>
-      <div class="content">积分：${u.points} ${u.qq ? ' · QQ：' + u.qq : ''} · 注册：${u.created_at}</div>
-      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-        <input type="number" id="pts-${u.id}" placeholder="±分数" style="width:90px;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:#fff;font-size:13px;">
-        <button class="btn-ok" onclick="givePts(${u.id})">发放/扣减</button>
-        ${u.is_admin ? '' : `<button class="${u.banned ? 'btn-ok' : 'btn-danger'}" onclick="banUser(${u.id}, ${u.banned ? 0 : 1})">${u.banned ? '解禁' : '封禁'}</button>`}
-        ${u.is_admin ? '' : `<button class="btn-warn" onclick="sendMsg(${u.id}, '${u.username}')">发站内信</button>`}
-        ${u.is_admin ? `<button class="btn-danger" onclick="setAdmin(${u.id}, 0)">取消管理员</button>` : `<button class="btn-ok" onclick="setAdmin(${u.id}, 1)">设为管理员</button>`}
-      </div>
-    </div>
-  `).join('');
+  el.innerHTML = data.users.map(function(u) {
+    var last = u.last_seen ? new Date(u.last_seen.includes('Z') ? u.last_seen : u.last_seen + 'Z') : null;
+    var online = last && (Date.now() - last.getTime()) < 300000;
+    var dotColor = online ? '#2ecc71' : '#666';
+    var dot = '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + dotColor + ';margin-right:4px;"></span>';
+    var av = u.avatar
+      ? '<img src="' + u.avatar + '" style="width:40px;height:40px;border-radius:50%;object-fit:cover;margin-right:10px;">'
+      : '<div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:16px;margin-right:10px;">' + u.username.charAt(0).toUpperCase() + '</div>';
+    var statusText = online ? '在线' : '上次：' + (u.last_seen || '未知');
+    var adminTag = u.is_admin ? '<span style="color:#f0ad4e;font-size:11px;">[站长]</span>' : '';
+    var banTag = u.banned ? '<span style="color:#dc3545;font-size:11px;">[已封禁]</span>' : '';
+    var banBtn = u.is_admin ? '' : '<button class="' + (u.banned ? 'btn-ok' : 'btn-danger') + '" onclick="banUser(' + u.id + ', ' + (u.banned ? 0 : 1) + ')">' + (u.banned ? '解禁' : '封禁') + '</button>';
+    var msgBtn = u.is_admin ? '' : '<button class="btn-warn" onclick="sendMsg(' + u.id + ', \'' + u.username + '\')">发站内信</button>';
+    var adminBtn = u.is_admin
+      ? '<button class="btn-danger" onclick="setAdmin(' + u.id + ', 0)">取消管理员</button>'
+      : '<button class="btn-ok" onclick="setAdmin(' + u.id + ', 1)">设为管理员</button>';
+    return '<div class="list-item">' +
+      '<div style="display:flex;align-items:center;">' + av + '<div>' +
+        '<div class="title">' + dot + '@' + u.username + ' ' + adminTag + ' ' + banTag + '</div>' +
+        '<div class="content">积分：' + u.points + ' ' + (u.qq ? ' · QQ：' + u.qq : '') + ' · ' + statusText + '</div>' +
+      '</div></div>' +
+      '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">' +
+        '<input type="number" id="pts-' + u.id + '" placeholder="±分数" style="width:90px;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:#fff;font-size:13px;">' +
+        '<button class="btn-ok" onclick="givePts(' + u.id + ')">发放/扣减</button>' +
+        banBtn + msgBtn + adminBtn +
+      '</div></div>';
+  }).join('');
 }
 
 async function givePts(userId) {
