@@ -10,14 +10,13 @@ export async function onRequestGet(context) {
 
   try { await env.DB.exec("ALTER TABLE users ADD COLUMN last_seen TEXT DEFAULT ''"); } catch(e) {}
   try { await env.DB.exec("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'"); } catch(e) {}
+  try { await env.DB.exec("ALTER TABLE users ADD COLUMN online_status INTEGER DEFAULT 0"); } catch(e) {}
 
-  const dbUser = await env.DB.prepare('SELECT is_admin, role FROM users WHERE id = ?').bind(userId).first();
-  if (!dbUser || (!dbUser.is_admin && dbUser.role !== 'admin' && dbUser.role !== 'super_admin')) return new Response(JSON.stringify({ error: '仅站长可访问' }), { status: 403 });
+  const dbUser = await env.DB.prepare('SELECT is_admin FROM users WHERE id = ?').bind(userId).first();
+  if (!dbUser || !dbUser.is_admin) return new Response(JSON.stringify({ error: '仅站长可访问' }), { status: 403 });
 
   try {
-    try { await env.DB.exec("ALTER TABLE users ADD COLUMN last_seen TEXT DEFAULT ''"); } catch(e) {}
-    try { await env.DB.exec("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'"); } catch(e) {}
-    const { results } = await env.DB.prepare('SELECT id, username, points, qq, bio, avatar, show_qq, created_at, is_admin, banned, last_seen, role FROM users ORDER BY is_admin DESC, id ASC').all();
+    const { results } = await env.DB.prepare('SELECT id, username, points, qq, bio, avatar, show_qq, created_at, is_admin, banned, last_seen, role, online_status FROM users ORDER BY is_admin DESC, id ASC').all();
     return new Response(JSON.stringify({ users: results }));
   } catch (e) {
     return new Response(JSON.stringify({ users: [] }));
