@@ -134,6 +134,7 @@ function openDetail(i) {
     <div><b>上传人：</b>@${escapeHtml(s.username)}</div>
     <div><b>上传时间：</b>${fmtTime(s.created_at)}</div>
     <div><b>状态：</b>${s.status === 'approved' ? '已通过审核' : s.status === 'pending' ? '审核中' : '未通过'}</div>
+    ${s.featured ? '<div style="color:#f0ad4e;margin-top:6px;">⭐ 该返图已受到站长非常喜爱，故此精选</div>' : ''}
     ${s.note ? `<div><b>站长备注：</b>${escapeHtml(s.note)}</div>` : ''}
   `;
   document.getElementById('detail-modal').classList.add('open');
@@ -153,6 +154,7 @@ function openAdminDetail(r) {
     <div><b>上传人：</b>站长-白沁</div>
     <div><b>上传时间：</b>${fmtTime(r.created_at)}</div>
     <div><b>类型：</b>${r.type || '站长返图'}</div>
+    ${r.featured ? '<div style="color:#f0ad4e;margin-top:6px;">⭐ 该返图已受到站长非常喜爱，故此精选</div>' : ''}
     ${r.note ? `<div><b>站长备注：</b>${escapeHtml(r.note)}</div>` : ''}
   `;
   document.getElementById('detail-modal').classList.add('open');
