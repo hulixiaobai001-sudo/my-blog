@@ -44,7 +44,6 @@ async function deleteUserData(env, userId) {
   for (const t of tables) {
     try { await env.DB.prepare('DELETE FROM ' + t + ' WHERE user_id = ?').bind(userId).run(); } catch(e) {}
   }
-  try {
-    await env.DB.prepare("UPDATE users SET banned = 2, username = '已注销用户' || id, qq = '', bio = '', avatar = '', avatar_url = '', short_name = '', nickname = '', contact = '', points = 0 WHERE id = ?").bind(userId).run();
-  } catch(e) {}
+  // 硬删除用户行：彻底移除账号
+  try { await env.DB.prepare('DELETE FROM users WHERE id = ?').bind(userId).run(); } catch(e) {}
 }
