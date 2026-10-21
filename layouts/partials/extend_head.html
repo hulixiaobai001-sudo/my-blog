@@ -151,19 +151,28 @@
   .tl-item { transition: transform .2s, box-shadow .2s; }
   .tl-item:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,.3); }
 
-  /* 音乐播放器 */
+  /* 音乐播放器 - 可拖拽悬浮球 */
   #music-player {
     position: fixed; bottom: 20px; right: 20px; z-index: 90;
     width: 48px; height: 48px; border-radius: 50%;
     background: linear-gradient(135deg, #667eea, #764ba2);
     display: flex; align-items: center; justify-content: center;
-    cursor: pointer; box-shadow: 0 4px 20px rgba(102,126,234,.4);
-    transition: transform .3s;
+    cursor: grab; box-shadow: 0 4px 20px rgba(102,126,234,.4);
+    touch-action: none; user-select: none; -webkit-user-select: none;
   }
-  #music-player:hover { transform: scale(1.1); }
+  #music-player:active { cursor: grabbing; }
   #music-player.playing { animation: rotate 3s linear infinite; }
   @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-  #music-player .icon { font-size: 20px; }
+  #music-player .icon { font-size: 20px; pointer-events: none; }
+  #back-top {
+    position: fixed; bottom: 80px; right: 20px; z-index: 90;
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(255,255,255,.15); backdrop-filter: blur(10px);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 16px; color: #fff;
+    opacity: 0; transition: opacity .3s; pointer-events: none;
+  }
+  #back-top.show { opacity: 1; pointer-events: auto; }
   #music-progress {
     position: fixed; bottom: 20px; right: 80px; z-index: 90;
     background: rgba(30,30,50,.9); backdrop-filter: blur(10px);
@@ -340,7 +349,80 @@ document.addEventListener('DOMContentLoaded', function() {
     }).catch(() => {});
   }
 
-  player.onclick = function() {
+  const backTop = document.createElement('div');
+  backTop.id = 'back-top';
+  backTop.textContent = '↑';
+  document.body.appendChild(backTop);
+
+  // 恢复悬浮球位置
+  var savedPos = localStorage.getItem('fab_pos');
+  if (savedPos) {
+    var p = JSON.parse(savedPos);
+    player.style.left = p.x + 'px';
+    player.style.top = p.y + 'px';
+    player.style.right = 'auto';
+    player.style.bottom = 'auto';
+  }
+
+  // 返回顶部
+  backTop.onclick = function() { window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  window.addEventListener('scroll', function() {
+    if (window.scrollY > 300) backTop.classList.add('show');
+    else backTop.classList.remove('show');
+  });
+
+  // 拖拽逻辑
+  var dragging = false, moved = false, startX, startY, origX, origY;
+  function getPos(e) {
+    if (e.touches && e.touches.length) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    return { x: e.clientX, y: e.clientY };
+  }
+  player.addEventListener('mousedown', startDrag);
+  player.addEventListener('touchstart', startDrag, { passive: false });
+  function startDrag(e) {
+    e.preventDefault();
+    dragging = true; moved = false;
+    var pos = getPos(e);
+    startX = pos.x; startY = pos.y;
+    var rect = player.getBoundingClientRect();
+    origX = rect.left; origY = rect.top;
+  }
+  document.addEventListener('mousemove', onDrag);
+  document.addEventListener('touchmove', onDrag, { passive: false });
+  function onDrag(e) {
+    if (!dragging) return;
+    e.preventDefault();
+    var pos = getPos(e);
+    var dx = pos.x - startX, dy = pos.y - startY;
+    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) moved = true;
+    var nx = origX + dx, ny = origY + dy;
+    nx = Math.max(0, Math.min(nx, window.innerWidth - 48));
+    ny = Math.max(0, Math.min(ny, window.innerHeight - 48));
+    player.style.left = nx + 'px';
+    player.style.top = ny + 'px';
+    player.style.right = 'auto';
+    player.style.bottom = 'auto';
+  }
+  document.addEventListener('mouseup', endDrag);
+  document.addEventListener('touchend', endDrag);
+  function endDrag() {
+    if (!dragging) return;
+    dragging = false;
+    if (moved) {
+      var rect = player.getBoundingClientRect();
+      var cx = rect.left + 24;
+      if (cx < window.innerWidth / 2) {
+        player.style.left = '12px';
+      } else {
+        player.style.left = (window.innerWidth - 60) + 'px';
+      }
+      localStorage.setItem('fab_pos', JSON.stringify({ x: parseInt(player.style.left), y: parseInt(player.style.top) }));
+    }
+  }
+
+  // 点击播放（拖拽后不触发）
+  player.addEventListener('click', function(e) {
+    if (moved) { moved = false; return; }
     if (!audio.paused) {
       audio.pause();
       player.classList.remove('playing');
@@ -352,7 +434,7 @@ document.addEventListener('DOMContentLoaded', function() {
       sessionStorage.setItem('bgm_playing', '1');
       showMsg('播放中');
     }
-  };
+  });
 
   // 定时保存播放位置
   setInterval(() => {
