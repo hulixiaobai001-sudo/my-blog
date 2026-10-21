@@ -7,12 +7,13 @@ export async function onRequestGet(context) {
   const session = await env.AUTH_KV.get(`session:${token}`);
   if (!session) return new Response(JSON.stringify({ error: '登录已过期' }), { status: 401 });
   const { userId } = JSON.parse(session);
-  const dbUser = await env.DB.prepare('SELECT is_admin FROM users WHERE id = ?').bind(userId).first();
-  if (!dbUser || !dbUser.is_admin) return new Response(JSON.stringify({ error: '仅站长可访问' }), { status: 403 });
+  const dbUser = await env.DB.prepare('SELECT is_admin, role FROM users WHERE id = ?').bind(userId).first();
+  if (!dbUser || (!dbUser.is_admin && dbUser.role !== 'admin' && dbUser.role !== 'super_admin')) return new Response(JSON.stringify({ error: '仅站长可访问' }), { status: 403 });
 
   try {
     try { await env.DB.exec("ALTER TABLE users ADD COLUMN last_seen TEXT DEFAULT ''"); } catch(e) {}
-    const { results } = await env.DB.prepare('SELECT id, username, points, qq, bio, avatar, show_qq, created_at, is_admin, banned, last_seen FROM users ORDER BY is_admin DESC, id ASC').all();
+    try { await env.DB.exec("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'"); } catch(e) {}
+    const { results } = await env.DB.prepare('SELECT id, username, points, qq, bio, avatar, show_qq, created_at, is_admin, banned, last_seen, role FROM users ORDER BY is_admin DESC, id ASC').all();
     return new Response(JSON.stringify({ users: results }));
   } catch (e) {
     return new Response(JSON.stringify({ users: [] }));

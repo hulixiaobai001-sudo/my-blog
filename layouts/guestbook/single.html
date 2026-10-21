@@ -1,0 +1,113 @@
+{{ define "main" }}
+<style>
+  .gb-wrap { max-width: 600px; margin: 20px auto; padding: 0 20px; position: relative; z-index: 1; }
+  .gb-wrap h1 { color: #fff; font-size: 24px; margin: 20px 0 8px; text-align: center; }
+  .gb-wrap .sub { color: #888; text-align: center; font-size: 13px; margin-bottom: 24px; }
+  .gb-form { background: rgba(255,255,255,.06); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,.1); border-radius: 16px; padding: 20px; margin-bottom: 24px; }
+  .gb-form textarea { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,.15); background: rgba(255,255,255,.05); color: #fff; font-size: 14px; box-sizing: border-box; min-height: 80px; resize: vertical; }
+  .gb-form textarea::placeholder { color: rgba(255,255,255,.4); }
+  .gb-form .row { display: flex; gap: 10px; margin-top: 12px; align-items: center; }
+  .gb-form button { padding: 10px 20px; border: none; border-radius: 10px; background: linear-gradient(135deg,#667eea,#764ba2); color: #fff; font-size: 14px; cursor: pointer; }
+  .gb-form button:disabled { opacity: .5; }
+  .gb-form .img-preview { max-width: 120px; max-height: 120px; border-radius: 8px; display: none; }
+  .gb-list .gb-item { background: rgba(255,255,255,.06); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,.08); border-radius: 14px; padding: 16px; margin-bottom: 12px; }
+  .gb-list .head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .gb-list .head img { width: 32px; height: 32px; border-radius: 50%; }
+  .gb-list .head .un { color: #fff; font-size: 14px; }
+  .gb-list .head .time { color: #666; font-size: 11px; margin-left: auto; }
+  .gb-list .content { color: #ddd; font-size: 14px; line-height: 1.6; }
+  .gb-list .content img { max-width: 100%; border-radius: 10px; margin-top: 8px; }
+  .empty { color: #666; text-align: center; padding: 40px 0; }
+</style>
+
+<div class="gb-wrap">
+  <h1>留言墙</h1>
+  <p class="sub">留下你的脚印，纯文本自动过审，含图片或敏感词需人工审核</p>
+  <div class="gb-form">
+    <textarea id="gb-content" placeholder="说点什么..."></textarea>
+    <div class="row">
+      <button onclick="document.getElementById('gb-img').click()">📷 传图</button>
+      <input type="file" id="gb-img" accept="image/*" style="display:none;" onchange="uploadImg(this)">
+      <img id="gb-preview" class="img-preview">
+      <button id="gb-submit" onclick="submit()">提交</button>
+    </div>
+  </div>
+  <div class="gb-list" id="list"><p class="empty">加载中...</p></div>
+</div>
+
+<script>
+var gbImageUrl = '';
+
+async function uploadImg(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = async function(e) {
+    var img = new Image();
+    img.onload = async function() {
+      var canvas = document.createElement('canvas');
+      var maxW = 800;
+      var scale = Math.min(1, maxW / img.width);
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      var compressed = canvas.toDataURL('image/jpeg', 0.7);
+      var res = await fetch('/api/upload/image', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ imageBase64: compressed })
+      });
+      var data = await res.json();
+      if (data.ok) {
+        gbImageUrl = data.url;
+        document.getElementById('gb-preview').src = data.url;
+        document.getElementById('gb-preview').style.display = 'block';
+      }
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function submit() {
+  var content = document.getElementById('gb-content').value.trim();
+  if (!content && !gbImageUrl) { alert('写点什么吧'); return; }
+  var btn = document.getElementById('gb-submit');
+  btn.disabled = true;
+  btn.textContent = '提交中...';
+  await fetch('/api/guestbook', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ content: content, image_url: gbImageUrl })
+  });
+  setTimeout(function() {
+    alert('您的发言已提交，如含图片或敏感词，正在人工审核中，请稍后查看。');
+    btn.disabled = false;
+    btn.textContent = '提交';
+    document.getElementById('gb-content').value = '';
+    gbImageUrl = '';
+    document.getElementById('gb-preview').style.display = 'none';
+    loadList();
+  }, 2500);
+}
+
+async function loadList() {
+  var res = await fetch('/api/guestbook');
+  var data = await res.json();
+  var el = document.getElementById('list');
+  if (!data.messages || data.messages.length === 0) {
+    el.innerHTML = '<p class="empty">还没有留言，来抢沙发</p>';
+    return;
+  }
+  el.innerHTML = data.messages.map(function(m) {
+    var av = m.avatar ? '<img src="' + m.avatar + '">' : '<img src="data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'><circle cx=\'50\' cy=\'50\' r=\'50\' fill=\'%23667eea\'/></svg>">';
+    return '<div class="gb-item"><div class="head">' + av +
+      '<span class="un">@' + escapeHtml(m.username) + '</span>' +
+      '<span class="time">' + m.created_at + '</span></div>' +
+      '<div class="content">' + escapeHtml(m.content) +
+      (m.image_url ? '<img src="' + m.image_url + '">' : '') +
+      '</div></div>';
+  }).join('');
+}
+
+loadList();
+</script>
+{{ end }}

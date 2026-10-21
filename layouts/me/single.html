@@ -12,36 +12,95 @@
   .toggle-row span { color: #ddd; font-size: 14px; }
   .save-btn { width: 100%; padding: 12px; border: none; border-radius: 10px; background: linear-gradient(135deg,#667eea,#764ba2); color: #fff; font-size: 15px; cursor: pointer; margin-top: 16px; }
   .msg { text-align: center; margin-top: 12px; font-size: 13px; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+  .tab { padding: 8px 16px; border-radius: 8px; background: rgba(255,255,255,.05); color: #aaa; cursor: pointer; font-size: 13px; border: 1px solid rgba(255,255,255,.1); }
+  .tab.active { background: rgba(102,126,234,.3); color: #fff; border-color: rgba(102,126,234,.5); }
+  .msg-item { background: rgba(255,255,255,.05); border-radius: 10px; padding: 12px; margin-bottom: 8px; font-size: 13px; }
+  .msg-status { font-size: 11px; padding: 2px 6px; border-radius: 4px; margin-left: 6px; }
 </style>
 
 <div class="me-wrap">
   <div class="me-card">
-    <h1>个人资料</h1>
-    <label>头像（上传后自动压缩）</label>
-    <button onclick="document.getElementById('avatar-input').click()" style="padding:8px 16px;border-radius:8px;border:1px dashed rgba(255,255,255,.3);background:rgba(255,255,255,.05);color:#ddd;cursor:pointer;">选择头像</button>
-    <input type="file" id="avatar-input" accept="image/*" style="display:none;" onchange="uploadAvatar(this)">
-    <img id="avatar-preview" class="avatar-preview" style="display:none;">
-    <input type="hidden" id="avatar-url">
-
-    <label>个性签名</label>
-    <textarea id="bio" placeholder="一句话介绍自己..."></textarea>
-
-    <div class="toggle-row">
-      <input type="checkbox" id="show-qq">
-      <span>允许在扩列墙展示我的QQ（点击直接跳转加好友，不暴露号码）</span>
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('info', this)">个人资料</div>
+      <div class="tab" onclick="switchTab('msgs', this)">我的留言</div>
     </div>
 
-    <button class="save-btn" onclick="save()">保存</button>
-    <div class="msg" id="msg"></div>
+    <div id="tab-info">
+      <h1>个人资料</h1>
+      <label>头像（上传后自动压缩）</label>
+      <button onclick="document.getElementById('avatar-input').click()" style="padding:8px 16px;border-radius:8px;border:1px dashed rgba(255,255,255,.3);background:rgba(255,255,255,.05);color:#ddd;cursor:pointer;">选择头像</button>
+      <input type="file" id="avatar-input" accept="image/*" style="display:none;" onchange="uploadAvatar(this)">
+      <img id="avatar-preview" class="avatar-preview" style="display:none;">
+      <input type="hidden" id="avatar-url">
+
+      <label>昵称</label>
+      <input type="text" id="nickname" placeholder="你的昵称">
+
+      <label>简称（扩列区显示用）</label>
+      <input type="text" id="short-name" placeholder="比如：小狐狸">
+
+      <label>联系方式</label>
+      <input type="text" id="contact" placeholder="QQ/微信/邮箱等">
+
+      <label>个性签名</label>
+      <textarea id="bio" placeholder="一句话介绍自己..."></textarea>
+
+      <div class="toggle-row">
+        <input type="checkbox" id="show-qq">
+        <span>允许在扩列区展示我的联系方式</span>
+      </div>
+
+      <button class="save-btn" onclick="save()">保存</button>
+      <div class="msg" id="msg"></div>
+    </div>
+
+    <div id="tab-msgs" style="display:none;">
+      <h1>我的留言</h1>
+      <div id="my-msgs"><p style="color:#666;font-size:13px;">加载中...</p></div>
+    </div>
   </div>
 </div>
 
 <script>
+function switchTab(tab, el) {
+  document.getElementById('tab-info').style.display = tab === 'info' ? 'block' : 'none';
+  document.getElementById('tab-msgs').style.display = tab === 'msgs' ? 'block' : 'none';
+  document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+  el.classList.add('active');
+  if (tab === 'msgs') loadMyMsgs();
+}
+
+async function loadMyMsgs() {
+  var el = document.getElementById('my-msgs');
+  try {
+    var res = await fetch('/api/messages?mine=1');
+    var data = await res.json();
+    if (!data.messages || data.messages.length === 0) {
+      el.innerHTML = '<p style="color:#666;font-size:13px;">还没有留言记录</p>';
+      return;
+    }
+    el.innerHTML = data.messages.map(function(m) {
+      var st = m.status === 'approved' ? '<span class="msg-status" style="background:#2ecc7133;color:#2ecc71;">已通过</span>'
+        : m.status === 'pending' ? '<span class="msg-status" style="background:#f0ad4e33;color:#f0ad4e;">审核中</span>'
+        : '<span class="msg-status" style="background:#dc354533;color:#dc3545;">已拒绝</span>';
+      return '<div class="msg-item"><div>' + escapeHtml(m.content) + st + '</div>' +
+        (m.image_url ? '<img src="' + m.image_url + '" style="max-width:100%;border-radius:8px;margin-top:6px;">' : '') +
+        '<div style="color:#666;font-size:11px;margin-top:4px;">' + m.created_at + '</div></div>';
+    }).join('');
+  } catch(e) {
+    el.innerHTML = '<p style="color:#666;font-size:13px;">加载失败</p>';
+  }
+}
+
 (async () => {
   const res = await fetch('/api/me');
   const data = await res.json();
   if (data.error) { location.href = '/login/'; return; }
   document.getElementById('bio').value = data.bio || '';
+  document.getElementById('nickname').value = data.nickname || '';
+  document.getElementById('short-name').value = data.short_name || '';
+  document.getElementById('contact').value = data.contact || '';
   document.getElementById('show-qq').checked = !!data.show_qq;
   if (data.avatar) {
     document.getElementById('avatar-preview').src = data.avatar;
@@ -84,6 +143,9 @@ async function save() {
     body: JSON.stringify({
       bio: document.getElementById('bio').value,
       avatar: document.getElementById('avatar-url').value,
+      nickname: document.getElementById('nickname').value,
+      short_name: document.getElementById('short-name').value,
+      contact: document.getElementById('contact').value,
       show_qq: document.getElementById('show-qq').checked
     })
   });

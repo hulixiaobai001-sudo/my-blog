@@ -118,6 +118,7 @@
     <button class="nav-btn active" data-panel="panel-content" onclick="switchPanel('panel-content', this)">内容管理</button>
     <button class="nav-btn" data-panel="panel-gallery" onclick="switchPanel('panel-gallery', this)">返图管理</button>
     <button class="nav-btn" data-panel="panel-tickets" onclick="switchPanel('panel-tickets', this)">事务处理</button>
+    <button class="nav-btn" data-panel="panel-guestbook" onclick="switchPanel('panel-guestbook', this)">留言审核</button>
     <button class="nav-btn" data-panel="panel-users" onclick="switchPanel('panel-users', this)">用户管理</button>
     <button class="nav-btn" data-panel="panel-settings" onclick="switchPanel('panel-settings', this)">站点设置</button>
   </aside>
@@ -169,6 +170,11 @@
       <div id="tickets"><p class="empty">加载中...</p></div>
       <h3 style="color:#bbb;font-size:15px;margin:24px 0 10px;">兑换发货</h3>
       <div id="redemptions"><p class="empty">加载中...</p></div>
+    </div>
+
+    <div class="panel" id="panel-guestbook">
+      <h2>留言审核</h2>
+      <div id="gb-list"><p class="empty">加载中...</p></div>
     </div>
 
     <div class="panel" id="panel-users">
@@ -245,6 +251,35 @@ function contentTab(t) {
   document.getElementById('ct-manage').className = t === 'manage' ? 'btn-ok' : 'btn-warn';
 }
 
+async function loadGuestbook() {
+  var res = await fetch('/api/admin/moderate-guestbook');
+  var data = await res.json();
+  var el = document.getElementById('gb-list');
+  if (!data.messages || data.messages.length === 0) {
+    el.innerHTML = '<p class="empty">没有待审核留言</p>';
+    return;
+  }
+  el.innerHTML = data.messages.map(function(m) {
+    return '<div class="list-item"><div class="title">@' + m.username + ' <span style="color:#f0ad4e;font-size:11px;">[待审核]</span></div>' +
+      '<div class="content">' + escapeHtml(m.content) + '</div>' +
+      (m.image_url ? '<img src="' + m.image_url + '" style="max-width:200px;border-radius:8px;margin-top:6px;">' : '') +
+      '<div class="content" style="color:#666;font-size:11px;">' + m.created_at + '</div>' +
+      '<div style="margin-top:10px;display:flex;gap:8px;">' +
+      '<button class="btn-ok" onclick="moderateGb(' + m.id + ',\'approved\')">通过</button>' +
+      '<button class="btn-danger" onclick="moderateGb(' + m.id + ',\'rejected\')">拒绝</button>' +
+      '</div></div>';
+  }).join('');
+}
+
+async function moderateGb(id, status) {
+  await fetch('/api/admin/moderate-guestbook', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ id: id, status: status })
+  });
+  loadGuestbook();
+}
+window.moderateGb = moderateGb;
+
 async function checkAdmin() {
   const res = await fetch('/api/auth/me/');
   const data = await res.json();
@@ -258,6 +293,7 @@ async function checkAdmin() {
   loadPostsAdmin();
   loadRedemptions();
   loadUsers();
+  loadGuestbook();
   loadAboutCfg();
   loadTrips();
   loadTrips();

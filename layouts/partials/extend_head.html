@@ -219,7 +219,7 @@ document.addEventListener('DOMContentLoaded', function() {
   items.forEach(li => {
     const a = li.querySelector('a span, a');
     const text = (a.textContent || '').trim();
-    if (['博客','个人','返图区','工单','扩列区'].includes(text)) {
+    if (['博客','个人','返图区','工单','扩列区','留言墙'].includes(text)) {
       li.classList.add('nav-keep');
     }
   });

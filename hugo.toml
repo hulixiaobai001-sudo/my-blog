@@ -44,6 +44,11 @@ buildFuture = true
     name = '工单'
     pageRef = '/tickets'
     weight = 50
+  [[menu.main]]
+    identifier = 'guestbook'
+    name = '留言墙'
+    pageRef = '/guestbook'
+    weight = 47
   [[menu.footer]]
     identifier = 'terms'
     name = '服务条款'
