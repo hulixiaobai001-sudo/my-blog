@@ -21,9 +21,15 @@
 
 <div class="me-wrap">
   <div class="me-card">
-    <div class="tabs">
-      <div class="tab active" onclick="switchTab('info', this)">个人资料</div>
-      <div class="tab" onclick="switchTab('msgs', this)">我的留言</div>
+    <div class="tabs" style="justify-content:space-between;">
+      <div style="display:flex;gap:8px;">
+        <div class="tab active" onclick="switchTab('info', this)">个人资料</div>
+        <div class="tab" onclick="switchTab('msgs', this)">我的留言</div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <button id="online-btn" onclick="toggleOnline()" style="display:none;padding:6px 12px;border:none;border-radius:8px;background:#2ecc71;color:#fff;cursor:pointer;font-size:12px;">在线</button>
+        <a href="/admin/" id="admin-link" style="display:none;padding:6px 12px;border-radius:8px;background:rgba(240,173,78,.2);color:#f0ad4e;text-decoration:none;font-size:12px;border:1px solid rgba(240,173,78,.3);">后台</a>
+      </div>
     </div>
 
     <div id="tab-info">
@@ -53,10 +59,6 @@
 
       <button class="save-btn" onclick="save()">保存</button>
       <div class="msg" id="msg"></div>
-      <div id="admin-online" style="display:none;margin-top:16px;padding:12px;background:rgba(102,126,234,.1);border-radius:10px;text-align:center;">
-        <div style="color:#aaa;font-size:12px;margin-bottom:8px;">运营在线状态（游客可见）</div>
-        <button onclick="toggleOnline()" style="padding:8px 20px;border:none;border-radius:8px;background:#2ecc71;color:#fff;cursor:pointer;font-size:13px;" id="online-btn">设为在线</button>
-      </div>
     </div>
 
     <div id="tab-msgs" style="display:none;">
@@ -112,7 +114,8 @@ async function loadMyMsgs() {
     document.getElementById('avatar-url').value = data.avatar;
   }
   if (data.is_admin || (data.role === 'admin' || data.role === 'super_admin')) {
-    document.getElementById('admin-online').style.display = 'block';
+    document.getElementById('online-btn').style.display = 'block';
+    document.getElementById('admin-link').style.display = 'block';
     updateOnlineBtn(data.online_status);
   }
 })();
