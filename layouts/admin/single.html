@@ -288,7 +288,7 @@ async function loadPendingReports() {
 async function moderate(id, pass, btn) {
   if (btn) { btn.disabled = true; btn.textContent = pass ? '通过中...' : '拒绝中...'; }
   try {
-    const res = await fetch('/api/report/moderate', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id, pass }) });
+    const res = await fetch('/api/report/moderate', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id, status: pass ? 'approved' : 'rejected' }) });
     if (!res.ok) { alert('操作失败: ' + res.status); }
   } catch(e) { alert('网络错误: ' + e.message); }
   loadPendingReports();
