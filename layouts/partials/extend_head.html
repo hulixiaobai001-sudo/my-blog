@@ -296,19 +296,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 导航栏头像按钮可拖拽
     setTimeout(function() {
-      var candidates = document.querySelectorAll('.header a, .header button, .header div');
+      var all = document.querySelectorAll('body *');
       var avatarBtn = null;
-      candidates.forEach(function(el) {
+      all.forEach(function(el) {
+        if (el.children.length > 3) return;
         var r = el.getBoundingClientRect();
-        if (r.width > 25 && r.width < 60 && r.height > 25 && r.height < 60 && r.right > window.innerWidth - 100 && r.top < 100) {
+        if (r.width > 30 && r.width < 60 && r.height > 30 && r.height < 60 && r.right > window.innerWidth - 80 && r.top > 50 && r.top < 120) {
           var style = window.getComputedStyle(el);
-          if (style.borderRadius.includes('50%') || style.borderRadius === '50%' || Math.abs(r.width - r.height) < 5) {
+          if (style.borderRadius === '50%' || style.borderRadius.includes('50%')) {
             avatarBtn = el;
           }
         }
       });
       if (avatarBtn) makeDraggable(avatarBtn);
-    }, 800);
+    }, 1000);
   }
 });
 

@@ -7,8 +7,16 @@ export async function onRequestGet(context) {
   if (!session) return new Response(JSON.stringify({ error: '登录已过期' }), { status: 401 });
   const { userId } = JSON.parse(session);
   try {
+    await env.DB.exec("ALTER TABLE users ADD COLUMN online_status INTEGER DEFAULT 0");
+  } catch(e) {}
+  try {
     await env.DB.prepare('UPDATE users SET last_seen = datetime(\'now\') WHERE id = ?').bind(userId).run();
-    const user = await env.DB.prepare('SELECT id, username, qq, bio, avatar, avatar_url, short_name, nickname, contact, show_qq, points, role FROM users WHERE id = ?').bind(userId).first();
+    const user = await env.DB.prepare('SELECT id, username, qq, bio, avatar, avatar_url, short_name, nickname, contact, show_qq, points, role, is_admin, online_status FROM users WHERE id = ?').bind(userId).first();
+    // 自动把站长（is_admin=1）升级为 super_admin
+    if (user && user.is_admin && user.role !== 'super_admin') {
+      await env.DB.prepare("UPDATE users SET role = 'super_admin' WHERE id = ?").bind(userId).run();
+      user.role = 'super_admin';
+    }
     return new Response(JSON.stringify(user || {}));
   } catch (e) {
     try {
