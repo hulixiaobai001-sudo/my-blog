@@ -305,11 +305,11 @@ document.addEventListener('DOMContentLoaded', function() {
       '<a href="/tickets/" style="color:#aaa;text-decoration:none;">工单</a>' +
       '</div>';
 
-    // 右列：运营成员
+    // 右列：运营成员入口
     const right = document.createElement('div');
     right.innerHTML =
       '<div style="color:#fff;font-size:15px;font-weight:600;margin-bottom:10px;">运营成员</div>' +
-      '<div id="team-list"></div>';
+      '<a href="/team/" style="color:#8ab4ff;font-size:13px;text-decoration:none;">查看团队 →</a>';
 
     grid.appendChild(left);
     grid.appendChild(mid);
@@ -340,39 +340,76 @@ document.addEventListener('DOMContentLoaded', function() {
       right.style.textAlign = 'center';
     }
 
-    // 加载运营成员在线状态
-    loadTeam();
+    // 导航栏头像按钮可拖拽
+    setTimeout(function() {
+      var avatarBtn = document.querySelector('.header img[src*="avatar"]') || document.querySelector('#profile img') || document.querySelector('.header img.avatar');
+      if (!avatarBtn) {
+        var allImgs = document.querySelectorAll('.header img');
+        allImgs.forEach(function(img) { if (img.width < 50 && img.height < 50) avatarBtn = img; });
+      }
+      if (avatarBtn) makeDraggable(avatarBtn);
+    }, 500);
   }
 });
 
-async function loadTeam() {
-  var teamEl = document.getElementById('team-list');
-  if (!teamEl) return;
-  var members = [
-    { name: '白沁', role: '站长', qq: '3441972628', avatar: '/images/team/baixin.jpg', desc: '代码、服务器、全站核心' },
-    { name: '凌泷', role: '管理员', qq: '2046134395', avatar: 'https://q1.qlogo.cn/g?b=qq&nk=2046134395&s=100', desc: '内容审核与日常管理' }
-  ];
-  var status = {};
-  try {
-    var res = await fetch('/api/team-status');
-    var data = await res.json();
-    if (data.members) data.members.forEach(function(m) { status[m.username] = m.online; });
-  } catch(e) {}
-  teamEl.innerHTML = members.map(function(m) {
-    var online = status[m.name] !== undefined ? status[m.name] : false;
-    var dotColor = online ? '#2ecc71' : '#666';
-    var dotText = online ? '在线' : '离线';
-    return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;' + (window.innerWidth <= 600 ? 'justify-content:center;' : '') + '">' +
-      '<div style="position:relative;">' +
-        '<img src="' + m.avatar + '" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.1);">' +
-        '<span style="position:absolute;bottom:0;right:0;width:10px;height:10px;border-radius:50%;background:' + dotColor + ';border:2px solid #1a1a2e;"></span>' +
-      '</div>' +
-      '<div>' +
-        '<div style="color:#ddd;font-size:13px;">@' + m.name + ' <span style="color:#f0ad4e;font-size:11px;">[' + m.role + ']</span></div>' +
-        '<div style="color:#777;font-size:11px;">' + m.desc + ' · ' + dotText + '</div>' +
-      '</div>' +
-    '</div>';
-  }).join('');
+function makeDraggable(el) {
+  el.style.position = 'fixed';
+  el.style.zIndex = '95';
+  el.style.cursor = 'grab';
+  el.style.touchAction = 'none';
+  el.style.userSelect = 'none';
+  var dragging = false, moved = false, sx, sy, ox, oy;
+  el.addEventListener('mousedown', function(e) {
+    e.preventDefault();
+    dragging = true; moved = false;
+    sx = e.clientX; sy = e.clientY;
+    var r = el.getBoundingClientRect();
+    ox = r.left; oy = r.top;
+  });
+  el.addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    dragging = true; moved = false;
+    var t = e.touches[0];
+    sx = t.clientX; sy = t.clientY;
+    var r = el.getBoundingClientRect();
+    ox = r.left; oy = r.top;
+  }, { passive: false });
+  document.addEventListener('mousemove', function(e) {
+    if (!dragging) return;
+    var dx = e.clientX - sx, dy = e.clientY - sy;
+    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) moved = true;
+    el.style.left = Math.max(0, Math.min(ox + dx, window.innerWidth - el.offsetWidth)) + 'px';
+    el.style.top = Math.max(0, Math.min(oy + dy, window.innerHeight - el.offsetHeight)) + 'px';
+    el.style.right = 'auto';
+  });
+  document.addEventListener('touchmove', function(e) {
+    if (!dragging) return;
+    e.preventDefault();
+    var t = e.touches[0];
+    var dx = t.clientX - sx, dy = t.clientY - sy;
+    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) moved = true;
+    el.style.left = Math.max(0, Math.min(ox + dx, window.innerWidth - el.offsetWidth)) + 'px';
+    el.style.top = Math.max(0, Math.min(oy + dy, window.innerHeight - el.offsetHeight)) + 'px';
+    el.style.right = 'auto';
+  }, { passive: false });
+  document.addEventListener('mouseup', function() {
+    if (!dragging) return;
+    dragging = false;
+    if (moved) {
+      var r = el.getBoundingClientRect();
+      if (r.left + el.offsetWidth / 2 < window.innerWidth / 2) el.style.left = '8px';
+      else el.style.left = (window.innerWidth - el.offsetWidth - 8) + 'px';
+    }
+  });
+  document.addEventListener('touchend', function() {
+    if (!dragging) return;
+    dragging = false;
+    if (moved) {
+      var r = el.getBoundingClientRect();
+      if (r.left + el.offsetWidth / 2 < window.innerWidth / 2) el.style.left = '8px';
+      else el.style.left = (window.innerWidth - el.offsetWidth - 8) + 'px';
+    }
+  });
 }
 
 // 全局XSS转义函数

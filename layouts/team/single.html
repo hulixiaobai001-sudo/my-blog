@@ -1,0 +1,52 @@
+{{ define "main" }}
+<style>
+  .team-wrap { max-width: 700px; margin: 20px auto; padding: 0 20px; position: relative; z-index: 1; }
+  .team-wrap h1 { color: #fff; font-size: 24px; text-align: center; margin: 30px 0 10px; }
+  .team-wrap .sub { color: #888; text-align: center; font-size: 13px; margin-bottom: 30px; }
+  .member-card { background: rgba(255,255,255,.06); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,.1); border-radius: 16px; padding: 24px; margin-bottom: 20px; display: flex; gap: 20px; align-items: flex-start; }
+  .member-card img { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,.15); }
+  .member-card .info h2 { color: #fff; font-size: 18px; margin: 0 0 4px; }
+  .member-card .info .role { color: #f0ad4e; font-size: 12px; margin-bottom: 10px; }
+  .member-card .info p { color: #aaa; font-size: 13px; line-height: 1.7; margin: 0 0 8px; }
+  .member-card .info .qq { color: #8ab4ff; font-size: 13px; }
+  .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-left: 6px; vertical-align: middle; }
+</style>
+
+<div class="team-wrap">
+  <h1>运营团队</h1>
+  <p class="sub">狐狸小白工作室 · 本站核心成员</p>
+
+  <div class="member-card">
+    <img src="/images/team/baixin.jpg">
+    <div class="info">
+      <h2>白沁 <span class="role">[站长]</span> <span class="status-dot" id="dot-baixin"></span></h2>
+      <p>狐狸小白工作室创始人，负责代码开发、服务器维护及网站全部核心事务。业余无线电操作员（呼号 BA3PKZ），福瑞UP主，喜欢折腾各种小项目。</p>
+      <div class="qq">QQ：3441972628</div>
+    </div>
+  </div>
+
+  <div class="member-card">
+    <img src="https://q1.qlogo.cn/g?b=qq&nk=2046134395&s=100">
+    <div class="info">
+      <h2>凌泷 <span class="role">[管理员]</span> <span class="status-dot" id="dot-linglong"></span></h2>
+      <p>狐狸小白工作室外聘成员，负责日常内容审核、留言与工单处理，维护社区氛围。</p>
+      <div class="qq">QQ：2046134395</div>
+    </div>
+  </div>
+</div>
+
+<script>
+(async function() {
+  try {
+    var res = await fetch('/api/team-status');
+    var data = await res.json();
+    if (data.members) {
+      data.members.forEach(function(m) {
+        var dot = document.getElementById('dot-' + (m.username === '白沁' ? 'baixin' : 'linglong'));
+        if (dot) dot.style.background = m.online ? '#2ecc71' : '#555';
+      });
+    }
+  } catch(e) {}
+})();
+</script>
+{{ end }}
