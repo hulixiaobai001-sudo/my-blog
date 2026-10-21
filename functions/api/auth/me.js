@@ -8,6 +8,6 @@ export async function onRequestGet(context) {
   if (!session) return new Response(JSON.stringify({ user: null }));
 
   const { userId } = JSON.parse(session);
-  const user = await env.DB.prepare('SELECT id, username, is_admin, points FROM users WHERE id = ?').bind(userId).first();
+  const user = await env.DB.prepare('SELECT id, username, is_admin, points, role FROM users WHERE id = ?').bind(userId).first();
   return new Response(JSON.stringify({ user }));
 }
