@@ -372,6 +372,60 @@ function makeDraggable(el) {
   });
 }
 
+// 站内信折叠弹窗
+(function() {
+  var bell = document.createElement('div');
+  bell.id = 'msg-bell';
+  bell.innerHTML = '📬';
+  bell.style.cssText = 'position:fixed;top:60px;left:12px;z-index:96;width:40px;height:40px;border-radius:50%;background:rgba(102,126,234,.3);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;';
+  document.body.appendChild(bell);
+
+  var panel = document.createElement('div');
+  panel.id = 'msg-panel';
+  panel.style.cssText = 'position:fixed;top:110px;left:12px;z-index:96;width:300px;max-height:400px;overflow-y:auto;background:rgba(20,20,35,.95);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:12px;display:none;';
+  document.body.appendChild(panel);
+
+  var open = false;
+  bell.onclick = function(e) {
+    e.stopPropagation();
+    open = !open;
+    panel.style.display = open ? 'block' : 'none';
+    if (open) loadMsgs();
+  };
+  document.addEventListener('click', function(e) {
+    if (!panel.contains(e.target) && e.target !== bell) { open = false; panel.style.display = 'none'; }
+  });
+
+  async function loadMsgs() {
+    try {
+      var res = await fetch('/api/messages');
+      var data = await res.json();
+      if (data.error) { panel.innerHTML = '<div style="color:#888;font-size:13px;">登录后查看站内信</div>'; return; }
+      var msgs = data.messages || [];
+      var unread = msgs.filter(function(m) { return !m.read; }).length;
+      if (unread > 0) bell.innerHTML = '📬<span style="position:absolute;top:-2px;right:-2px;width:16px;height:16px;border-radius:50%;background:#e74c3c;color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;">' + unread + '</span>';
+      else bell.innerHTML = '📬';
+      if (msgs.length === 0) { panel.innerHTML = '<div style="color:#666;font-size:13px;text-align:center;padding:20px;">没有站内信</div>'; return; }
+      panel.innerHTML = '<div style="color:#fff;font-size:14px;margin-bottom:10px;">站内信（' + unread + '条未读）</div>' +
+        msgs.map(function(m) {
+          return '<div style="padding:10px;background:' + (m.read ? 'transparent' : 'rgba(102,126,234,.1)') + ';border-radius:8px;margin-bottom:6px;cursor:pointer;" onclick="readMsg(' + m.id + ')">' +
+            '<div style="color:#ddd;font-size:13px;">' + escapeHtml(m.title || '通知') + '</div>' +
+            '<div style="color:#888;font-size:12px;margin-top:4px;">' + escapeHtml(m.content || '') + '</div>' +
+            '<div style="color:#555;font-size:11px;margin-top:4px;">' + m.created_at + '</div>' +
+          '</div>';
+        }).join('');
+    } catch(e) {}
+  }
+
+  window.readMsg = async function(id) {
+    await fetch('/api/messages', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id: id }) });
+    loadMsgs();
+  };
+
+  setInterval(loadMsgs, 30000);
+  loadMsgs();
+})();
+
 // 全局XSS转义函数
 window.escapeHtml = function(str) {
   if (!str) return '';
