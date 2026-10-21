@@ -31,12 +31,12 @@ buildFuture = true
     weight = 40
   [[menu.main]]
     identifier = 'gallery'
-    name = '返图墙'
+    name = '返图区'
     pageRef = '/gallery'
     weight = 45
   [[menu.main]]
     identifier = 'expand'
-    name = '扩列墙'
+    name = '扩列区'
     pageRef = '/expand'
     weight = 46
   [[menu.main]]
