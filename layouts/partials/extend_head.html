@@ -294,7 +294,7 @@ document.addEventListener('DOMContentLoaded', function() {
       '</div>' +
       '<div style="font-size:11px;color:#555;margin-top:4px;">© 2026 狐狸白沁个人站</div>';
 
-    // 导航栏头像按钮可拖拽
+    // 导航栏头像按钮固定到左侧位置
     setTimeout(function() {
       var all = document.querySelectorAll('body *');
       var avatarBtn = null;
@@ -308,7 +308,12 @@ document.addEventListener('DOMContentLoaded', function() {
           }
         }
       });
-      if (avatarBtn) makeDraggable(avatarBtn);
+      if (avatarBtn) {
+        avatarBtn.style.position = 'fixed';
+        avatarBtn.style.left = '20px';
+        avatarBtn.style.top = '160px';
+        avatarBtn.style.zIndex = '99';
+      }
     }, 1500);
   }
 });
