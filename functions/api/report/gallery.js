@@ -1,19 +1,18 @@
 export async function onRequestGet({ env }) {
   try {
     const allUser = await env.DB.prepare(`
-      SELECT r.id, r.image_key, r.caption, r.created_at, r.note, r.featured, u.username
+      SELECT r.id, r.image_key, r.caption, r.created_at, u.username
       FROM reports r JOIN users u ON r.user_id = u.id
       WHERE r.status = 'approved' AND (r.type = 'user' OR r.type IS NULL)
       ORDER BY r.id DESC
     `).all();
     const allAdmin = await env.DB.prepare(`
-      SELECT r.id, r.image_key, r.caption, r.created_at, r.note, r.featured, r.type as rtype
+      SELECT r.id, r.image_key, r.caption, r.created_at
       FROM reports r
       WHERE r.status = 'approved' AND r.type = 'admin'
       ORDER BY r.admin_date DESC
     `).all();
 
-    // 随机取2张
     function shuffle(arr) {
       for (let i = arr.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
