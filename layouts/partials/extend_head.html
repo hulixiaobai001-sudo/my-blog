@@ -294,26 +294,24 @@ document.addEventListener('DOMContentLoaded', function() {
       '</div>' +
       '<div style="font-size:11px;color:#555;margin-top:4px;">© 2026 狐狸白沁个人站</div>';
 
-    // 导航栏头像按钮固定到左侧位置
+    // 在左侧创建个人入口按钮，隐藏右上角原来的
     setTimeout(function() {
       var all = document.querySelectorAll('body *');
-      var avatarBtn = null;
       all.forEach(function(el) {
         if (el.children.length > 2) return;
         var r = el.getBoundingClientRect();
         if (r.width > 30 && r.width < 55 && r.height > 30 && r.height < 55 && r.right > window.innerWidth - 70 && r.top > 55 && r.top < 110) {
           var style = window.getComputedStyle(el);
           if (style.borderRadius === '50%' || style.borderRadius.includes('50%')) {
-            avatarBtn = el;
+            el.style.display = 'none';
           }
         }
       });
-      if (avatarBtn) {
-        avatarBtn.style.position = 'fixed';
-        avatarBtn.style.left = '20px';
-        avatarBtn.style.top = '160px';
-        avatarBtn.style.zIndex = '99';
-      }
+      var myBtn = document.createElement('a');
+      myBtn.href = '/me/';
+      myBtn.innerHTML = '白';
+      myBtn.style.cssText = 'position:fixed;left:20px;top:160px;z-index:99;width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;text-decoration:none;box-shadow:0 4px 12px rgba(102,126,234,.4);';
+      document.body.appendChild(myBtn);
     }, 1500);
   }
 });
