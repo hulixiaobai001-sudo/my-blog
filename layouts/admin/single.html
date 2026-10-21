@@ -517,6 +517,7 @@ async function loadUsers() {
         <button class="btn-ok" onclick="givePts(${u.id})">发放/扣减</button>
         ${u.is_admin ? '' : `<button class="${u.banned ? 'btn-ok' : 'btn-danger'}" onclick="banUser(${u.id}, ${u.banned ? 0 : 1})">${u.banned ? '解禁' : '封禁'}</button>`}
         ${u.is_admin ? '' : `<button class="btn-warn" onclick="sendMsg(${u.id}, '${u.username}')">发站内信</button>`}
+        ${u.is_admin ? `<button class="btn-danger" onclick="setAdmin(${u.id}, 0)">取消管理员</button>` : `<button class="btn-ok" onclick="setAdmin(${u.id}, 1)">设为管理员</button>`}
       </div>
     </div>
   `).join('');
@@ -533,6 +534,12 @@ async function givePts(userId) {
 async function banUser(userId, ban) {
   if (!confirm(ban ? '确定封禁该用户？' : '确定解禁该用户？')) return;
   await fetch('/api/admin/users', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId, action: ban ? 'ban' : 'unban' }) });
+  loadUsers();
+}
+
+async function setAdmin(userId, isAdmin) {
+  if (!confirm(isAdmin ? '确定设为管理员？' : '确定取消管理员？')) return;
+  await fetch('/api/admin/set-admin', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId, action: isAdmin ? 'set_admin' : 'remove_admin' }) });
   loadUsers();
 }
 
@@ -618,6 +625,7 @@ window.moderate = moderate;
 window.replyTicket = replyTicket;
 window.givePts = givePts;
 window.banUser = banUser;
+window.setAdmin = setAdmin;
 window.sendMsg = sendMsg;
 window.saveStatus = saveStatus;
 window.saveTrips = saveTrips;
