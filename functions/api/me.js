@@ -7,6 +7,7 @@ export async function onRequestGet(context) {
   if (!session) return new Response(JSON.stringify({ error: '登录已过期' }), { status: 401 });
   const { userId } = JSON.parse(session);
   try {
+    await env.DB.prepare('UPDATE users SET last_seen = datetime(\'now\') WHERE id = ?').bind(userId).run();
     const user = await env.DB.prepare('SELECT id, username, qq, bio, avatar, show_qq, points FROM users WHERE id = ?').bind(userId).first();
     return new Response(JSON.stringify(user || {}));
   } catch (e) {

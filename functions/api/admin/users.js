@@ -11,7 +11,7 @@ export async function onRequestGet(context) {
   if (!dbUser || !dbUser.is_admin) return new Response(JSON.stringify({ error: '仅站长可访问' }), { status: 403 });
 
   try {
-    const { results } = await env.DB.prepare('SELECT id, username, points, qq, bio, avatar, show_qq, created_at, is_admin, banned FROM users ORDER BY is_admin DESC, id ASC').all();
+    const { results } = await env.DB.prepare('SELECT id, username, points, qq, bio, avatar, show_qq, created_at, is_admin, banned, last_seen FROM users ORDER BY is_admin DESC, id ASC').all();
     return new Response(JSON.stringify({ users: results }));
   } catch (e) {
     return new Response(JSON.stringify({ users: [] }));
