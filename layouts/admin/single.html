@@ -279,14 +279,18 @@ async function loadPendingReports() {
       </div>
     `;
     item.querySelectorAll('button').forEach(btn => {
-      btn.addEventListener('click', () => moderate(parseInt(btn.dataset.id), btn.dataset.pass === 'true'));
+      btn.addEventListener('click', () => { btn.disabled = true; btn.textContent = btn.dataset.pass === 'true' ? '通过中...' : '拒绝中...'; moderate(parseInt(btn.dataset.id), btn.dataset.pass === 'true', btn); });
     });
     el.appendChild(item);
   });
 }
 
-async function moderate(id, pass) {
-  await fetch('/api/report/moderate', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id, pass }) });
+async function moderate(id, pass, btn) {
+  if (btn) { btn.disabled = true; btn.textContent = pass ? '通过中...' : '拒绝中...'; }
+  try {
+    const res = await fetch('/api/report/moderate', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id, pass }) });
+    if (!res.ok) { alert('操作失败: ' + res.status); }
+  } catch(e) { alert('网络错误: ' + e.message); }
   loadPendingReports();
 }
 
