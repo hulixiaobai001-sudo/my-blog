@@ -265,17 +265,24 @@ async function loadPendingReports() {
   const data = await res.json();
   const el = document.getElementById('pending-reports');
   if (!data.reports || data.reports.length === 0) { el.innerHTML = '<p class="empty">没有待审核的返图</p>'; return; }
-  el.innerHTML = data.reports.map(r => `
-    <div class="list-item">
+  el.innerHTML = '';
+  data.reports.forEach(r => {
+    const item = document.createElement('div');
+    item.className = 'list-item';
+    item.innerHTML = `
       <img src="/api/report/view?key=${r.image_key}" style="max-width:150px;border-radius:8px;margin-bottom:8px;" />
       <div class="meta">${r.created_at}</div>
       <div class="content">${r.caption || '无配文'}</div>
       <div style="margin-top:10px;">
-        <button class="btn-ok" onclick="moderate(${r.id}, true)">通过 (+5分)</button>
-        <button class="btn-danger" onclick="moderate(${r.id}, false)">拒绝</button>
+        <button class="btn-ok" data-id="${r.id}" data-pass="true">通过 (+5分)</button>
+        <button class="btn-danger" data-id="${r.id}" data-pass="false">拒绝</button>
       </div>
-    </div>
-  `).join('');
+    `;
+    item.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => moderate(parseInt(btn.dataset.id), btn.dataset.pass === 'true'));
+    });
+    el.appendChild(item);
+  });
 }
 
 async function moderate(id, pass) {
