@@ -353,7 +353,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const res = await fetch('/api/privacy-version');
     const data = await res.json();
     const ver = data.version;
-    const agreed = localStorage.getItem('privacy_ver');
+    const agreed = localStorage.getItem('privacy_ver') || document.cookie.replace(/(?:(?:^|.*;\s*)privacy_ver\s*\=\s*([^;]*).*$)/, '$1');
     if (agreed === ver) return;
 
     const modal = document.createElement('div');
@@ -370,6 +370,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     setTimeout(() => modal.classList.add('open'), 500);
     modal.querySelector('#privacy-agree').onclick = function() {
       localStorage.setItem('privacy_ver', ver);
+      document.cookie = 'privacy_ver=' + ver + ';path=/;max-age=31536000';
       modal.classList.remove('open');
     };
   } catch(e) {}
