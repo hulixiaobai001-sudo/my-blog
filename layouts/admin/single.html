@@ -561,5 +561,24 @@ async function savePrivacyVer() {
   const data = await res.json();
   document.getElementById('pv-result').textContent = data.ok ? '已保存！所有用户下次访问会收到弹窗。' : '失败：' + (data.error || '');
 }
+
+// 把需要onclick调用的函数挂到全局
+window.moderate = moderate;
+window.replyTicket = replyTicket;
+window.givePts = givePts;
+window.banUser = banUser;
+window.sendMsg = sendMsg;
+window.saveStatus = saveStatus;
+window.saveTrips = saveTrips;
+window.saveAboutCfg = saveAboutCfg;
+window.savePrivacyVer = savePrivacyVer;
+window.publishBlog = publishBlog;
+window.publishNotice = publishNotice;
+window.approveTicket = approveTicket;
+window.claimRedeem = claimRedeem;
+window.uploadAdminReport = uploadAdminReport;
+window.uploadCover = uploadCover;
+window.filterUsers = filterUsers;
+window.switchPanel = switchPanel;
 </script>
 {{ end }}
