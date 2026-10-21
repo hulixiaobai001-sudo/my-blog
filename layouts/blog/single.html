@@ -78,9 +78,9 @@ async function loadPosts() {
   }
   el.innerHTML = data.posts.map(p => `
     <div class="post-card" onclick="openPost(${p.id})">
-      ${p.cover_url ? '<img class="cover" src="' + p.cover_url + '">' : ''}
-      <h2>${p.title}</h2>
-      <div class="date">${p.created_at} ${p.category ? '<span style="color:#8ab4ff;margin-left:8px;">[' + p.category + ']</span>' : ''}</div>
+      ${p.cover_url ? '<img class="cover" src="' + escapeHtml(p.cover_url) + '" onerror="this.style.display=\'none\'">' : ''}
+      <h2>${escapeHtml(p.title)}</h2>
+      <div class="date">${escapeHtml(p.created_at)} ${p.category ? '<span style="color:#8ab4ff;margin-left:8px;">[' + escapeHtml(p.category) + ']</span>' : ''}</div>
     </div>
   `).join('');
   offset = data.posts.length;
@@ -98,9 +98,9 @@ async function loadMore() {
   const el = document.getElementById('post-list');
   el.innerHTML += data.posts.map(p => `
     <div class="post-card" onclick="openPost(${p.id})">
-      ${p.cover_url ? '<img class="cover" src="' + p.cover_url + '">' : ''}
-      <h2>${p.title}</h2>
-      <div class="date">${fmtTime(p.created_at)} ${p.category ? '<span style="color:#8ab4ff;margin-left:8px;">[' + p.category + ']</span>' : ''}</div>
+      ${p.cover_url ? '<img class="cover" src="' + escapeHtml(p.cover_url) + '" onerror="this.style.display=\'none\'">' : ''}
+      <h2>${escapeHtml(p.title)}</h2>
+      <div class="date">${escapeHtml(fmtTime(p.created_at))} ${p.category ? '<span style="color:#8ab4ff;margin-left:8px;">[' + escapeHtml(p.category) + ']</span>' : ''}</div>
     </div>
   `).join('');
   offset += data.posts.length;

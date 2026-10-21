@@ -1,3 +1,5 @@
+import { randomToken } from '../../_lib.js';
+
 export async function onRequestPost(context) {
   const { request, env } = context;
   try {
@@ -21,7 +23,7 @@ export async function onRequestPost(context) {
     }
     const user = await env.DB.prepare('SELECT id, username, is_admin FROM users WHERE username = ?').bind(username).first();
 
-    const token = crypto.randomUUID() + crypto.randomUUID();
+    const token = randomToken() + randomToken();
     await env.AUTH_KV.put(`session:${token}`, JSON.stringify({ userId: user.id, isAdmin: user.is_admin }), { expirationTtl: 60 * 60 * 24 * 30 });
 
     return new Response(JSON.stringify({ token, user }), {

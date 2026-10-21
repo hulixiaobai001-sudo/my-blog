@@ -112,12 +112,7 @@ let slides = [];
 let current = 0;
 let isAdmin = false;
 let currentDetailId = null;
-
-function fmtTime(t) {
-  if (!t) return '';
-  const d = new Date(t.replace(' ', 'T') + '+08:00');
-  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
-}
+let adminReports = [];
 
 function fmtTime(t) {
   if (!t) return '';
@@ -139,6 +134,11 @@ function openDetail(i) {
   `;
   document.getElementById('detail-modal').classList.add('open');
   loadDetailComments(s.id);
+}
+
+function openAdminDetailById(id) {
+  const r = adminReports.find(x => x.id === id);
+  if (r) openAdminDetail(r);
 }
 
 function closeDetail() {
@@ -202,10 +202,11 @@ async function loadGallery() {
   const data = await res.json();
 
   const adminEl = document.getElementById('admin-timeline');
+  adminReports = data.admin_reports || [];
   if (data.admin_reports && data.admin_reports.length > 0) {
     adminEl.innerHTML = data.admin_reports.map(r => `
-      <div class="tl-item" style="cursor:pointer;" onclick="openAdminDetail(${JSON.stringify(r).replace(/"/g, '&quot;')})">
-        <img src="/api/report/view?key=${r.image_key}" />
+      <div class="tl-item" style="cursor:pointer;" onclick="openAdminDetailById(${r.id})">
+        <img src="/api/report/view?key=${escapeHtml(r.image_key)}" />
         <div class="tl-info">
           <div class="tl-date">${fmtTime(r.created_at)}</div>
           <div class="tl-caption">${escapeHtml(r.caption || '')}</div>

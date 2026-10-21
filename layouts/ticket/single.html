@@ -77,9 +77,9 @@ async function loadList() {
   if (!data.tickets || data.tickets.length === 0) { el.innerHTML = '<p style="color:#999;font-size:13px;">还没有工单</p>'; return; }
   el.innerHTML = data.tickets.map(t => `
     <div class="ticket-item">
-      <div class="title">${t.title} <span class="status-${t.status}">${t.status === 'open' ? '处理中' : '已关闭'}</span></div>
-      <div class="content">${t.content}</div>
-      ${t.reply ? `<div class="reply">站长回复：${t.reply}</div>` : ''}
+      <div class="title">${escapeHtml(t.title)} <span class="status-${t.status}">${t.status === 'open' ? '处理中' : '已关闭'}</span></div>
+      <div class="content">${escapeHtml(t.content)}</div>
+      ${t.reply ? `<div class="reply">站长回复：${escapeHtml(t.reply)}</div>` : ''}
     </div>
   `).join('');
 }

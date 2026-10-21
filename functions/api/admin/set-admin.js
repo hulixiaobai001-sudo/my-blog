@@ -6,10 +6,9 @@ export async function onRequestPost(context) {
   const session = await env.AUTH_KV.get(`session:${token}`);
   if (!session) return new Response(JSON.stringify({ error: '登录已过期' }), { status: 401 });
   const { userId: adminId } = JSON.parse(session);
-  const admin = await env.DB.prepare('SELECT is_admin, role FROM users WHERE id = ?').bind(adminId).first();
-  if (!admin || (!admin.is_admin && admin.role !== 'super_admin')) return new Response(JSON.stringify({ error: '无权限' }), { status: 403 });
-  // 站长（is_admin=1 且最早账号）或 super_admin 才能设管理员
-  if (admin.role !== 'super_admin' && admin.is_admin !== 1) return new Response(JSON.stringify({ error: '仅站长可设置角色' }), { status: 403 });
+  // 仅 super_admin（站长）可设置/取消管理员
+  const admin = await env.DB.prepare('SELECT role FROM users WHERE id = ?').bind(adminId).first();
+  if (!admin || admin.role !== 'super_admin') return new Response(JSON.stringify({ error: '无权限' }), { status: 403 });
 
   const { userId, action } = await request.json();
   if (!userId || !action) return new Response(JSON.stringify({ error: '参数错误' }), { status: 400 });

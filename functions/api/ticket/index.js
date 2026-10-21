@@ -1,4 +1,6 @@
-﻿export async function onRequestPost(context) {
+﻿import { sanitize } from '../../_lib.js';
+
+export async function onRequestPost(context) {
   const { request, env } = context;
   const cookie = request.headers.get('Cookie') || '';
   const token = cookie.match(/session=([^;]+)/)?.[1];
@@ -16,15 +18,21 @@
 
   const { title, content } = await request.json();
   if (!title || !content) return new Response(JSON.stringify({ error: '标题和内容不能为空' }), { status: 400 });
-  const cleanTitle = title.replace(/<script[\s\S]*?<\/script>/gi, '').slice(0, 100);
-  const cleanContent = content.replace(/<script[\s\S]*?<\/script>/gi, '').replace(/<iframe[^>]*>/gi, '').slice(0, 2000);
+  const cleanTitle = sanitize(title, 100);
+  const cleanContent = sanitize(content, 2000);
   await env.DB.prepare('INSERT INTO tickets (user_id, title, content) VALUES (?, ?, ?)').bind(userId, cleanTitle, cleanContent).run();
   try {
     await env.DB.exec('CREATE TABLE IF NOT EXISTS points_log (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, amount INTEGER, reason TEXT, created_at TEXT DEFAULT (datetime(\'now\',\'localtime\')))');
-    await env.DB.prepare('UPDATE users SET points = points - 10 WHERE id = ?').bind(userId).run();
-    await env.DB.prepare('INSERT INTO points_log (user_id, amount, reason) VALUES (?, ?, ?)').bind(userId, -10, '提交工单：' + cleanTitle).run();
+    // 扣分不允许为负：积分不足时跳过扣分（工单仍提交），避免出现负数积分
+    const update = await env.DB.prepare('UPDATE users SET points = points - 10 WHERE id = ? AND points >= 10').bind(userId).run();
+    if (update.meta.changes > 0) {
+      await env.DB.prepare('INSERT INTO points_log (user_id, amount, reason) VALUES (?, ?, ?)').bind(userId, -10, '提交工单：' + cleanTitle).run();
+    }
   } catch(e) {
-    await env.DB.prepare('UPDATE users SET points = points - 10 WHERE id = ?').bind(userId).run();
+    const update = await env.DB.prepare('UPDATE users SET points = points - 10 WHERE id = ? AND points >= 10').bind(userId).run();
+    if (update.meta.changes > 0) {
+      await env.DB.prepare('INSERT INTO points_log (user_id, amount, reason) VALUES (?, ?, ?)').bind(userId, -10, '提交工单：' + cleanTitle).run();
+    }
   }
   await env.AUTH_KV.put(rateKey, String(todayCount + 1), { expirationTtl: 86400 * 2 });
   return new Response(JSON.stringify({ ok: true }));

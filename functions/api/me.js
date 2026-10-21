@@ -1,3 +1,5 @@
+import { sanitize } from '../_lib.js';
+
 export async function onRequestGet(context) {
   const { request, env } = context;
   const cookie = request.headers.get('Cookie') || '';
@@ -42,10 +44,12 @@ export async function onRequestPost(context) {
   if (!session) return new Response(JSON.stringify({ error: '登录已过期' }), { status: 401 });
   const { userId } = JSON.parse(session);
   const body = await request.json();
-  const clean = function(s, max) { return (s || '').replace(/<script[\s\S]*?<\/script>/gi, '').slice(0, max || 200); };
+  const clean = function(s, max) { return sanitize(s, max || 200); };
+  // 头像仅允许 http(s) 链接，防止 javascript: 等协议注入
+  const avatarClean = String(body.avatar || '').startsWith('http') ? String(body.avatar).slice(0, 500) : '';
   try {
     await env.DB.prepare('UPDATE users SET bio = ?, avatar = ?, avatar_url = ?, short_name = ?, nickname = ?, contact = ?, show_qq = ? WHERE id = ?')
-      .bind(clean(body.bio), body.avatar || '', clean(body.avatar_url), clean(body.short_name, 20), clean(body.nickname, 20), clean(body.contact, 50), body.show_qq ? 1 : 0, userId).run();
+      .bind(clean(body.bio), avatarClean, clean(body.avatar_url), clean(body.short_name, 20), clean(body.nickname, 20), clean(body.contact, 50), body.show_qq ? 1 : 0, userId).run();
   } catch (e) {
     await env.DB.exec("ALTER TABLE users ADD COLUMN bio TEXT DEFAULT ''");
     await env.DB.exec("ALTER TABLE users ADD COLUMN avatar TEXT DEFAULT ''");
@@ -55,7 +59,7 @@ export async function onRequestPost(context) {
     await env.DB.exec("ALTER TABLE users ADD COLUMN contact TEXT DEFAULT ''");
     await env.DB.exec("ALTER TABLE users ADD COLUMN show_qq INTEGER DEFAULT 0");
     await env.DB.prepare('UPDATE users SET bio = ?, avatar = ?, avatar_url = ?, short_name = ?, nickname = ?, contact = ?, show_qq = ? WHERE id = ?')
-      .bind(clean(body.bio), body.avatar || '', clean(body.avatar_url), clean(body.short_name, 20), clean(body.nickname, 20), clean(body.contact, 50), body.show_qq ? 1 : 0, userId).run();
+      .bind(clean(body.bio), avatarClean, clean(body.avatar_url), clean(body.short_name, 20), clean(body.nickname, 20), clean(body.contact, 50), body.show_qq ? 1 : 0, userId).run();
   }
   return new Response(JSON.stringify({ ok: true }));
 }

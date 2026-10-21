@@ -45,7 +45,7 @@
   document.getElementById('log-list').innerHTML = data.logs.map(l => `
     <div class="log-item">
       <div>
-        <div class="reason">${l.reason}</div>
+        <div class="reason">${escapeHtml(l.reason)}</div>
         <div class="time">${l.created_at}</div>
       </div>
       <div class="${l.amount > 0 ? 'amount-pos' : 'amount-neg'}">${l.amount > 0 ? '+' : ''}${l.amount}</div>

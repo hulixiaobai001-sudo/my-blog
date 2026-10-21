@@ -5,3 +5,6 @@ resources/
 
 # 本地开发服务器日志
 hugo_server.log
+build.log
+git.log
+_build_check/

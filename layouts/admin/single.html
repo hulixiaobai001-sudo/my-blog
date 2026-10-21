@@ -221,6 +221,8 @@
 
 <script>
 let mde = null;
+let isSuperAdmin = false;
+let userCache = [];
 
 document.addEventListener('DOMContentLoaded', () => {
   if (window.EasyMDE) {
@@ -260,10 +262,10 @@ async function loadGuestbook() {
     return;
   }
   el.innerHTML = data.messages.map(function(m) {
-    return '<div class="list-item"><div class="title">@' + m.username + ' <span style="color:#f0ad4e;font-size:11px;">[待审核]</span></div>' +
+    return '<div class="list-item"><div class="title">@' + escapeHtml(m.username) + ' <span style="color:#f0ad4e;font-size:11px;">[待审核]</span></div>' +
       '<div class="content">' + escapeHtml(m.content) + '</div>' +
-      (m.image_url ? '<img src="' + m.image_url + '" style="max-width:200px;border-radius:8px;margin-top:6px;">' : '') +
-      '<div class="content" style="color:#666;font-size:11px;">' + m.created_at + '</div>' +
+      (m.image_url ? '<img src="' + escapeHtml(m.image_url) + '" style="max-width:200px;border-radius:8px;margin-top:6px;">' : '') +
+      '<div class="content" style="color:#666;font-size:11px;">' + escapeHtml(m.created_at) + '</div>' +
       '<div style="margin-top:10px;display:flex;gap:8px;">' +
       '<button class="btn-ok" onclick="moderateGb(' + m.id + ',\'approved\')">通过</button>' +
       '<button class="btn-danger" onclick="moderateGb(' + m.id + ',\'rejected\')">拒绝</button>' +
@@ -298,6 +300,7 @@ async function checkAdmin() {
     document.querySelector('.content').innerHTML = '<p class="empty">仅站长可访问</p>';
     return;
   }
+  if (data.user.role === 'super_admin') isSuperAdmin = true;
   loadPendingReports();
   loadApprovedReports();
   loadTickets();
@@ -306,7 +309,6 @@ async function checkAdmin() {
   loadUsers();
   loadGuestbook();
   loadAboutCfg();
-  loadTrips();
   loadTrips();
 }
 
@@ -320,9 +322,9 @@ async function loadPendingReports() {
     const item = document.createElement('div');
     item.className = 'list-item';
     item.innerHTML = `
-      <img src="/api/report/view?key=${r.image_key}" style="max-width:150px;border-radius:8px;margin-bottom:8px;" />
-      <div class="meta">${r.created_at}</div>
-      <div class="content">${r.caption || '无配文'}</div>
+      <img src="/api/report/view?key=${escapeHtml(r.image_key)}" style="max-width:150px;border-radius:8px;margin-bottom:8px;" />
+      <div class="meta">${escapeHtml(r.created_at)}</div>
+      <div class="content">${escapeHtml(r.caption) || '无配文'}</div>
       <div style="margin-top:10px;">
         <button class="btn-ok" data-id="${r.id}" data-pass="true">通过 (+5分)</button>
         <button class="btn-danger" data-id="${r.id}" data-pass="false">拒绝</button>
@@ -346,8 +348,6 @@ async function moderate(id, pass, btn) {
 }
 
 async function loadApprovedReports() {
-  const res = await fetch('/api/report/pending/');
-  const data = await res.json();
   const el = document.getElementById('approved-reports');
   try {
     const all = await fetch('/api/report/all-approved');
@@ -358,10 +358,10 @@ async function loadApprovedReports() {
       const item = document.createElement('div');
       item.className = 'list-item';
       item.innerHTML = `
-        <img src="/api/report/view?key=${r.image_key}" style="max-width:100px;border-radius:8px;margin-bottom:8px;" />
-        <div class="content" style="font-size:13px;">${r.caption || '无配文'}</div>
-        <input id="note-${r.id}" placeholder="站长备注" value="${r.note || ''}" style="width:100%;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:#fff;font-size:12px;margin:4px 0;" />
-        <input id="type-${r.id}" placeholder="类型（如：站长返图/活动返图）" value="${r.type === 'admin' ? '站长返图' : r.type || '用户返图'}" style="width:100%;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:#fff;font-size:12px;margin:4px 0;" />
+        <img src="/api/report/view?key=${escapeHtml(r.image_key)}" style="max-width:100px;border-radius:8px;margin-bottom:8px;" />
+        <div class="content" style="font-size:13px;">${escapeHtml(r.caption) || '无配文'}</div>
+        <input id="note-${r.id}" placeholder="站长备注" value="${escapeHtml(r.note || '')}" style="width:100%;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:#fff;font-size:12px;margin:4px 0;" />
+        <input id="type-${r.id}" placeholder="类型（如：站长返图/活动返图）" value="${escapeHtml(r.type === 'admin' ? '站长返图' : r.type || '用户返图')}" style="width:100%;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:#fff;font-size:12px;margin:4px 0;" />
         <label style="font-size:12px;color:#ccc;margin:4px 0;display:inline-block;">
           <input type="checkbox" id="featured-${r.id}" ${r.featured ? 'checked' : ''} /> 精选
         </label>
@@ -369,7 +369,7 @@ async function loadApprovedReports() {
       `;
       el.appendChild(item);
     });
-  } catch(e) { el.innerHTML = '<p class="empty">加载失败：' + e.message + '</p>'; }
+  } catch(e) { el.innerHTML = '<p class="empty">加载失败</p>'; }
 }
 
 async function editReport(id) {
@@ -388,10 +388,10 @@ async function loadTickets() {
   if (!data.tickets || data.tickets.length === 0) { el.innerHTML = '<p class="empty">没有待处理的工单</p>'; return; }
   el.innerHTML = data.tickets.map(t => `
     <div class="list-item">
-      <div class="title">${t.title} <span style="color:#8ab4ff;font-size:11px;">[${t.status === 'open' ? '处理中' : t.status === 'done' ? '已回复' : '已关闭'}]</span></div>
-      <div class="content">${t.content}</div>
-      ${t.reply ? `<div style="color:#8ab4ff;font-size:12px;margin-top:6px;">回复：${t.reply}</div>` : ''}
-      <textarea style="margin-top:8px;height:70px;" id="reply-${t.id}" placeholder="回复内容...">${t.reply || ''}</textarea>
+      <div class="title">${escapeHtml(t.title)} <span style="color:#8ab4ff;font-size:11px;">[${t.status === 'open' ? '处理中' : t.status === 'done' ? '已回复' : '已关闭'}]</span></div>
+      <div class="content">${escapeHtml(t.content)}</div>
+      ${t.reply ? `<div style="color:#8ab4ff;font-size:12px;margin-top:6px;">回复：${escapeHtml(t.reply)}</div>` : ''}
+      <textarea style="margin-top:8px;height:70px;" id="reply-${t.id}" placeholder="回复内容...">${escapeHtml(t.reply || '')}</textarea>
       <input type="number" id="refund-${t.id}" placeholder="采纳返还积分（0=不返还）" style="margin-top:6px;width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:#fff;font-size:13px;">
       <div>
         <button class="btn-ok" onclick="replyTicket(${t.id},false)">回复</button>
@@ -409,12 +409,13 @@ async function replyTicket(id, close) {
 }
 
 async function publishBlog(type) {
-  const title = document.getElementById(type === 'blog' ? 'blog-title' : 'notice-title').value;
+  // 公告与文章共用同一组输入元素（页面只有一套标题/正文/结果控件）
+  const title = document.getElementById('blog-title').value;
   let content;
   if (type === 'blog' && mde) { content = mde.value(); }
-  else { content = document.getElementById(type === 'blog' ? 'blog-content' : 'notice-content').value; }
+  else { content = document.getElementById('blog-content').value; }
   const category = type === 'blog' ? document.getElementById('blog-category').value : '';
-  const result = document.getElementById(type === 'blog' ? 'blog-result' : 'notice-result');
+  const result = document.getElementById('blog-result');
   if (!title || !content) { result.textContent = '标题和内容不能为空'; return; }
   result.textContent = '发布中...';
   const body = { title, content, type };
@@ -423,9 +424,9 @@ async function publishBlog(type) {
   const res = await fetch('/api/blog/', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
   if (res.ok) {
     result.textContent = '发布成功！';
-    document.getElementById(type === 'blog' ? 'blog-title' : 'notice-title').value = '';
+    document.getElementById('blog-title').value = '';
     if (type === 'blog' && mde) mde.value('');
-    else document.getElementById(type === 'blog' ? 'blog-content' : 'notice-content').value = '';
+    else document.getElementById('blog-content').value = '';
     window._coverUrl = '';
     document.getElementById('cover-preview').style.display = 'none';
     document.getElementById('cover-input').value = '';
@@ -515,8 +516,8 @@ async function loadPostsAdmin() {
   el.innerHTML = data.posts.map(p => `
     <div class="list-item" style="display:flex;justify-content:space-between;align-items:center;">
       <div>
-        <div class="title">${p.title} <span style="color:#888;font-size:11px;">[${p.category || '未分类'}]</span></div>
-        <div class="meta">${p.created_at}</div>
+        <div class="title">${escapeHtml(p.title)} <span style="color:#888;font-size:11px;">[${escapeHtml(p.category) || '未分类'}]</span></div>
+        <div class="meta">${escapeHtml(p.created_at)}</div>
       </div>
       <button class="btn-danger" onclick="delPost(${p.id})">删除</button>
     </div>
@@ -536,8 +537,8 @@ async function loadRedemptions() {
   if (!data.redemptions || data.redemptions.length === 0) { el.innerHTML = '<p class="empty">没有待处理的兑换申请</p>'; return; }
   el.innerHTML = data.redemptions.map(r => `
     <div class="list-item">
-      <div class="title">${r.item_name} <span style="color:#f0ad4e;font-size:11px;">-${r.cost}分</span></div>
-      <div class="content">@${r.username} · ${r.created_at}</div>
+      <div class="title">${escapeHtml(r.item_name)} <span style="color:#f0ad4e;font-size:11px;">-${r.cost}分</span></div>
+      <div class="content">@${escapeHtml(r.username)} · ${escapeHtml(r.created_at)}</div>
       <div style="margin-top:10px;">
         <button class="btn-ok" onclick="completeRedeem(${r.id})">确认已发货</button>
       </div>
@@ -555,27 +556,31 @@ async function loadUsers() {
   const data = await res.json();
   const el = document.getElementById('user-list');
   if (!data.users || data.users.length === 0) { el.innerHTML = '<p class="empty">暂无用户</p>'; return; }
+  userCache = data.users;
   el.innerHTML = data.users.map(function(u) {
     var last = u.last_seen ? new Date(u.last_seen.includes('Z') ? u.last_seen : u.last_seen + 'Z') : null;
     var online = last && (Date.now() - last.getTime()) < 300000;
     var dotColor = online ? '#2ecc71' : '#666';
     var dot = '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + dotColor + ';margin-right:4px;"></span>';
-    var safeName = (u.username || '').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/'/g,"\\'");
+    var safeName = escapeHtml(u.username || '');
     var av = u.avatar
-      ? '<img src="' + u.avatar + '" style="width:40px;height:40px;border-radius:50%;object-fit:cover;margin-right:10px;">'
+      ? '<img src="' + escapeHtml(u.avatar) + '" style="width:40px;height:40px;border-radius:50%;object-fit:cover;margin-right:10px;" onerror="this.style.display=\'none\'">'
       : '<div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:16px;margin-right:10px;">' + safeName.charAt(0).toUpperCase() + '</div>';
-    var statusText = online ? '在线' : '上次：' + (u.last_seen || '未知');
+    var statusText = online ? '在线' : '上次：' + escapeHtml(u.last_seen || '未知');
     var adminTag = u.role === 'super_admin' ? '<span style="color:#f0ad4e;font-size:11px;">[站长]</span>' : ((u.is_admin || u.role === 'admin') ? '<span style="color:#8ab4ff;font-size:11px;">[管理员]</span>' : '');
     var banTag = u.banned ? '<span style="color:#dc3545;font-size:11px;">[已封禁]</span>' : '';
-    var banBtn = u.is_admin ? '' : '<button class="' + (u.banned ? 'btn-ok' : 'btn-danger') + '" onclick="banUser(' + u.id + ', ' + (u.banned ? 0 : 1) + ')">' + (u.banned ? '解禁' : '封禁') + '</button>';
-    var msgBtn = u.is_admin ? '' : '<button class="btn-warn" onclick="sendMsg(' + u.id + ', \'' + safeName + '\')">发站内信</button>';
-    var adminBtn = u.is_admin
-      ? '<button class="btn-danger" onclick="setAdmin(' + u.id + ', 0)">取消管理员</button>'
-      : '<button class="btn-ok" onclick="setAdmin(' + u.id + ', 1)">设为管理员</button>';
+    // 仅站长（super_admin）显示管理按钮
+    var banBtn = (isSuperAdmin && !u.is_admin) ? '<button class="' + (u.banned ? 'btn-ok' : 'btn-danger') + '" onclick="banUser(' + u.id + ', ' + (u.banned ? 0 : 1) + ')">' + (u.banned ? '解禁' : '封禁') + '</button>' : '';
+    var msgBtn = (isSuperAdmin && !u.is_admin) ? '<button class="btn-warn" onclick="sendMsg(' + u.id + ')">发站内信</button>' : '';
+    var adminBtn = isSuperAdmin
+      ? (u.is_admin
+        ? '<button class="btn-danger" onclick="setAdmin(' + u.id + ', 0)">取消管理员</button>'
+        : '<button class="btn-ok" onclick="setAdmin(' + u.id + ', 1)">设为管理员</button>')
+      : '';
     return '<div class="list-item">' +
       '<div style="display:flex;align-items:center;">' + av + '<div>' +
         '<div class="title">' + dot + '@' + safeName + ' ' + adminTag + ' ' + banTag + '</div>' +
-        '<div class="content">积分：' + u.points + ' ' + (u.qq ? ' · QQ：' + u.qq : '') + ' · ' + statusText + '</div>' +
+        '<div class="content">积分：' + u.points + ' ' + (u.qq ? ' · QQ：' + escapeHtml(u.qq) : '') + ' · ' + statusText + '</div>' +
       '</div></div>' +
       '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">' +
         '<input type="number" id="pts-' + u.id + '" placeholder="±分数" style="width:90px;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:#fff;font-size:13px;">' +
@@ -605,7 +610,9 @@ async function setAdmin(userId, isAdmin) {
   loadUsers();
 }
 
-async function sendMsg(userId, username) {
+async function sendMsg(userId) {
+  const u = userCache.find(x => x.id === userId);
+  const username = u ? u.username : '';
   const title = prompt('站内信标题：', '系统通知');
   if (!title) return;
   const content = prompt('站内信内容：');

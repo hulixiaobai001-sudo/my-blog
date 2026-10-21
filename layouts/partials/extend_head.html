@@ -219,7 +219,7 @@ document.addEventListener('DOMContentLoaded', function() {
   items.forEach(li => {
     const a = li.querySelector('a span, a');
     const text = (a.textContent || '').trim();
-    if (['博客','个人','返图区','工单','扩列区','留言墙'].includes(text)) {
+    if (['博客','个人','公告','返图区','工单','扩列区','留言墙'].includes(text)) {
       li.classList.add('nav-keep');
     }
   });
@@ -288,6 +288,11 @@ document.addEventListener('DOMContentLoaded', function() {
       '<a href="/team/" style="color:#8ab4ff;text-decoration:none;">运营团队</a>' +
       ' · ' +
       '<a href="https://travel.moe/go.html" target="_blank" style="color:#888;text-decoration:none;">异次元之旅</a>' +
+      '</div>' +
+      '<div style="font-size:11px;color:#666;margin-top:6px;">' +
+      '<a href="https://my.feishu.cn/docx/VmeXdDj3kofQJjxC2FqcTvHunab" target="_blank" style="color:#666;text-decoration:none;">服务条款</a>' +
+      ' · ' +
+      '<a href="https://my.feishu.cn/docx/PhKsdqFqMoPWxwxQ6wHc5Po0ndh" target="_blank" style="color:#666;text-decoration:none;">隐私政策</a>' +
       '</div>' +
       '<div style="font-size:11px;color:#666;margin-top:6px;">' +
       '<a href="https://icp.gov.moe/?keyword=20260855" target="_blank" style="color:#666;text-decoration:none;">萌ICP备20260855号</a>' +

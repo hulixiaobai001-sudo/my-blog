@@ -78,7 +78,7 @@ async function loadList() {
     <div class="report-item">
       <img src="/api/report/view?key=${r.image_key}" />
       <div class="info">
-        <div style="color:#fff;font-size:13px;">${r.caption || '无配文'}</div>
+        <div style="color:#fff;font-size:13px;">${escapeHtml(r.caption) || '无配文'}</div>
         <div class="status-${r.status}">${r.status === 'pending' ? '待审核' : r.status === 'approved' ? '已通过' : '已拒绝'}</div>
       </div>
     </div>

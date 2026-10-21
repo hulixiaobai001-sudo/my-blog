@@ -1,9 +1,0 @@
-﻿git.exe : To https://github.com/hulixiaobai001-sudo/my-blog.git
-所在位置 行:4 字符: 1
-+ & "C:\Program Files\Git\cmd\git.exe" -c http.proxy=http://127.0.0.1:7 ...
-+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    + CategoryInfo          : NotSpecified: (To https://gith...udo/my-blog.git:String) [], RemoteException
-    + FullyQualifiedErrorId : NativeCommandError
- 
-   8533f35..65a43ab  main -> main
-

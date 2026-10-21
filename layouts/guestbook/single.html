@@ -98,15 +98,15 @@ async function loadList() {
     return;
   }
   el.innerHTML = data.messages.map(function(m) {
-    var av = m.avatar ? '<img src="' + m.avatar + '">' : '<img src="data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'><circle cx=\'50\' cy=\'50\' r=\'50\' fill=\'%23667eea\'/></svg>">';
+    var av = m.avatar ? '<img src="' + escapeHtml(m.avatar) + '">' : '<img src="data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'><circle cx=\'50\' cy=\'50\' r=\'50\' fill=\'%23667eea\'/></svg>">';
     var delBtn = (m.user_id && data.currentUserId && m.user_id === data.currentUserId)
       ? '<button onclick="delMsg(' + m.id + ')" style="margin-left:auto;background:none;border:none;color:#dc3545;cursor:pointer;font-size:12px;">删除</button>'
       : '<span style="margin-left:auto;"></span>';
     return '<div class="gb-item"><div class="head">' + av +
       '<span class="un">@' + escapeHtml(m.username) + '</span>' +
-      '<span class="time">' + m.created_at + '</span>' + delBtn + '</div>' +
+      '<span class="time">' + escapeHtml(m.created_at) + '</span>' + delBtn + '</div>' +
       '<div class="content">' + escapeHtml(m.content) +
-      (m.image_url ? '<img src="' + m.image_url + '">' : '') +
+      (m.image_url ? '<img src="' + escapeHtml(m.image_url) + '">' : '') +
       '</div></div>';
   }).join('');
 }

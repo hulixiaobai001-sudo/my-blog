@@ -27,7 +27,7 @@ buildFuture = true
   [[menu.main]]
     identifier = 'announcements'
     name = '公告'
-    pageRef = '/announcements'
+    pageRef = '/notice'
     weight = 40
   [[menu.main]]
     identifier = 'gallery'
@@ -52,10 +52,10 @@ buildFuture = true
   [[menu.footer]]
     identifier = 'terms'
     name = '服务条款'
-    pageRef = '/terms'
+    url = 'https://my.feishu.cn/docx/VmeXdDj3kofQJjxC2FqcTvHunab'
     weight = 10
   [[menu.footer]]
     identifier = 'privacy'
     name = '隐私政策'
-    pageRef = '/privacy'
+    url = 'https://my.feishu.cn/docx/PhKsdqFqMoPWxwxQ6wHc5Po0ndh'
     weight = 20

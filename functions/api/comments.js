@@ -1,3 +1,5 @@
+import { sanitize } from '../_lib.js';
+
 export async function onRequestGet(context) {
   const { request, env } = context;
   const url = new URL(request.url);
@@ -23,6 +25,10 @@ export async function onRequestPost(context) {
   const session = await env.AUTH_KV.get(`session:${token}`);
   if (!session) return new Response(JSON.stringify({ error: '登录已过期' }), { status: 401 });
   const { userId } = JSON.parse(session);
+  // 封禁用户禁止评论
+  const me = await env.DB.prepare('SELECT banned FROM users WHERE id = ?').bind(userId).first();
+  if (!me) return new Response(JSON.stringify({ error: '用户不存在' }), { status: 403 });
+  if (me.banned) return new Response(JSON.stringify({ error: '账号已被封禁' }), { status: 403 });
 
   // 频率限制：1分钟1条
   const rateKey = `rate:comment:${userId}`;
@@ -31,7 +37,7 @@ export async function onRequestPost(context) {
 
   const { post_id, content } = await request.json();
   if (!post_id || !content) return new Response(JSON.stringify({ error: '内容不能为空' }), { status: 400 });
-  const clean = content.replace(/<script[\s\S]*?<\/script>/gi, '').replace(/<iframe[^>]*>/gi, '').slice(0, 500);
+  const clean = sanitize(content, 500);
   try {
     await env.DB.prepare('INSERT INTO comments (post_id, user_id, content) VALUES (?, ?, ?)').bind(post_id, userId, clean).run();
   } catch (e) {

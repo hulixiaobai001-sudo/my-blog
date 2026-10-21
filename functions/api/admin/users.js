@@ -1,3 +1,5 @@
+import { sanitize } from '../../_lib.js';
+
 export async function onRequestGet(context) {
   const { request, env } = context;
   const cookie = request.headers.get('Cookie') || '';
@@ -32,8 +34,9 @@ export async function onRequestPost(context) {
   const session = await env.AUTH_KV.get(`session:${token}`);
   if (!session) return new Response(JSON.stringify({ error: '登录已过期' }), { status: 401 });
   const { userId: adminId } = JSON.parse(session);
-  const dbAdmin = await env.DB.prepare('SELECT is_admin FROM users WHERE id = ?').bind(adminId).first();
-  if (!dbAdmin || !dbAdmin.is_admin) return new Response(JSON.stringify({ error: '仅站长可操作' }), { status: 403 });
+  // 发积分/封禁/站内信仅限 super_admin（站长），普通管理员只有审核权限
+  const dbAdmin = await env.DB.prepare('SELECT role FROM users WHERE id = ?').bind(adminId).first();
+  if (!dbAdmin || dbAdmin.role !== 'super_admin') return new Response(JSON.stringify({ error: '仅站长可操作' }), { status: 403 });
 
   const body = await request.json();
 
@@ -46,7 +49,7 @@ export async function onRequestPost(context) {
 
   // 发站内信
   if (body.action === 'message') {
-    await env.DB.prepare('INSERT INTO messages (user_id, title, content, created_at) VALUES (?, ?, ?, datetime(\'now\'))').bind(body.userId, body.title, body.content).run();
+    await env.DB.prepare('INSERT INTO messages (user_id, title, content, created_at) VALUES (?, ?, ?, datetime(\'now\'))').bind(body.userId, sanitize(body.title, 200), sanitize(body.content, 2000)).run();
     return new Response(JSON.stringify({ ok: true }));
   }
 

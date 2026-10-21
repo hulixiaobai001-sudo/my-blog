@@ -1,3 +1,5 @@
+import { sanitize } from '../_lib.js';
+
 const sensitiveWords = ['色情', '赌博', '毒品', '枪支', '暴力', '诈骗', '黑客', '刷单', '代孕', '迷药'];
 
 export async function onRequestPost(context) {
@@ -13,8 +15,9 @@ export async function onRequestPost(context) {
   if (user.banned) return new Response(JSON.stringify({ error: '账号已被封禁' }), { status: 403 });
 
   const body = await request.json();
-  const content = (body.content || '').replace(/<script[\s\S]*?<\/script>/gi, '').slice(0, 500).trim();
-  const imageUrl = body.image_url || '';
+  const content = sanitize(body.content, 500).trim();
+  // 图片仅允许 http(s) 链接，防止协议注入
+  const imageUrl = String(body.image_url || '').startsWith('http') ? String(body.image_url).slice(0, 500) : '';
   if (!content && !imageUrl) return new Response(JSON.stringify({ error: '内容不能为空' }), { status: 400 });
 
   let status = 'approved';

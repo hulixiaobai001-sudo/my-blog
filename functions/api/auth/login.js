@@ -1,3 +1,5 @@
+import { randomToken } from '../../_lib.js';
+
 export async function onRequestPost(context) {
   const { request, env } = context;
   const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
@@ -28,7 +30,7 @@ export async function onRequestPost(context) {
   }
 
   await env.AUTH_KV.delete(failKey);
-  const token = crypto.randomUUID() + crypto.randomUUID();
+  const token = randomToken() + randomToken();
   await env.AUTH_KV.put(`session:${token}`, JSON.stringify({ userId: user.id, isAdmin: user.is_admin }), { expirationTtl: 60 * 60 * 24 * 30 });
 
   return new Response(JSON.stringify({ token, user: { id: user.id, username: user.username, is_admin: user.is_admin } }), {

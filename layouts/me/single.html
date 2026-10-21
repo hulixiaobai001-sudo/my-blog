@@ -91,8 +91,8 @@ async function loadMyMsgs() {
         : m.status === 'pending' ? '<span class="msg-status" style="background:#f0ad4e33;color:#f0ad4e;">审核中</span>'
         : '<span class="msg-status" style="background:#dc354533;color:#dc3545;">已拒绝</span>';
       return '<div class="msg-item"><div>' + escapeHtml(m.content) + st + '</div>' +
-        (m.image_url ? '<img src="' + m.image_url + '" style="max-width:100%;border-radius:8px;margin-top:6px;">' : '') +
-        '<div style="color:#666;font-size:11px;margin-top:4px;">' + m.created_at + '</div></div>';
+        (m.image_url ? '<img src="' + escapeHtml(m.image_url) + '" style="max-width:100%;border-radius:8px;margin-top:6px;" onerror="this.style.display=\'none\'">' : '') +
+        '<div style="color:#666;font-size:11px;margin-top:4px;">' + escapeHtml(m.created_at) + '</div></div>';
     }).join('');
   } catch(e) {
     el.innerHTML = '<p style="color:#666;font-size:13px;">加载失败</p>';
