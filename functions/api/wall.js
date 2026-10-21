@@ -1,13 +1,19 @@
 import { sanitize } from '../_lib.js';
 
 export async function onRequestGet(context) {
-  const { env } = context;
+  const { request, env } = context;
+  const url = new URL(request.url);
+  const page = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
+  const pageSize = Math.min(50, Math.max(1, parseInt(url.searchParams.get('pageSize') || '20')));
+  const offset = (page - 1) * pageSize;
   try {
     try { await env.DB.exec("CREATE TABLE IF NOT EXISTS wall (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, username TEXT, content TEXT, image_key TEXT DEFAULT '', status TEXT DEFAULT 'pending', created_at DATETIME DEFAULT (datetime('now')))"); } catch(e) {}
-    const { results } = await env.DB.prepare("SELECT id, username, content, image_key, status, created_at FROM wall WHERE status = 'approved' ORDER BY id DESC LIMIT 50").all();
-    return new Response(JSON.stringify({ messages: results }));
+    const countRow = await env.DB.prepare("SELECT COUNT(*) as c FROM wall WHERE status = 'approved'").first();
+    const total = countRow ? countRow.c : 0;
+    const { results } = await env.DB.prepare("SELECT id, username, content, image_key, status, created_at FROM wall WHERE status = 'approved' ORDER BY id DESC LIMIT ? OFFSET ?").bind(pageSize, offset).all();
+    return new Response(JSON.stringify({ messages: results, total: total, hasMore: offset + results.length < total }));
   } catch (e) {
-    return new Response(JSON.stringify({ messages: [] }));
+    return new Response(JSON.stringify({ messages: [], total: 0, hasMore: false }));
   }
 }
 

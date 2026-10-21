@@ -43,6 +43,11 @@ export async function onRequestPost(context) {
   const session = await env.AUTH_KV.get(`session:${token}`);
   if (!session) return new Response(JSON.stringify({ error: '登录已过期' }), { status: 401 });
   const { userId } = JSON.parse(session);
+
+  // 封禁检查
+  const bannedUser = await env.DB.prepare('SELECT banned FROM users WHERE id = ?').bind(userId).first();
+  if (bannedUser && bannedUser.banned) return new Response(JSON.stringify({ error: '账号已被封禁' }), { status: 403 });
+
   const body = await request.json();
   const clean = function(s, max) { return sanitize(s, max || 200); };
   // 头像仅允许 http(s) 链接，防止 javascript: 等协议注入

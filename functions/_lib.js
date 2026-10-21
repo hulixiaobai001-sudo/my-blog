@@ -37,3 +37,14 @@ export function json(body, status) {
     headers: { 'Content-Type': 'application/json; charset=utf-8' }
   });
 }
+
+// 统一错误日志：写入 D1 error_log 表，供监控 Cron 检查
+export async function logError(env, path, error) {
+  try {
+    await env.DB.prepare('CREATE TABLE IF NOT EXISTS error_log (id INTEGER PRIMARY KEY AUTOINCREMENT, path TEXT, message TEXT, created_at TEXT)');
+    var msg = String(error && error.message ? error.message : error).slice(0, 500);
+    await env.DB.prepare('INSERT INTO error_log (path, message, created_at) VALUES (?, ?, datetime(\'now\'))').bind(path, msg).run();
+  } catch (e) {
+    // 日志写入失败不影响主流程
+  }
+}

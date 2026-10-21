@@ -10,3 +10,4 @@ git.log
 _build_check/
 
 draft_*/
+doc-fetch-resources/

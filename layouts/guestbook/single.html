@@ -3,40 +3,100 @@
   .gb-wrap { max-width: 600px; margin: 20px auto; padding: 0 20px; position: relative; z-index: 1; }
   .gb-wrap h1 { color: #fff; font-size: 24px; margin: 20px 0 8px; text-align: center; }
   .gb-wrap .sub { color: #888; text-align: center; font-size: 13px; margin-bottom: 24px; }
+  .gb-tabs { display: flex; gap: 8px; margin-bottom: 16px; justify-content: center; }
+  .gb-tabs button { padding: 8px 18px; border-radius: 20px; border: 1px solid rgba(255,255,255,.15); background: rgba(255,255,255,.05); color: #aaa; font-size: 13px; cursor: pointer; transition: all .2s; }
+  .gb-tabs button.active { background: linear-gradient(135deg,#667eea,#764ba2); color: #fff; border-color: transparent; }
   .gb-form { background: rgba(255,255,255,.06); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,.1); border-radius: 16px; padding: 20px; margin-bottom: 24px; }
   .gb-form textarea { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,.15); background: rgba(255,255,255,.05); color: #fff; font-size: 14px; box-sizing: border-box; min-height: 80px; resize: vertical; }
   .gb-form textarea::placeholder { color: rgba(255,255,255,.4); }
-  .gb-form .row { display: flex; gap: 10px; margin-top: 12px; align-items: center; }
+  .gb-form .row { display: flex; gap: 10px; margin-top: 12px; align-items: center; flex-wrap: wrap; }
   .gb-form button { padding: 10px 20px; border: none; border-radius: 10px; background: linear-gradient(135deg,#667eea,#764ba2); color: #fff; font-size: 14px; cursor: pointer; }
   .gb-form button:disabled { opacity: .5; }
   .gb-form .img-preview { max-width: 120px; max-height: 120px; border-radius: 8px; display: none; }
+  .gb-form .anon-check { display: flex; align-items: center; gap: 6px; color: #aaa; font-size: 13px; cursor: pointer; }
+  .gb-form .anon-check input { width: 16px; height: 16px; }
   .gb-list .gb-item { background: rgba(255,255,255,.06); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,.08); border-radius: 14px; padding: 16px; margin-bottom: 12px; }
   .gb-list .head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
   .gb-list .head img { width: 32px; height: 32px; border-radius: 50%; }
   .gb-list .head .un { color: #fff; font-size: 14px; }
+  .gb-list .head .anon-tag { background: rgba(255,255,255,.1); color: #aaa; font-size: 11px; padding: 2px 8px; border-radius: 10px; }
   .gb-list .head .time { color: #666; font-size: 11px; margin-left: auto; }
   .gb-list .content { color: #ddd; font-size: 14px; line-height: 1.6; }
   .gb-list .content img { max-width: 100%; border-radius: 10px; margin-top: 8px; }
-  .empty { color: #666; text-align: center; padding: 40px 0; }
+  .gb-list .del-btn { background: none; border: none; color: #dc3545; cursor: pointer; font-size: 12px; padding: 4px 8px; }
+  .load-more-btn { display: block; width: 100%; padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,.15); background: rgba(255,255,255,.05); color: #aaa; font-size: 14px; cursor: pointer; margin-top: 12px; transition: all .2s; }
+  .load-more-btn:hover { background: rgba(255,255,255,.1); color: #fff; }
+  .load-more-btn:disabled { opacity: .5; cursor: not-allowed; }
+  /* 漂流瓶弹窗 */
+  #bottle-modal { display: none; position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,.7); backdrop-filter: blur(8px); align-items: center; justify-content: center; padding: 20px; }
+  #bottle-modal.open { display: flex; }
+  #bottle-box { max-width: 420px; width: 100%; background: rgba(30,30,50,.95); border: 1px solid rgba(255,255,255,.15); border-radius: 16px; padding: 28px; text-align: center; animation: fadeUp .4s ease; }
+  #bottle-box h3 { color: #fff; font-size: 18px; margin: 0 0 16px; }
+  #bottle-box .bottle-content { color: #ddd; font-size: 15px; line-height: 1.8; min-height: 60px; display: flex; align-items: center; justify-content: center; }
+  #bottle-box .bottle-btns { display: flex; gap: 10px; margin-top: 20px; }
+  #bottle-box .bottle-btns button { flex: 1; padding: 12px; border-radius: 10px; border: none; cursor: pointer; font-size: 14px; }
+  #bottle-again { background: linear-gradient(135deg,#667eea,#764ba2); color: #fff; }
+  #bottle-close { background: rgba(255,255,255,.1); color: #ccc; }
+  .bottle-fab { position: fixed; bottom: 140px; right: 16px; z-index: 90; width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg,#f6a623,#e67e22); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 22px; box-shadow: 0 4px 16px rgba(246,166,35,.4); animation: float 3s ease-in-out infinite; }
+  @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 </style>
 
 <div class="gb-wrap">
   <h1>留言墙</h1>
-  <p class="sub">留下你的脚印，纯文本自动过审，含图片或敏感词需人工审核</p>
+  <p class="sub">留下你的脚印 · 支持匿名树洞 · 捞个漂流瓶</p>
+  <div class="gb-tabs">
+    <button id="tab-normal" class="active" onclick="switchTab('normal')">💬 公开留言</button>
+    <button id="tab-anon" onclick="switchTab('anon')">🌲 匿名树洞</button>
+  </div>
   <div class="gb-form">
     <textarea id="gb-content" placeholder="说点什么..."></textarea>
     <div class="row">
       <button onclick="document.getElementById('gb-img').click()">📷 传图</button>
       <input type="file" id="gb-img" accept="image/*" style="display:none;" onchange="uploadImg(this)">
       <img id="gb-preview" class="img-preview">
+      <label class="anon-check" id="anon-label"><input type="checkbox" id="gb-anon"> 匿名发送</label>
       <button id="gb-submit" onclick="submit()">提交</button>
     </div>
   </div>
-  <div class="gb-list" id="list"><p class="empty">加载中...</p></div>
+  <div class="gb-list" id="list">
+    <div class="skeleton-card"></div>
+    <div class="skeleton-card"></div>
+    <div class="skeleton-card"></div>
+  </div>
+  <button class="load-more-btn" id="load-more" style="display:none;" onclick="loadMore()">加载更多</button>
+</div>
+
+<!-- 漂流瓶悬浮按钮 -->
+<div class="bottle-fab" onclick="openBottle()" title="捞个漂流瓶">🍾</div>
+
+<!-- 漂流瓶弹窗 -->
+<div id="bottle-modal">
+  <div id="bottle-box">
+    <h3>🍾 你捞到了一个漂流瓶</h3>
+    <div class="bottle-content" id="bottle-content">正在捞取...</div>
+    <div class="bottle-btns">
+      <button id="bottle-again" onclick="openBottle()">再捞一个</button>
+      <button id="bottle-close" onclick="closeBottle()">关闭</button>
+    </div>
+  </div>
 </div>
 
 <script>
 var gbImageUrl = '';
+var currentPage = 1;
+var currentTab = 'normal';
+var loading = false;
+
+function switchTab(tab) {
+  currentTab = tab;
+  currentPage = 1;
+  document.getElementById('tab-normal').classList.toggle('active', tab === 'normal');
+  document.getElementById('tab-anon').classList.toggle('active', tab === 'anon');
+  document.getElementById('gb-anon').checked = (tab === 'anon');
+  document.getElementById('list').innerHTML = '<div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div>';
+  document.getElementById('load-more').style.display = 'none';
+  loadList();
+}
 
 async function uploadImg(input) {
   var file = input.files[0];
@@ -61,6 +121,8 @@ async function uploadImg(input) {
         gbImageUrl = data.url;
         document.getElementById('gb-preview').src = data.url;
         document.getElementById('gb-preview').style.display = 'block';
+      } else {
+        showToast('图片上传失败', 'error');
       }
     };
     img.src = e.target.result;
@@ -70,45 +132,94 @@ async function uploadImg(input) {
 
 async function submit() {
   var content = document.getElementById('gb-content').value.trim();
-  if (!content && !gbImageUrl) { alert('写点什么吧'); return; }
+  var isAnon = document.getElementById('gb-anon').checked;
+  if (!content && !gbImageUrl) { showToast('写点什么吧', 'warning'); return; }
   var btn = document.getElementById('gb-submit');
   btn.disabled = true;
   btn.textContent = '提交中...';
-  await fetch('/api/guestbook', {
-    method: 'POST', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ content: content, image_url: gbImageUrl })
-  });
-  setTimeout(function() {
-    alert('您的发言已提交，如含图片或敏感词，正在人工审核中，请稍后查看。');
-    btn.disabled = false;
-    btn.textContent = '提交';
-    document.getElementById('gb-content').value = '';
-    gbImageUrl = '';
-    document.getElementById('gb-preview').style.display = 'none';
-    loadList();
-  }, 2500);
+  try {
+    var res = await fetch('/api/guestbook', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ content: content, image_url: gbImageUrl, is_anonymous: isAnon })
+    });
+    var data = await res.json();
+    if (data.error) { showToast(data.error, 'error'); }
+    else {
+      showToast(isAnon ? '匿名留言已提交，审核通过后显示' : '发言已提交，含图片或敏感词需人工审核', 'success');
+      document.getElementById('gb-content').value = '';
+      gbImageUrl = '';
+      document.getElementById('gb-preview').style.display = 'none';
+      currentPage = 1;
+      loadList();
+    }
+  } catch(e) { showToast('提交失败，请重试', 'error'); }
+  btn.disabled = false;
+  btn.textContent = '提交';
+}
+
+function renderSkeleton() {
+  var html = '';
+  for (var i = 0; i < 3; i++) {
+    html += '<div class="gb-item"><div class="head"><div class="skeleton skeleton-avatar"></div><div class="skeleton skeleton-line" style="width:80px;"></div></div><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line" style="width:60%;"></div></div>';
+  }
+  return html;
+}
+
+function renderEmpty() {
+  return '<div class="empty-state"><div class="empty-icon">🌙</div><div class="empty-text">还没有留言</div><div class="empty-hint">来抢沙发，留下你的第一句话吧</div><button class="empty-action" onclick="document.getElementById(\'gb-content\').focus()">写第一条留言</button></div>';
 }
 
 async function loadList() {
-  var res = await fetch('/api/guestbook');
-  var data = await res.json();
+  if (loading) return;
+  loading = true;
   var el = document.getElementById('list');
-  if (!data.messages || data.messages.length === 0) {
-    el.innerHTML = '<p class="empty">还没有留言，来抢沙发</p>';
-    return;
+  var loadBtn = document.getElementById('load-more');
+  try {
+    var url = '/api/guestbook?page=' + currentPage + '&pageSize=20';
+    if (currentTab === 'anon') url += '&anon=1';
+    var res = await fetch(url);
+    var data = await res.json();
+    var msgs = data.messages || [];
+    if (currentPage === 1 && msgs.length === 0) {
+      el.innerHTML = renderEmpty();
+      loadBtn.style.display = 'none';
+      return;
+    }
+    var html = msgs.map(function(m) {
+      var isAnon = m.is_anonymous || !m.username;
+      var av = isAnon
+        ? '<div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;">🌲</div>'
+        : (m.avatar ? '<img src="' + escapeHtml(m.avatar) + '">' : '<img src="data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'><circle cx=\'50\' cy=\'50\' r=\'50\' fill=\'%23667eea\'/></svg>">');
+      var name = isAnon ? '<span class="anon-tag">匿名</span>' : '<span class="un">@' + escapeHtml(m.username) + '</span>';
+      var delBtn = (!isAnon && m.user_id && data.currentUserId && m.user_id === data.currentUserId)
+        ? '<button class="del-btn" onclick="delMsg(' + m.id + ')">删除</button>'
+        : '';
+      return '<div class="gb-item"><div class="head">' + av + name +
+        '<span class="time">' + escapeHtml(m.created_at) + '</span>' + delBtn + '</div>' +
+        '<div class="content">' + escapeHtml(m.content) +
+        (m.image_url ? '<img src="' + escapeHtml(m.image_url) + '">' : '') +
+        '</div></div>';
+    }).join('');
+    if (currentPage === 1) {
+      el.innerHTML = html;
+    } else {
+      el.insertAdjacentHTML('beforeend', html);
+    }
+    loadBtn.style.display = data.hasMore ? 'block' : 'none';
+    loadBtn.disabled = false;
+    loadBtn.textContent = '加载更多';
+  } catch(e) {
+    showToast('加载失败', 'error');
   }
-  el.innerHTML = data.messages.map(function(m) {
-    var av = m.avatar ? '<img src="' + escapeHtml(m.avatar) + '">' : '<img src="data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'><circle cx=\'50\' cy=\'50\' r=\'50\' fill=\'%23667eea\'/></svg>">';
-    var delBtn = (m.user_id && data.currentUserId && m.user_id === data.currentUserId)
-      ? '<button onclick="delMsg(' + m.id + ')" style="margin-left:auto;background:none;border:none;color:#dc3545;cursor:pointer;font-size:12px;">删除</button>'
-      : '<span style="margin-left:auto;"></span>';
-    return '<div class="gb-item"><div class="head">' + av +
-      '<span class="un">@' + escapeHtml(m.username) + '</span>' +
-      '<span class="time">' + escapeHtml(m.created_at) + '</span>' + delBtn + '</div>' +
-      '<div class="content">' + escapeHtml(m.content) +
-      (m.image_url ? '<img src="' + escapeHtml(m.image_url) + '">' : '') +
-      '</div></div>';
-  }).join('');
+  loading = false;
+}
+
+async function loadMore() {
+  var btn = document.getElementById('load-more');
+  btn.disabled = true;
+  btn.textContent = '加载中...';
+  currentPage++;
+  await loadList();
 }
 
 async function delMsg(id) {
@@ -117,7 +228,31 @@ async function delMsg(id) {
     method: 'DELETE', headers: {'Content-Type':'application/json'},
     body: JSON.stringify({ id: id })
   });
+  showToast('已删除', 'success');
+  currentPage = 1;
   loadList();
+}
+
+// 漂流瓶
+async function openBottle() {
+  var modal = document.getElementById('bottle-modal');
+  var content = document.getElementById('bottle-content');
+  modal.classList.add('open');
+  content.textContent = '正在捞取...';
+  try {
+    var res = await fetch('/api/guestbook?bottle=1');
+    var data = await res.json();
+    if (data.message) {
+      content.textContent = '"' + data.message + '"';
+    } else {
+      content.textContent = '海里暂时没有漂流瓶，去留一个吧～';
+    }
+  } catch(e) {
+    content.textContent = '捞取失败，稍后再试';
+  }
+}
+function closeBottle() {
+  document.getElementById('bottle-modal').classList.remove('open');
 }
 
 loadList();

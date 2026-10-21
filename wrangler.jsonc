@@ -20,5 +20,8 @@
       "binding": "IMAGES_KV",
       "id": "4dab216a5aa9451bbc0f58f65450a76f"
     }
-  ]
+  ],
+  "triggers": {
+    "crons": ["*/10 * * * *"]
+  }
 }

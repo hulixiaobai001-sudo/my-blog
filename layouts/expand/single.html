@@ -12,33 +12,81 @@
   .add-btn { display: block; padding: 8px 16px; border-radius: 10px; background: rgba(102,126,234,.2); border: 1px solid rgba(102,126,234,.3); color: #8ab4ff; text-decoration: none; font-size: 13px; transition: background .2s; }
   .add-btn:hover { background: rgba(102,126,234,.3); }
   .empty { color: #666; text-align: center; padding: 40px 0; }
+  .load-more-btn { display: block; width: 100%; padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,.15); background: rgba(255,255,255,.05); color: #aaa; font-size: 14px; cursor: pointer; margin-top: 16px; transition: all .2s; grid-column: 1 / -1; }
+  .load-more-btn:hover { background: rgba(255,255,255,.1); color: #fff; }
+  .load-more-btn:disabled { opacity: .5; cursor: not-allowed; }
 </style>
 
 <div class="expand-wrap">
   <h1>扩列墙</h1>
   <p class="sub">找到同好，点击卡片直接发起QQ加好友（不展示QQ号）</p>
   <div class="expand-grid" id="grid">
-    <p class="empty">加载中...</p>
+    <div class="skeleton-card" style="height:160px;"></div>
+    <div class="skeleton-card" style="height:160px;"></div>
+    <div class="skeleton-card" style="height:160px;"></div>
   </div>
 </div>
 
 <script>
-(async () => {
-  const res = await fetch('/api/expand');
-  const data = await res.json();
-  const grid = document.getElementById('grid');
-  if (!data.users || data.users.length === 0) {
-    grid.innerHTML = '<p class="empty">还没有小伙伴上墙，登录后去 <a href="/me/" style="color:#8ab4ff;">个人资料</a> 开启展示吧</p>';
-    return;
+var expandPage = 1;
+var expandLoading = false;
+
+function renderExpandSkeleton() {
+  var html = '';
+  for (var i = 0; i < 6; i++) {
+    html += '<div class="user-card" style="opacity:.5;"><div class="skeleton skeleton-avatar" style="margin:0 auto 10px;"></div><div class="skeleton skeleton-line" style="width:60%;margin:0 auto 8px;"></div><div class="skeleton skeleton-line" style="width:80%;margin:0 auto;"></div></div>';
   }
-  grid.innerHTML = data.users.map(u => `
-    <div class="user-card">
-      <div class="avatar">${u.avatar ? '<img src="' + escapeHtml(u.avatar) + '" onerror="this.style.display=\'none\'">' : escapeHtml(u.username).charAt(0).toUpperCase()}</div>
-      <div class="name">${escapeHtml(u.username)}</div>
-      <div class="bio">${escapeHtml(u.bio) || '这个人很懒，什么都没写'}</div>
-      <a class="add-btn" href="mqqapi://card/show_pslcard?src_type=internal&version=1&uin=${escapeHtml(u.qq)}" target="_blank">加好友</a>
-    </div>
-  `).join('');
-})();
+  return html;
+}
+
+async function loadExpand() {
+  if (expandLoading) return;
+  expandLoading = true;
+  var grid = document.getElementById('grid');
+  try {
+    var res = await fetch('/api/expand?page=' + expandPage + '&pageSize=20');
+    var data = await res.json();
+    var users = data.users || [];
+    if (expandPage === 1 && users.length === 0) {
+      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">🐾</div><div class="empty-text">还没有小伙伴上墙</div><div class="empty-hint">登录后去个人资料开启展示吧</div><a class="empty-action" href="/me/">去设置</a></div>';
+      expandLoading = false;
+      return;
+    }
+    var html = users.map(function(u) {
+      return '<div class="user-card">' +
+        '<div class="avatar">' + (u.avatar ? '<img src="' + escapeHtml(u.avatar) + '" onerror="this.style.display=\'none\'">' : escapeHtml(u.username).charAt(0).toUpperCase()) + '</div>' +
+        '<div class="name">' + escapeHtml(u.username) + '</div>' +
+        '<div class="bio">' + escapeHtml(u.bio) || '这个人很懒，什么都没写' + '</div>' +
+        '<a class="add-btn" href="mqqapi://card/show_pslcard?src_type=internal&version=1&uin=' + escapeHtml(u.qq) + '" target="_blank">加好友</a>' +
+      '</div>';
+    }).join('');
+    if (expandPage === 1) {
+      grid.innerHTML = html;
+    } else {
+      grid.insertAdjacentHTML('beforeend', html);
+    }
+    // 加载更多按钮
+    var oldBtn = document.getElementById('expand-load-more');
+    if (oldBtn) oldBtn.remove();
+    if (data.hasMore) {
+      var btn = document.createElement('button');
+      btn.id = 'expand-load-more';
+      btn.className = 'load-more-btn';
+      btn.textContent = '加载更多';
+      btn.onclick = function() {
+        btn.disabled = true;
+        btn.textContent = '加载中...';
+        expandPage++;
+        loadExpand();
+      };
+      grid.appendChild(btn);
+    }
+  } catch(e) {
+    showToast('加载失败', 'error');
+  }
+  expandLoading = false;
+}
+
+loadExpand();
 </script>
 {{ end }}

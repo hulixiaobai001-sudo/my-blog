@@ -24,6 +24,10 @@ export async function onRequestPost(context) {
   if (!session) return new Response(JSON.stringify({ error: '登录已过期' }), { status: 401 });
   const { userId } = JSON.parse(session);
 
+  // 封禁检查
+  const bannedUser = await env.DB.prepare('SELECT banned FROM users WHERE id = ?').bind(userId).first();
+  if (bannedUser && bannedUser.banned) return new Response(JSON.stringify({ error: '账号已被封禁' }), { status: 403 });
+
   const { itemName } = await request.json();
   const costNum = getPrice(itemName);
   if (!itemName || costNum === null) return new Response(JSON.stringify({ error: '商品不存在' }), { status: 400 });

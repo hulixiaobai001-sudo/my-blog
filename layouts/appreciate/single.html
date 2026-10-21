@@ -1,0 +1,64 @@
+{{ define "main" }}
+<style>
+  .ap-wrap { max-width: 560px; margin: 20px auto; padding: 0 20px; position: relative; z-index: 1; }
+  .ap-wrap h1 { color: #fff; font-size: 26px; margin: 20px 0 8px; text-align: center; }
+  .ap-wrap .sub { color: #888; text-align: center; font-size: 13px; margin-bottom: 28px; }
+  .ap-card { background: rgba(255,255,255,.06); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,.1); border-radius: 20px; padding: 28px; margin-bottom: 16px; text-align: center; }
+  .ap-card .thanks { color: #ddd; font-size: 15px; line-height: 1.9; margin-bottom: 20px; }
+  .ap-card .thanks b { color: #fff; }
+  .qr-box { display: inline-block; padding: 16px; background: #fff; border-radius: 16px; margin: 16px 0; }
+  .qr-box img { width: 200px; height: 200px; display: block; border-radius: 8px; }
+  .qr-label { color: #666; font-size: 13px; margin-top: 10px; }
+  .ap-amounts { display: flex; gap: 10px; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
+  .ap-amount { padding: 8px 18px; border-radius: 20px; border: 1px solid rgba(255,255,255,.15); background: rgba(255,255,255,.05); color: #aaa; font-size: 13px; }
+  .ap-note { color: #888; font-size: 12px; line-height: 1.8; margin-top: 16px; text-align: left; }
+  .ap-note b { color: #aaa; }
+  .ap-link { display: inline-block; margin-top: 16px; padding: 10px 24px; border-radius: 20px; background: linear-gradient(135deg,#667eea,#764ba2); color: #fff; text-decoration: none; font-size: 14px; }
+  .ap-link:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(102,126,234,.4); }
+  .fox-icon { font-size: 48px; margin-bottom: 12px; }
+</style>
+
+<div class="ap-wrap">
+  <h1>赞赏支持</h1>
+  <p class="sub">如果你喜欢这个小站，欢迎请站长喝杯奶茶 🧋</p>
+
+  <div class="ap-card">
+    <div class="fox-icon">🦊</div>
+    <div class="thanks">
+      你好呀，我是<b>白沁</b>。<br>
+      这个网站是我利用课余时间一点点搭建起来的个人小窝，<br>
+      从博客到返图墙，从积分商城到留言区，<br>
+      每一个功能都倾注了我对这个圈层的热爱。<br><br>
+      如果你在这里感到了温暖或快乐，<br>
+      欢迎用赞赏的方式表达你的支持～<br>
+      你的每一份心意都会变成我继续维护这个小站的动力 💜
+    </div>
+
+    <div class="qr-box">
+      <img src="/images/donate.jpg" alt="赞赏二维码" />
+      <div class="qr-label">微信赞赏码</div>
+    </div>
+
+    <div class="ap-amounts">
+      <span class="ap-amount">☕ 5 元 请杯咖啡</span>
+      <span class="ap-amount">🧋 10 元 请杯奶茶</span>
+      <span class="ap-amount">🍱 30 元 请顿饭</span>
+      <span class="ap-amount">💜 随心</span>
+    </div>
+
+    <a class="ap-link" href="/guestbook/">赞赏后去留言墙说句话吧</a>
+  </div>
+
+  <div class="ap-card" style="text-align:left;">
+    <div class="ap-note">
+      <b>📌 关于赞赏的说明</b><br><br>
+      • 这是一个<b>个人网站</b>，并非商业产品或付费服务，赞赏完全是自愿性质<br>
+      • 赞赏金额无论多少，都是对站长个人的认可与鼓励<br>
+      • 赞赏后可以在<a href="/guestbook/" style="color:#8ab4ff;">留言墙</a>留下你的昵称和想说的话，站长会看到<br>
+      • 目前仅支持微信赞赏码扫码支付，后续视情况可能集成微信支付（开发中）<br>
+      • 赞赏不提供任何实物或虚拟商品回报，纯粹是"请站长喝杯奶茶"的心意<br>
+      • 如有任何问题，欢迎通过<a href="/tickets/" style="color:#8ab4ff;">工单</a>联系站长
+    </div>
+  </div>
+</div>
+{{ end }}

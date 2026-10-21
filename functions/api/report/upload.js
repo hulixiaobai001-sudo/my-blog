@@ -8,6 +8,10 @@ export async function onRequestPost(context) {
   if (!session) return new Response(JSON.stringify({ error: '登录已过期' }), { status: 401 });
   const { userId } = JSON.parse(session);
 
+  // 封禁检查
+  const bannedUser = await env.DB.prepare('SELECT banned FROM users WHERE id = ?').bind(userId).first();
+  if (bannedUser && bannedUser.banned) return new Response(JSON.stringify({ error: '账号已被封禁' }), { status: 403 });
+
   // 频率限制：每天5次
   const today = new Date().toISOString().slice(0, 10);
   const rateKey = `rate:report:${userId}:${today}`;
