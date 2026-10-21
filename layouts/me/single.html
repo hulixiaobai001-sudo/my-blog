@@ -59,6 +59,11 @@
 
       <button class="save-btn" onclick="save()">保存</button>
       <div class="msg" id="msg"></div>
+
+      <div style="margin-top:28px;padding-top:18px;border-top:1px solid rgba(255,255,255,.12);">
+        <button id="del-account-btn" onclick="deleteAccount()" style="padding:10px 18px;border-radius:10px;border:1px solid rgba(220,53,69,.5);background:rgba(220,53,69,.12);color:#dc3545;cursor:pointer;font-size:14px;">注销账号</button>
+        <div style="color:#666;font-size:12px;margin-top:6px;">注销后将永久删除你的返图、留言、工单等全部数据，且不可恢复</div>
+      </div>
     </div>
 
     <div id="tab-msgs" style="display:none;">
@@ -185,6 +190,28 @@ async function save() {
   const data = await res.json();
   document.getElementById('msg').textContent = data.ok ? '保存成功！' : '保存失败';
   document.getElementById('msg').style.color = data.ok ? '#2ecc71' : '#e74c3c';
+}
+
+async function deleteAccount() {
+  if (!confirm('确定要注销账号吗？\n你的返图、留言、工单、积分等全部数据将被永久删除，且不可恢复！')) return;
+  if (!confirm('再次确认：此操作不可撤销，真的要注销吗？')) return;
+  const password = prompt('请输入登录密码确认注销：');
+  if (!password) return;
+  try {
+    const res = await fetch('/api/auth/delete', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ password: password })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      alert('账号已注销，感谢你的陪伴');
+      location.href = '/';
+    } else {
+      alert(data.error || '注销失败');
+    }
+  } catch(e) {
+    alert('网络错误，请稍后再试');
+  }
 }
 </script>
 {{ end }}

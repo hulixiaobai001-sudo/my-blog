@@ -8,3 +8,5 @@ hugo_server.log
 build.log
 git.log
 _build_check/
+
+draft_*/

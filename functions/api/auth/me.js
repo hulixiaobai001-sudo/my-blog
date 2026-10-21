@@ -8,6 +8,8 @@ export async function onRequestGet(context) {
   if (!session) return new Response(JSON.stringify({ user: null }));
 
   const { userId } = JSON.parse(session);
-  const user = await env.DB.prepare('SELECT id, username, is_admin, points, role FROM users WHERE id = ?').bind(userId).first();
+  const user = await env.DB.prepare('SELECT id, username, is_admin, points, role, banned FROM users WHERE id = ?').bind(userId).first();
+  // 已封禁或已注销的账号视为未登录
+  if (user && user.banned) return new Response(JSON.stringify({ user: null }));
   return new Response(JSON.stringify({ user }));
 }

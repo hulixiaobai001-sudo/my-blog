@@ -222,6 +222,7 @@
 <script>
 let mde = null;
 let isSuperAdmin = false;
+let currentAdminId = 0;
 let userCache = [];
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -301,6 +302,7 @@ async function checkAdmin() {
     return;
   }
   if (data.user.role === 'super_admin') isSuperAdmin = true;
+  currentAdminId = data.user.id;
   loadPendingReports();
   loadApprovedReports();
   loadTickets();
@@ -571,12 +573,15 @@ async function loadUsers() {
     var banTag = u.banned ? '<span style="color:#dc3545;font-size:11px;">[已封禁]</span>' : '';
     // 仅站长（super_admin）显示管理按钮
     var banBtn = (isSuperAdmin && !u.is_admin) ? '<button class="' + (u.banned ? 'btn-ok' : 'btn-danger') + '" onclick="banUser(' + u.id + ', ' + (u.banned ? 0 : 1) + ')">' + (u.banned ? '解禁' : '封禁') + '</button>' : '';
-    var msgBtn = (isSuperAdmin && !u.is_admin) ? '<button class="btn-warn" onclick="sendMsg(' + u.id + ')">发站内信</button>' : '';
+    // 站内信：管理员与站长均可发，站长可发给任意用户（含管理员/站长），不能发给自己
+    var msgBtn = (u.id !== currentAdminId) ? '<button class="btn-warn" onclick="sendMsg(' + u.id + ')">发站内信</button>' : '';
     var adminBtn = isSuperAdmin
       ? (u.is_admin
         ? '<button class="btn-danger" onclick="setAdmin(' + u.id + ', 0)">取消管理员</button>'
         : '<button class="btn-ok" onclick="setAdmin(' + u.id + ', 1)">设为管理员</button>')
       : '';
+    // 删除用户（注销）：仅站长，且不能删自己/管理员
+    var delBtn = (isSuperAdmin && !u.is_admin && u.id !== currentAdminId) ? '<button class="btn-danger" onclick="deleteUser(' + u.id + ')">删除</button>' : '';
     return '<div class="list-item">' +
       '<div style="display:flex;align-items:center;">' + av + '<div>' +
         '<div class="title">' + dot + '@' + safeName + ' ' + adminTag + ' ' + banTag + '</div>' +
@@ -585,7 +590,7 @@ async function loadUsers() {
       '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">' +
         '<input type="number" id="pts-' + u.id + '" placeholder="±分数" style="width:90px;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:#fff;font-size:13px;">' +
         '<button class="btn-ok" onclick="givePts(' + u.id + ')">发放/扣减</button>' +
-        banBtn + msgBtn + adminBtn +
+        banBtn + msgBtn + adminBtn + delBtn +
       '</div></div>';
   }).join('');
 }
@@ -607,6 +612,15 @@ async function banUser(userId, ban) {
 async function setAdmin(userId, isAdmin) {
   if (!confirm(isAdmin ? '确定设为管理员？' : '确定取消管理员？')) return;
   await fetch('/api/admin/set-admin', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId, action: isAdmin ? 'set_admin' : 'remove_admin' }) });
+  loadUsers();
+}
+
+async function deleteUser(userId) {
+  const u = userCache.find(x => x.id === userId);
+  const username = u ? u.username : ('#' + userId);
+  if (!confirm('确定删除用户 @' + username + ' 吗？\n将永久清除该用户的返图、留言、工单、积分记录等全部内容，且不可恢复！')) return;
+  if (!confirm('再次确认：此操作不可撤销，真的要删除 @' + username + ' 吗？')) return;
+  await fetch('/api/admin/users', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId, action: 'delete_user' }) });
   loadUsers();
 }
 
