@@ -267,8 +267,18 @@ async function loadGuestbook() {
       '<div style="margin-top:10px;display:flex;gap:8px;">' +
       '<button class="btn-ok" onclick="moderateGb(' + m.id + ',\'approved\')">通过</button>' +
       '<button class="btn-danger" onclick="moderateGb(' + m.id + ',\'rejected\')">拒绝</button>' +
+      '<button class="btn-danger" style="background:#555;" onclick="deleteGb(' + m.id + ')">删除</button>' +
       '</div></div>';
   }).join('');
+}
+
+async function deleteGb(id) {
+  if (!confirm('确定永久删除这条留言？')) return;
+  await fetch('/api/admin/moderate-guestbook', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ id: id, action: 'delete' })
+  });
+  loadGuestbook();
 }
 
 async function moderateGb(id, status) {
@@ -279,6 +289,7 @@ async function moderateGb(id, status) {
   loadGuestbook();
 }
 window.moderateGb = moderateGb;
+window.deleteGb = deleteGb;
 
 async function checkAdmin() {
   const res = await fetch('/api/auth/me/');

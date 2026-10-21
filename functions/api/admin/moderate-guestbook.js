@@ -9,7 +9,12 @@ export async function onRequestPost(context) {
   const admin = await env.DB.prepare('SELECT is_admin, role FROM users WHERE id = ?').bind(userId).first();
   if (!admin || (!admin.is_admin && admin.role !== 'admin' && admin.role !== 'super_admin')) return new Response(JSON.stringify({ error: '无权限' }), { status: 403 });
 
-  const { id, status } = await request.json();
+  const body = await request.json();
+  const { id, status } = body;
+  if (body.action === 'delete') {
+    await env.DB.prepare('DELETE FROM guestbook WHERE id = ?').bind(id).run();
+    return new Response(JSON.stringify({ ok: true }));
+  }
   if (!id || !status) return new Response(JSON.stringify({ error: '参数错误' }), { status: 400 });
   if (status !== 'approved' && status !== 'rejected') return new Response(JSON.stringify({ error: '状态错误' }), { status: 400 });
 
