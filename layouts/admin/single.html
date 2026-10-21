@@ -553,7 +553,7 @@ async function loadUsers() {
       ? '<img src="' + u.avatar + '" style="width:40px;height:40px;border-radius:50%;object-fit:cover;margin-right:10px;">'
       : '<div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:16px;margin-right:10px;">' + u.username.charAt(0).toUpperCase() + '</div>';
     var statusText = online ? '在线' : '上次：' + (u.last_seen || '未知');
-    var adminTag = u.is_admin ? '<span style="color:#f0ad4e;font-size:11px;">[站长]</span>' : '';
+    var adminTag = u.role === 'super_admin' ? '<span style="color:#f0ad4e;font-size:11px;">[站长]</span>' : ((u.is_admin || u.role === 'admin') ? '<span style="color:#8ab4ff;font-size:11px;">[管理员]</span>' : '');
     var banTag = u.banned ? '<span style="color:#dc3545;font-size:11px;">[已封禁]</span>' : '';
     var banBtn = u.is_admin ? '' : '<button class="' + (u.banned ? 'btn-ok' : 'btn-danger') + '" onclick="banUser(' + u.id + ', ' + (u.banned ? 0 : 1) + ')">' + (u.banned ? '解禁' : '封禁') + '</button>';
     var msgBtn = u.is_admin ? '' : '<button class="btn-warn" onclick="sendMsg(' + u.id + ', \'' + u.username + '\')">发站内信</button>';
