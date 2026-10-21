@@ -159,6 +159,8 @@
       <input id="admin-caption" placeholder="配文说明" />
       <button class="btn-primary" onclick="uploadAdminImg()">上传</button>
       <div id="admin-img-result" class="result-msg"></div>
+      <h3 style="color:#bbb;font-size:15px;margin:24px 0 10px;">已审核返图编辑</h3>
+      <div id="approved-reports"><p class="empty">加载中...</p></div>
     </div>
 
     <div class="panel" id="panel-tickets">
@@ -251,6 +253,7 @@ async function checkAdmin() {
     return;
   }
   loadPendingReports();
+  loadApprovedReports();
   loadTickets();
   loadPostsAdmin();
   loadRedemptions();
@@ -292,6 +295,43 @@ async function moderate(id, pass, btn) {
     if (!res.ok) { alert('操作失败: ' + res.status); }
   } catch(e) { alert('网络错误: ' + e.message); }
   loadPendingReports();
+  loadApprovedReports();
+}
+
+async function loadApprovedReports() {
+  const res = await fetch('/api/report/pending/');
+  const data = await res.json();
+  const el = document.getElementById('approved-reports');
+  try {
+    const all = await fetch('/api/report/all-approved');
+    const allData = await all.json();
+    if (!allData.reports || allData.reports.length === 0) { el.innerHTML = '<p class="empty">没有已审核的返图</p>'; return; }
+    el.innerHTML = '';
+    allData.reports.forEach(r => {
+      const item = document.createElement('div');
+      item.className = 'list-item';
+      item.innerHTML = `
+        <img src="/api/report/view?key=${r.image_key}" style="max-width:100px;border-radius:8px;margin-bottom:8px;" />
+        <div class="content" style="font-size:13px;">${r.caption || '无配文'}</div>
+        <input id="note-${r.id}" placeholder="站长备注" value="${r.note || ''}" style="width:100%;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:#fff;font-size:12px;margin:4px 0;" />
+        <input id="type-${r.id}" placeholder="类型（如：站长返图/活动返图）" value="${r.type === 'admin' ? '站长返图' : r.type || '用户返图'}" style="width:100%;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:#fff;font-size:12px;margin:4px 0;" />
+        <label style="font-size:12px;color:#ccc;margin:4px 0;display:inline-block;">
+          <input type="checkbox" id="featured-${r.id}" ${r.featured ? 'checked' : ''} /> 精选
+        </label>
+        <button class="btn-ok" style="margin-top:6px;" onclick="editReport(${r.id})">保存</button>
+      `;
+      el.appendChild(item);
+    });
+  } catch(e) { el.innerHTML = '<p class="empty">加载失败：' + e.message + '</p>'; }
+}
+
+async function editReport(id) {
+  const note = document.getElementById('note-' + id).value;
+  const type = document.getElementById('type-' + id).value;
+  const featured = document.getElementById('featured-' + id).checked;
+  const typeMap = { '站长返图': 'admin', '用户返图': 'user' };
+  await fetch('/api/report/edit', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id, note, type: typeMap[type] || type, featured }) });
+  alert('已保存');
 }
 
 async function loadTickets() {
