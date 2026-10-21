@@ -204,7 +204,7 @@ document.addEventListener('DOMContentLoaded', function() {
   items.forEach(li => {
     const a = li.querySelector('a span, a');
     const text = (a.textContent || '').trim();
-    if (['博客','个人','返图墙','工单','扩列墙'].includes(text)) {
+    if (['博客','个人','返图区','工单','扩列区'].includes(text)) {
       li.classList.add('nav-keep');
     }
   });
@@ -280,6 +280,13 @@ document.addEventListener('DOMContentLoaded', function() {
     t.style.cssText = 'display:inline-block;margin-top:8px;opacity:.7;text-decoration:none;';
     t.innerHTML = '<img src="https://travel.moe/images/icon/icon64pink.png" style="width:18px;height:18px;vertical-align:middle;"> <span style="font-size:12px;color:#888;">异次元之旅</span>';
     footer.appendChild(t);
+    footer.appendChild(document.createElement('br'));
+    const team = document.createElement('div');
+    team.style.cssText = 'margin-top:12px;font-size:12px;color:#888;line-height:1.8;';
+    team.innerHTML = '<div style="color:#aaa;margin-bottom:4px;">本站运营</div>' +
+      '<div>站长：白沁（QQ：3441972628）</div>' +
+      '<div>管理员：虚位以待，有意向请发工单</div>';
+    footer.appendChild(team);
   }
 });
 

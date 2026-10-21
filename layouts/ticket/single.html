@@ -21,6 +21,13 @@
 <div class="ticket-wrap">
   <div class="ticket-card">
     <h1>提交工单</h1>
+    <div style="margin-bottom:12px;">
+      <div style="font-size:13px;color:#aaa;margin-bottom:6px;">快速模板：</div>
+      <button onclick="useTemplate('bug')" style="margin-right:6px;margin-bottom:6px;padding:6px 12px;font-size:12px;background:rgba(255,255,255,.1);color:#ccc;border:1px solid rgba(255,255,255,.15);border-radius:8px;cursor:pointer;">🐛 Bug反馈</button>
+      <button onclick="useTemplate('suggest')" style="margin-right:6px;margin-bottom:6px;padding:6px 12px;font-size:12px;background:rgba(255,255,255,.1);color:#ccc;border:1px solid rgba(255,255,255,.15);border-radius:8px;cursor:pointer;">💡 功能建议</button>
+      <button onclick="useTemplate('appeal')" style="margin-right:6px;margin-bottom:6px;padding:6px 12px;font-size:12px;background:rgba(255,255,255,.1);color:#ccc;border:1px solid rgba(255,255,255,.15);border-radius:8px;cursor:pointer;">⚖️ 封禁申诉</button>
+      <button onclick="useTemplate('other')" style="margin-right:6px;margin-bottom:6px;padding:6px 12px;font-size:12px;background:rgba(255,255,255,.1);color:#ccc;border:1px solid rgba(255,255,255,.15);border-radius:8px;cursor:pointer;">💬 其他问题</button>
+    </div>
     <input type="text" id="title" placeholder="标题" />
     <textarea id="content" placeholder="描述你要反馈的问题或建议"></textarea>
     <button onclick="submit()">提交</button>
@@ -33,6 +40,24 @@
 </div>
 
 <script>
+function useTemplate(type) {
+  const t = document.getElementById('title');
+  const c = document.getElementById('content');
+  if (type === 'bug') {
+    t.value = 'Bug反馈：';
+    c.value = '问题描述：\n复现步骤：\n浏览器/设备：\n期望结果：';
+  } else if (type === 'suggest') {
+    t.value = '功能建议：';
+    c.value = '建议内容：\n期望效果：';
+  } else if (type === 'appeal') {
+    t.value = '封禁申诉：';
+    c.value = '我的账号：\n申诉理由：\n相关截图/说明：';
+  } else {
+    t.value = '';
+    c.value = '';
+  }
+}
+
 async function submit() {
   const t = document.getElementById('title').value.trim();
   const c = document.getElementById('content').value.trim();
