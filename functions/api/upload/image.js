@@ -8,7 +8,7 @@ export async function onRequestPost(context) {
   if (!session) return new Response(JSON.stringify({ error: '登录已过期' }), { status: 401 });
   const { userId } = JSON.parse(session);
   const dbUser = await env.DB.prepare('SELECT is_admin FROM users WHERE id = ?').bind(userId).first();
-  if (!dbUser || !dbUser.is_admin) return new Response(JSON.stringify({ error: '仅站长可上传' }), { status: 403 });
+  if (!dbUser) return new Response(JSON.stringify({ error: '用户不存在' }), { status: 403 });
 
   const { imageBase64 } = await request.json();
   if (!imageBase64) return new Response(JSON.stringify({ error: '缺少图片' }), { status: 400 });
