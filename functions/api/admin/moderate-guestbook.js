@@ -28,6 +28,8 @@ export async function onRequestGet(context) {
   const admin = await env.DB.prepare('SELECT is_admin, role FROM users WHERE id = ?').bind(userId).first();
   if (!admin || (!admin.is_admin && admin.role !== 'admin' && admin.role !== 'super_admin')) return new Response(JSON.stringify({ error: '无权限' }), { status: 403 });
 
+  try { await env.DB.exec("CREATE TABLE IF NOT EXISTS guestbook (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, content TEXT, image_url TEXT, status TEXT DEFAULT 'pending', created_at TEXT)"); } catch(e) {}
+
   const { results } = await env.DB.prepare("SELECT g.id, g.content, g.image_url, g.created_at, g.status, u.username FROM guestbook g JOIN users u ON g.user_id = u.id WHERE g.status = 'pending' ORDER BY g.id DESC").all();
   return new Response(JSON.stringify({ messages: results || [] }));
 }

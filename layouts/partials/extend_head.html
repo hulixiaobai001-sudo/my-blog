@@ -420,6 +420,45 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
+  // 返回顶部按钮也可拖拽
+  var btDragging = false, btMoved = false, btStartX, btStartY, btOrigX, btOrigY;
+  backTop.addEventListener('mousedown', btStartDrag);
+  backTop.addEventListener('touchstart', btStartDrag, { passive: false });
+  function btStartDrag(e) {
+    e.preventDefault();
+    btDragging = true; btMoved = false;
+    var pos = getPos(e);
+    btStartX = pos.x; btStartY = pos.y;
+    var rect = backTop.getBoundingClientRect();
+    btOrigX = rect.left; btOrigY = rect.top;
+  }
+  document.addEventListener('mousemove', btOnDrag);
+  document.addEventListener('touchmove', btOnDrag, { passive: false });
+  function btOnDrag(e) {
+    if (!btDragging) return;
+    e.preventDefault();
+    var pos = getPos(e);
+    var dx = pos.x - btStartX, dy = pos.y - btStartY;
+    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) btMoved = true;
+    var nx = btOrigX + dx, ny = btOrigY + dy;
+    nx = Math.max(0, Math.min(nx, window.innerWidth - 36));
+    ny = Math.max(0, Math.min(ny, window.innerHeight - 36));
+    backTop.style.left = nx + 'px';
+    backTop.style.top = ny + 'px';
+    backTop.style.right = 'auto';
+    backTop.style.bottom = 'auto';
+  }
+  document.addEventListener('mouseup', btEndDrag);
+  document.addEventListener('touchend', btEndDrag);
+  function btEndDrag() {
+    if (!btDragging) return;
+    btDragging = false;
+  }
+  backTop.addEventListener('click', function(e) {
+    if (btMoved) { btMoved = false; return; }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
   // 点击播放（拖拽后不触发）
   player.addEventListener('click', function(e) {
     if (moved) { moved = false; return; }
