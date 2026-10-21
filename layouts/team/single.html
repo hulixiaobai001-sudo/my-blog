@@ -20,7 +20,7 @@
     <img src="/images/team/baixin.jpg">
     <div class="info">
       <h2>白沁 <span class="role">[站长]</span> <span class="status-dot" id="dot-baixin"></span></h2>
-      <p>狐狸小白工作室创始人，负责代码开发、服务器维护及网站全部核心事务。业余无线电操作员（呼号 BA3PKZ），福瑞UP主，喜欢折腾各种小项目。</p>
+      <p>狐狸小白工作室创始人，负责代码开发、服务器维护及网站全部核心事务。福瑞UP主，喜欢折腾各种小项目。</p>
       <div class="qq">QQ：3441972628</div>
     </div>
   </div>
@@ -42,8 +42,12 @@
     var data = await res.json();
     if (data.members) {
       data.members.forEach(function(m) {
-        var dot = document.getElementById('dot-' + (m.username === '白沁' ? 'baixin' : 'linglong'));
-        if (dot) dot.style.background = m.online ? '#2ecc71' : '#555';
+        if (m.qq === '3441972628') {
+          document.getElementById('dot-baixin').style.background = m.online ? '#2ecc71' : '#555';
+        }
+        if (m.qq === '2046134395') {
+          document.getElementById('dot-linglong').style.background = m.online ? '#2ecc71' : '#555';
+        }
       });
     }
   } catch(e) {}

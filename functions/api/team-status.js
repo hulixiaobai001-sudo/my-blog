@@ -6,8 +6,8 @@ export async function onRequestGet(context) {
     await env.DB.exec("ALTER TABLE users ADD COLUMN online_status INTEGER DEFAULT 0");
   } catch(e) {}
   try {
-    const { results } = await env.DB.prepare("SELECT username, online_status FROM users WHERE role IN ('admin','super_admin') OR is_admin = 1").all();
-    return new Response(JSON.stringify({ members: (results || []).map(u => ({ username: u.username, online: !!u.online_status })) }));
+    const { results } = await env.DB.prepare("SELECT username, qq, online_status FROM users WHERE role IN ('admin','super_admin') OR is_admin = 1").all();
+    return new Response(JSON.stringify({ members: (results || []).map(u => ({ username: u.username, qq: String(u.qq || ''), online: !!u.online_status })) }));
   } catch(e) {
     return new Response(JSON.stringify({ members: [] }));
   }
