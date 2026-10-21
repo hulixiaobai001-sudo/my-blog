@@ -50,15 +50,15 @@ buildFuture = true
     pageRef = '/guestbook'
     weight = 47
   [[menu.main]]
-    identifier = 'appreciate'
-    name = '赞赏'
-    pageRef = '/appreciate'
-    weight = 55
-  [[menu.main]]
     identifier = 'points-rules'
     name = '积分规则'
     pageRef = '/points-rules'
     weight = 56
+  [[menu.footer]]
+    identifier = 'appreciate'
+    name = '赞赏'
+    url = '/appreciate/'
+    weight = 15
   [[menu.footer]]
     identifier = 'terms'
     name = '服务条款'

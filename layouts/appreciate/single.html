@@ -1,64 +1,92 @@
 {{ define "main" }}
 <style>
-  .ap-wrap { max-width: 560px; margin: 20px auto; padding: 0 20px; position: relative; z-index: 1; }
+  .ap-wrap { max-width: 620px; margin: 20px auto; padding: 0 20px; position: relative; z-index: 1; }
   .ap-wrap h1 { color: #fff; font-size: 26px; margin: 20px 0 8px; text-align: center; }
   .ap-wrap .sub { color: #888; text-align: center; font-size: 13px; margin-bottom: 28px; }
-  .ap-card { background: rgba(255,255,255,.06); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,.1); border-radius: 20px; padding: 28px; margin-bottom: 16px; text-align: center; }
-  .ap-card .thanks { color: #ddd; font-size: 15px; line-height: 1.9; margin-bottom: 20px; }
-  .ap-card .thanks b { color: #fff; }
+  .ap-card { background: rgba(255,255,255,.06); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,.1); border-radius: 20px; padding: 28px; margin-bottom: 16px; }
+  .ap-intro { color: #ddd; font-size: 14px; line-height: 2; margin-bottom: 20px; }
+  .ap-intro b { color: #fff; }
   .qr-box { display: inline-block; padding: 16px; background: #fff; border-radius: 16px; margin: 16px 0; }
   .qr-box img { width: 200px; height: 200px; display: block; border-radius: 8px; }
-  .qr-label { color: #666; font-size: 13px; margin-top: 10px; }
-  .ap-amounts { display: flex; gap: 10px; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
-  .ap-amount { padding: 8px 18px; border-radius: 20px; border: 1px solid rgba(255,255,255,.15); background: rgba(255,255,255,.05); color: #aaa; font-size: 13px; }
-  .ap-note { color: #888; font-size: 12px; line-height: 1.8; margin-top: 16px; text-align: left; }
-  .ap-note b { color: #aaa; }
-  .ap-link { display: inline-block; margin-top: 16px; padding: 10px 24px; border-radius: 20px; background: linear-gradient(135deg,#667eea,#764ba2); color: #fff; text-decoration: none; font-size: 14px; }
-  .ap-link:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(102,126,234,.4); }
-  .fox-icon { font-size: 48px; margin-bottom: 12px; }
+  .qr-label { color: #666; font-size: 13px; margin-top: 10px; text-align: center; }
+  .ap-thanks { color: #8ab4ff; font-size: 14px; margin: 16px 0 8px; line-height: 1.9; }
+  .ap-thanks a { color: #5b9aff; font-weight: 600; text-decoration: underline; }
+  .ap-coop { border-top: 1px solid rgba(255,255,255,.08); margin-top: 20px; padding-top: 16px; color: #aaa; font-size: 13px; line-height: 1.9; }
+  .ap-coop a { color: #8ab4ff; text-decoration: none; }
+  .team-list { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
+  .team-member { text-align: center; width: 72px; }
+  .team-member .avatar {
+    width: 56px; height: 56px; border-radius: 50%; margin: 0 auto 8px;
+    background: linear-gradient(135deg,#667eea,#764ba2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; color: #fff; overflow: hidden;
+  }
+  .team-member .avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .team-member .tname { color: #ddd; font-size: 13px; }
+  .team-note { color: #777; font-size: 12px; text-align: center; margin-top: 14px; }
+  .ap-doc-link { color: #8ab4ff; text-decoration: none; }
+  .center { text-align: center; }
 </style>
 
 <div class="ap-wrap">
   <h1>赞赏支持</h1>
-  <p class="sub">如果你喜欢这个小站，欢迎请站长喝杯奶茶 🧋</p>
+  <p class="sub">狐狸小白工作室 · 专业代码开发 · 承接委托建站与运维</p>
 
   <div class="ap-card">
-    <div class="fox-icon">🦊</div>
-    <div class="thanks">
-      你好呀，我是<b>白沁</b>。<br>
-      这个网站是我利用课余时间一点点搭建起来的个人小窝，<br>
-      从博客到返图墙，从积分商城到留言区，<br>
-      每一个功能都倾注了我对这个圈层的热爱。<br><br>
-      如果你在这里感到了温暖或快乐，<br>
-      欢迎用赞赏的方式表达你的支持～<br>
-      你的每一份心意都会变成我继续维护这个小站的动力 💜
+    <div class="ap-intro">
+      <b>狐狸小白工作室</b>是一家专业代码开发工作室，专注个人网站与中小型站点的开发、部署与长期运维，承接委托建站与运维业务。
+      <br><br>
+      本站为<b>个人性质网站</b>，赞赏完全自愿、金额随意。所有赞赏将用于<b>服务器升级与日常运维</b>，让小站更稳定地陪伴大家。
     </div>
 
-    <div class="qr-box">
-      <img src="/images/donate.jpg" alt="赞赏二维码" />
-      <div class="qr-label">微信赞赏码</div>
+    <div class="center">
+      <div class="qr-box">
+        <img src="/images/donate.jpg" alt="赞赏二维码" />
+        <div class="qr-label">微信赞赏码 · 金额随意</div>
+      </div>
     </div>
 
-    <div class="ap-amounts">
-      <span class="ap-amount">☕ 5 元 请杯咖啡</span>
-      <span class="ap-amount">🧋 10 元 请杯奶茶</span>
-      <span class="ap-amount">🍱 30 元 请顿饭</span>
-      <span class="ap-amount">💜 随心</span>
+    <div class="ap-thanks">
+      单次赞赏满 300 元，请联系我们 <a href="https://wpa.qq.com/msgrd?v=3&uin=3441972628&site=qq&menu=yes" target="_blank">QQ 3441972628</a>，我们将对您进行特殊感谢。
     </div>
 
-    <a class="ap-link" href="/guestbook/">赞赏后去留言墙说句话吧</a>
+    <div class="ap-coop">
+      如果你也想搭建属于自己的小站，欢迎委托我们开发与运维，合作详情可联系工作室
+      <a href="https://wpa.qq.com/msgrd?v=3&uin=3441972628&site=qq&menu=yes" target="_blank">QQ 3441972628</a>。
+      <br>
+      赞赏相关规则详见<a class="ap-doc-link" href="https://my.feishu.cn/docx/Dy1CdC0OmoEr2oxSyuCcsp6CnAf" target="_blank">《赞赏声明》</a>。
+    </div>
   </div>
 
-  <div class="ap-card" style="text-align:left;">
-    <div class="ap-note">
-      <b>📌 关于赞赏的说明</b><br><br>
-      • 这是一个<b>个人网站</b>，并非商业产品或付费服务，赞赏完全是自愿性质<br>
-      • 赞赏金额无论多少，都是对站长个人的认可与鼓励<br>
-      • 赞赏后可以在<a href="/guestbook/" style="color:#8ab4ff;">留言墙</a>留下你的昵称和想说的话，站长会看到<br>
-      • 目前仅支持微信赞赏码扫码支付，后续视情况可能集成微信支付（开发中）<br>
-      • 赞赏不提供任何实物或虚拟商品回报，纯粹是"请站长喝杯奶茶"的心意<br>
-      • 如有任何问题，欢迎通过<a href="/tickets/" style="color:#8ab4ff;">工单</a>联系站长
-    </div>
+  <div class="ap-card">
+    <div style="text-align:center;color:#fff;font-size:16px;margin-bottom:6px;">一期合作成员</div>
+    <div class="team-list" id="team-list"></div>
+    <div class="team-note" id="team-note">一期成员招募中，已注册用户自动加入，满员后二期暂不开放</div>
   </div>
 </div>
+
+<script>
+(async function() {
+  try {
+    var res = await fetch('/api/team');
+    var data = await res.json();
+    var list = document.getElementById('team-list');
+    var note = document.getElementById('team-note');
+    var members = data.members || [];
+    if (members.length === 0) {
+      list.innerHTML = '<div style="color:#888;font-size:13px;">暂无成员</div>';
+      return;
+    }
+    list.innerHTML = members.map(function(m) {
+      var avatar = m.avatar
+        ? '<img src="' + window.escapeHtml(m.avatar) + '" onerror="this.parentNode.innerHTML=window.escapeHtml(' + JSON.stringify(m.username) + ').charAt(0).toUpperCase()">'
+        : window.escapeHtml(m.username).charAt(0).toUpperCase();
+      return '<div class="team-member"><div class="avatar">' + avatar + '</div><div class="tname">' + window.escapeHtml(m.username) + '</div></div>';
+    }).join('');
+    if (data.full) {
+      note.textContent = '一期成员已满员，二期暂不开放';
+    }
+  } catch(e) {}
+})();
+</script>
 {{ end }}
