@@ -48,7 +48,10 @@
   #menu.menu {
     display: flex !important; gap: 24px !important;
     list-style: none !important; margin: 0 !important; padding: 0 !important;
+    overflow-x: auto !important; white-space: nowrap !important;
+    -webkit-overflow-scrolling: touch !important;
   }
+  #menu.menu::-webkit-scrollbar { display: none; }
   #menu.menu li { display: none !important; }
   #menu.menu li.nav-keep { display: inline-block !important; }
   #menu.menu li a { font-size: 14px !important; color: #e5e7eb !important; text-decoration: none !important; transition: color .2s !important; }
