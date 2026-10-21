@@ -299,9 +299,9 @@ document.addEventListener('DOMContentLoaded', function() {
       var all = document.querySelectorAll('body *');
       var avatarBtn = null;
       all.forEach(function(el) {
-        if (el.children.length > 3) return;
+        if (el.children.length > 2) return;
         var r = el.getBoundingClientRect();
-        if (r.width > 30 && r.width < 60 && r.height > 30 && r.height < 60 && r.right > window.innerWidth - 80 && r.top > 50 && r.top < 120) {
+        if (r.width > 30 && r.width < 55 && r.height > 30 && r.height < 55 && r.right > window.innerWidth - 70 && r.top > 55 && r.top < 110) {
           var style = window.getComputedStyle(el);
           if (style.borderRadius === '50%' || style.borderRadius.includes('50%')) {
             avatarBtn = el;
@@ -309,7 +309,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       });
       if (avatarBtn) makeDraggable(avatarBtn);
-    }, 1000);
+    }, 1500);
   }
 });
 
@@ -374,11 +374,11 @@ function makeDraggable(el) {
 }
 
 // 站内信折叠弹窗
-(function() {
+document.addEventListener('DOMContentLoaded', function() {
   var bell = document.createElement('div');
   bell.id = 'msg-bell';
   bell.innerHTML = '📬';
-  bell.style.cssText = 'position:fixed;top:60px;left:12px;z-index:96;width:40px;height:40px;border-radius:50%;background:rgba(102,126,234,.3);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;';
+  bell.style.cssText = 'position:fixed;bottom:80px;left:12px;z-index:96;width:40px;height:40px;border-radius:50%;background:rgba(102,126,234,.5);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;';
   document.body.appendChild(bell);
 
   var panel = document.createElement('div');
@@ -425,7 +425,7 @@ function makeDraggable(el) {
 
   setInterval(loadMsgs, 30000);
   loadMsgs();
-})();
+});
 
 // 全局XSS转义函数
 window.escapeHtml = function(str) {
