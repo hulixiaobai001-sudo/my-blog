@@ -388,51 +388,5 @@ document.addEventListener('DOMContentLoaded', async function() {
     };
   } catch(e) {}
 });
-
-// 无刷新页面切换
-(function() {
-  let loading = false;
-  async function navigate(url, pushState = true) {
-    if (loading) return;
-    loading = true;
-    document.body.style.opacity = '0.5';
-    try {
-      const res = await fetch(url, { headers: { 'X-PJAX': '1' } });
-      const html = await res.text();
-      const doc = new DOMParser().parseFromString(html, 'text/html');
-      const newMain = doc.querySelector('main');
-      const oldMain = document.querySelector('main');
-      if (newMain && oldMain) {
-        oldMain.innerHTML = newMain.innerHTML;
-      }
-      document.title = doc.title;
-      if (pushState) history.pushState({}, '', url);
-      window.scrollTo(0, 0);
-      // 重新执行页面内脚本
-      const scripts = doc.querySelectorAll('main script');
-      scripts.forEach(s => {
-        const ns = document.createElement('script');
-        ns.textContent = s.textContent;
-        document.querySelector('main').appendChild(ns);
-      });
-    } catch(e) {
-      window.location.href = url;
-    } finally {
-      loading = false;
-      document.body.style.opacity = '1';
-    }
-  }
-  document.addEventListener('click', function(e) {
-    const a = e.target.closest('a');
-    if (!a) return;
-    const href = a.getAttribute('href');
-    if (!href || href.startsWith('#') || href.startsWith('http') || href.startsWith('mailto:') || href.startsWith('javascript:') || a.target === '_blank') return;
-    e.preventDefault();
-    navigate(href);
-  });
-  window.addEventListener('popstate', function(e) {
-    navigate(location.pathname, false);
-  });
-})();
 </script>
 {{ end }}
