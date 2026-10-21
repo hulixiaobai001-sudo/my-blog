@@ -12,8 +12,8 @@ export async function onRequestGet(context) {
   try {
     await env.DB.prepare('UPDATE users SET last_seen = datetime(\'now\') WHERE id = ?').bind(userId).run();
     const user = await env.DB.prepare('SELECT id, username, qq, bio, avatar, avatar_url, short_name, nickname, contact, show_qq, points, role, is_admin, online_status FROM users WHERE id = ?').bind(userId).first();
-    // 自动把站长（is_admin=1）升级为 super_admin
-    if (user && user.is_admin && user.role !== 'super_admin') {
+    // 只有站长QQ自动升级为 super_admin
+    if (user && user.is_admin && user.qq == '3441972628' && user.role !== 'super_admin') {
       await env.DB.prepare("UPDATE users SET role = 'super_admin' WHERE id = ?").bind(userId).run();
       user.role = 'super_admin';
     }
