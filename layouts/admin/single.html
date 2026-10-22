@@ -555,7 +555,7 @@ async function uploadFursuitImg(input) {
       const compressed = canvas.toDataURL('image/jpeg', 0.75);
       const res = await fetch('/api/upload/image', {
         method: 'POST', headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ image: compressed })
+        body: JSON.stringify({ imageBase64: compressed })
       });
       const data = await res.json();
       if (data.url) {
@@ -842,7 +842,12 @@ async function replyTicket(id, close) {
   const result = (document.getElementById('result-' + id) || {}).value || 'none';
   const points = (document.getElementById('points-' + id) || {}).value;
   const body = { id, reply, close, result: close ? result : '', points: close ? points : undefined };
-  if (close && !confirm('确定关闭工单 #' + id + ' 吗？\n积分调整值：' + (points || '0') + '，关闭后不可重复调分。')) return;
+  if (close) {
+    // 关闭前确认处理意见，避免误默认成“无需处理”
+    const label = result === 'fixed' ? '已处理' : result === 'useful' ? '建议采纳' : result === 'malicious' ? '恶意工单' : '无需处理';
+    const ptsText = points || '0';
+    if (!confirm('确定关闭工单 #' + id + ' 吗？\n\n处理意见：' + label + '\n积分调整：' + ptsText + '\n\n关闭后不可重复调分，请确认意见无误。')) return;
+  }
   const res = await fetch('/api/ticket/reply', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
   const data = await res.json();
   if (data.error) { alert(data.error); return; }
