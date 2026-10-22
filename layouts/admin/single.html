@@ -79,6 +79,9 @@
   .list-item .meta { color: #888; font-size: 12px; }
   .list-item .content { color: #ccc; font-size: 13px; margin-top: 6px; }
   .empty { color: #6b7280; text-align: center; padding: 30px 0; font-size: 13px; }
+  .stat-box2 { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); border-radius: 14px; padding: 18px 12px; text-align: center; }
+  .stat-box2 .num2 { color: #fff; font-size: 26px; font-weight: 700; }
+  .stat-box2 .lab2 { color: #888; font-size: 12px; margin-top: 6px; }
   .result-msg { margin-top: 10px; font-size: 13px; color: #8ab4ff; }
 
   .EasyMDEContainer .CodeMirror, .EasyMDEContainer .editor-toolbar, .EasyMDEContainer .editor-preview {
@@ -115,16 +118,43 @@
 <div class="admin-root">
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-title">站长后台</div>
-    <button class="nav-btn active" data-panel="panel-content" onclick="switchPanel('panel-content', this)">内容管理</button>
+    <button class="nav-btn active" data-panel="panel-dashboard" onclick="switchPanel('panel-dashboard', this)">总览</button>
+    <button class="nav-btn" data-panel="panel-content" onclick="switchPanel('panel-content', this)">内容管理</button>
     <button class="nav-btn" data-panel="panel-gallery" onclick="switchPanel('panel-gallery', this)">返图管理</button>
     <button class="nav-btn" data-panel="panel-tickets" onclick="switchPanel('panel-tickets', this)">事务处理</button>
     <button class="nav-btn" data-panel="panel-guestbook" onclick="switchPanel('panel-guestbook', this)">留言审核</button>
     <button class="nav-btn" data-panel="panel-users" onclick="switchPanel('panel-users', this)">用户管理</button>
+    <button class="nav-btn" data-panel="panel-words" onclick="switchPanel('panel-words', this)">敏感词库</button>
+    <button class="nav-btn" data-panel="panel-logs" onclick="switchPanel('panel-logs', this)">管理日志</button>
     <button class="nav-btn" data-panel="panel-settings" onclick="switchPanel('panel-settings', this)">站点设置</button>
   </aside>
 
   <main class="content">
-    <div class="panel active" id="panel-content">
+    <div class="panel active" id="panel-dashboard">
+      <h2>全站总览</h2>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:20px;">
+        <div class="stat-box2"><div class="num2" id="db-users">-</div><div class="lab2">用户总数</div></div>
+        <div class="stat-box2"><div class="num2" id="db-newusers">-</div><div class="lab2">今日新注册</div></div>
+        <div class="stat-box2"><div class="num2" id="db-pendreports">-</div><div class="lab2">待审返图</div></div>
+        <div class="stat-box2"><div class="num2" id="db-pendgb">-</div><div class="lab2">待审留言</div></div>
+        <div class="stat-box2"><div class="num2" id="db-pendtickets">-</div><div class="lab2">待处理工单</div></div>
+        <div class="stat-box2"><div class="num2" id="db-errors">-</div><div class="lab2">异常日志</div></div>
+        <div class="stat-box2"><div class="num2" id="db-views">-</div><div class="lab2">累计访问</div></div>
+        <div class="stat-box2"><div class="num2" id="db-gb">-</div><div class="lab2">留言总数</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <h3 style="color:#bbb;font-size:15px;margin:0 0 10px;">最近注册</h3>
+          <div id="db-recent-users"><p class="empty">加载中...</p></div>
+        </div>
+        <div>
+          <h3 style="color:#bbb;font-size:15px;margin:0 0 10px;">最近异常</h3>
+          <div id="db-recent-errors"><p class="empty">加载中...</p></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-content">
       <h2>内容管理</h2>
       <div style="display:flex;gap:8px;margin-bottom:16px;">
         <button class="btn-ok" onclick="contentTab('write')" id="ct-write">写文章/公告</button>
@@ -153,6 +183,11 @@
     <div class="panel" id="panel-gallery">
       <h2>返图管理</h2>
       <h3 style="color:#bbb;font-size:15px;margin:16px 0 10px;">待审核</h3>
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center;">
+        <label style="color:#ddd;font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="sel-all-reports" onchange="document.querySelectorAll('.rpt-chk').forEach(c=>c.checked=this.checked)" style="width:15px;height:15px;"> 全选</label>
+        <button class="btn-ok" onclick="batchModerateReports(true)">批量通过</button>
+        <button class="btn-danger" onclick="batchModerateReports(false)">批量拒绝</button>
+      </div>
       <div id="pending-reports"><p class="empty">加载中...</p></div>
       <h3 style="color:#bbb;font-size:15px;margin:24px 0 10px;">站长上传返图</h3>
       <input type="file" id="admin-img" accept="image/*" />
@@ -181,6 +216,11 @@
       <div style="display:flex;gap:8px;margin-bottom:16px;">
         <button class="btn-ok" onclick="gbTab('pending')" id="gb-tab-pending">待审核</button>
         <button class="btn-warn" onclick="gbTab('approved')" id="gb-tab-approved">已通过</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center;">
+        <label style="color:#ddd;font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="sel-all-gb" onchange="document.querySelectorAll('.gb-chk').forEach(c=>c.checked=this.checked)" style="width:15px;height:15px;"> 全选</label>
+        <button class="btn-ok" onclick="batchGb(true)">批量通过</button>
+        <button class="btn-danger" onclick="batchGb(false)">批量拒绝</button>
       </div>
       <div id="gb-list"><p class="empty">加载中...</p></div>
     </div>
@@ -224,6 +264,26 @@
       <button class="btn-primary" onclick="savePrivacyVer()">保存并推送弹窗</button>
       <div class="result-msg" id="pv-result"></div>
 
+      <h3 style="color:#bbb;font-size:15px;margin:24px 0 10px;">全局开关（仅站长）</h3>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:10px;">
+        <label style="display:flex;align-items:center;gap:8px;color:#ddd;font-size:13px;cursor:pointer;"><input type="checkbox" id="sw-register" style="width:16px;height:16px;"> 开放注册</label>
+        <label style="display:flex;align-items:center;gap:8px;color:#ddd;font-size:13px;cursor:pointer;"><input type="checkbox" id="sw-guestbook" style="width:16px;height:16px;"> 开放留言</label>
+        <label style="display:flex;align-items:center;gap:8px;color:#ddd;font-size:13px;cursor:pointer;"><input type="checkbox" id="sw-maintenance" style="width:16px;height:16px;"> 维护模式（全站提示）</label>
+      </div>
+      <p style="color:#999;font-size:12px;margin-bottom:10px;">首页 BGM 地址（留空不显示，支持 mp3 直链）：</p>
+      <input id="sw-bgm" placeholder="https://.../bgm.mp3" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:#fff;margin-bottom:10px;">
+      <button class="btn-primary" onclick="saveSiteSwitches()">保存全局设置</button>
+      <div class="result-msg" id="sw-result"></div>
+
+      <h3 style="color:#bbb;font-size:15px;margin:24px 0 10px;">数据备份导出（仅站长）</h3>
+      <p style="color:#999;font-size:12px;margin-bottom:10px;">一键导出 CSV 备份，防止数据丢失。</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn-warn" onclick="exportData('users')">导出用户</button>
+        <button class="btn-warn" onclick="exportData('guestbook')">导出留言</button>
+        <button class="btn-warn" onclick="exportData('reports')">导出返图</button>
+        <button class="btn-warn" onclick="exportData('tickets')">导出工单</button>
+      </div>
+
       <div id="fursuit-admin" style="display:none;">
         <h3 style="color:#bbb;font-size:15px;margin:24px 0 10px;">兽装相册管理（仅站长）</h3>
         <p style="color:#999;font-size:12px;margin-bottom:10px;">上传新图或填写图片地址，可删除条目，保存后替换展示。</p>
@@ -235,6 +295,23 @@
         </div>
         <button class="btn-ok" onclick="saveFursuit()">保存相册</button>
         <div class="result-msg" id="fursuit-result"></div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-words">
+      <h2>敏感词库</h2>
+      <p style="color:#999;font-size:12px;margin:0 0 12px;">留言、树洞、站内信命中敏感词会自动拦截或进入审核。每行一个词。</p>
+      <textarea id="words-input" style="width:100%;height:200px;font-family:monospace;font-size:13px;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:#fff;margin-bottom:10px;"></textarea>
+      <button class="btn-primary" onclick="saveWords()">保存词库</button>
+      <div class="result-msg" id="words-result"></div>
+    </div>
+
+    <div class="panel" id="panel-logs">
+      <h2>管理日志</h2>
+      <p style="color:#999;font-size:12px;margin:0 0 12px;">谁在后台做了什么，留痕可查（审核/封禁/删用户/工单/导出等）。</p>
+      <div id="admin-log-list"><p class="empty">加载中...</p></div>
+      <div style="margin-top:12px;text-align:center;">
+        <button class="btn-warn" id="log-more" style="display:none;" onclick="loadMoreLogs()">加载更多</button>
       </div>
     </div>
   </main>
@@ -299,12 +376,13 @@ async function loadGuestbook() {
     var statusTag = gbCurrentStatus === 'pending'
       ? '<span style="color:#f0ad4e;font-size:11px;">[待审核]</span>'
       : '<span style="color:#2ecc71;font-size:11px;">[已通过]</span>';
+    var chkBox = '<input type="checkbox" class="gb-chk" data-id="' + m.id + '" style="width:15px;height:15px;margin-right:8px;"' + (gbCurrentStatus !== 'pending' ? ' disabled' : '') + '>';
     var buttons = gbCurrentStatus === 'pending'
       ? '<button class="btn-ok" onclick="moderateGb(' + m.id + ',\'approved\')">通过</button>' +
         '<button class="btn-danger" onclick="moderateGb(' + m.id + ',\'rejected\')">拒绝</button>' +
         '<button class="btn-danger" style="background:#555;" onclick="deleteGb(' + m.id + ')">删除</button>'
       : '<button class="btn-danger" onclick="deleteGb(' + m.id + ')">删除</button>';
-    return '<div class="list-item"><div class="title">@' + escapeHtml(m.username) + ' ' + anonTag + replyTag + statusTag + '</div>' +
+    return '<div class="list-item"><div class="title">' + chkBox + '@' + escapeHtml(m.username) + ' ' + anonTag + replyTag + statusTag + '</div>' +
       '<div class="content">' + escapeHtml(m.content) + '</div>' +
       (m.image_url ? '<img src="' + escapeHtml(m.image_url) + '" style="max-width:200px;border-radius:8px;margin-top:6px;">' : '') +
       '<div class="content" style="color:#666;font-size:11px;">' + escapeHtml(m.created_at) + '</div>' +
@@ -327,6 +405,17 @@ async function moderateGb(id, status) {
     body: JSON.stringify({ id: id, status: status })
   });
   loadGuestbook();
+}
+
+async function batchGb(pass) {
+  const ids = [...document.querySelectorAll('.gb-chk:checked')].map(c => parseInt(c.dataset.id));
+  if (!ids.length) { alert('请先勾选留言'); return; }
+  if (!confirm('确定批量' + (pass ? '通过' : '拒绝') + ' ' + ids.length + ' 条留言？')) return;
+  const res = await fetch('/api/admin/moderate-guestbook', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ ids, status: pass ? 'approved' : 'rejected' }) });
+  const d = await res.json();
+  alert('已处理 ' + (d.count || 0) + ' 条');
+  loadGuestbook();
+  loadDashboard();
 }
 window.moderateGb = moderateGb;
 window.deleteGb = deleteGb;
@@ -353,6 +442,11 @@ async function checkAdmin() {
   loadGuestbook();
   loadAboutCfg();
   loadTrips();
+  loadDashboard();
+  loadWords();
+  loadLogs();
+  loadSiteSwitches();
+  loadPendingReports();
 }
 
 var fursuitItems = [];
@@ -431,6 +525,85 @@ async function saveFursuit() {
   document.getElementById('fursuit-result').textContent = data.error || ('已保存 ' + data.count + ' 张图片');
 }
 
+async function loadDashboard() {
+  try {
+    const res = await fetch('/api/admin/dashboard');
+    const d = await res.json();
+    document.getElementById('db-users').textContent = d.total_users;
+    document.getElementById('db-newusers').textContent = d.new_users_today;
+    document.getElementById('db-pendreports').textContent = d.pending_reports;
+    document.getElementById('db-pendgb').textContent = d.pending_guestbook;
+    document.getElementById('db-pendtickets').textContent = d.pending_tickets;
+    document.getElementById('db-errors').textContent = d.error_logs;
+    document.getElementById('db-views').textContent = d.total_views || 0;
+    document.getElementById('db-gb').textContent = d.total_guestbook;
+    const ru = document.getElementById('db-recent-users');
+    ru.innerHTML = (d.recent_users || []).map(u => '<div class="content" style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06);">@' + escapeHtml(u.username) + ' <span style="color:#666;font-size:11px;">' + escapeHtml(u.created_at || '') + '</span></div>').join('') || '<p class="empty">暂无注册</p>';
+    const re = document.getElementById('db-recent-errors');
+    re.innerHTML = (d.recent_errors || []).map(e => '<div class="content" style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06);"><span style="color:#e74c3c;">' + escapeHtml(e.path || '') + '</span><br><span style="color:#888;font-size:11px;">' + escapeHtml(String(e.message || '').slice(0, 60)) + ' · ' + escapeHtml(e.created_at || '') + '</span></div>').join('') || '<p class="empty">暂无异常日志</p>';
+  } catch(e) {}
+}
+
+async function loadWords() {
+  const res = await fetch('/api/admin/sensitive-words');
+  const d = await res.json();
+  document.getElementById('words-input').value = (d.words || []).join('\n');
+}
+
+async function saveWords() {
+  const words = document.getElementById('words-input').value.split(/[\n,，]+/).map(w => w.trim()).filter(w => w);
+  const res = await fetch('/api/admin/sensitive-words', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ words }) });
+  const d = await res.json();
+  document.getElementById('words-result').textContent = d.error || ('已保存 ' + d.count + ' 个敏感词');
+}
+
+var logPage = 1;
+
+async function loadLogs() {
+  logPage = 1;
+  await fetchLogs(true);
+}
+
+async function fetchLogs(reset) {
+  const res = await fetch('/api/admin/logs?page=' + logPage + '&pageSize=50');
+  const d = await res.json();
+  const el = document.getElementById('admin-log-list');
+  if (!d.logs || d.logs.length === 0) { el.innerHTML = '<p class="empty">还没有操作日志</p>'; return; }
+  const html = d.logs.map(l => '<div class="list-item"><div class="title">' + escapeHtml(l.action) + ' <span style="color:#8ab4ff;font-size:11px;">@' + escapeHtml(l.actor_name || ('#' + l.actor_id)) + '</span></div><div class="content">' + escapeHtml(l.detail || '') + '</div><div class="content" style="color:#666;font-size:11px;">' + escapeHtml(l.created_at || '') + '</div></div>').join('');
+  if (reset) el.innerHTML = html; else el.innerHTML += html;
+  document.getElementById('log-more').style.display = (logPage * 50 < d.total) ? 'inline-block' : 'none';
+}
+
+function loadMoreLogs() { logPage++; fetchLogs(false); }
+
+async function loadSiteSwitches() {
+  try {
+    const res = await fetch('/api/admin/site-settings');
+    const d = await res.json();
+    const st = d.settings || {};
+    document.getElementById('sw-register').checked = st.registration_open !== '0';
+    document.getElementById('sw-guestbook').checked = st.guestbook_open !== '0';
+    document.getElementById('sw-maintenance').checked = st.maintenance_mode === '1';
+    document.getElementById('sw-bgm').value = st.bgm_url || '';
+  } catch(e) {}
+}
+
+async function saveSiteSwitches() {
+  const res = await fetch('/api/admin/site-settings', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({
+    registration_open: document.getElementById('sw-register').checked ? '1' : '0',
+    guestbook_open: document.getElementById('sw-guestbook').checked ? '1' : '0',
+    maintenance_mode: document.getElementById('sw-maintenance').checked ? '1' : '0',
+    bgm_url: document.getElementById('sw-bgm').value.trim()
+  }) });
+  const d = await res.json();
+  document.getElementById('sw-result').textContent = d.error || '已保存';
+}
+
+function exportData(type) {
+  if (!confirm('确定导出' + (type === 'users' ? '用户' : type === 'guestbook' ? '留言' : type === 'reports' ? '返图' : '工单') + '数据 CSV？')) return;
+  window.location.href = '/api/admin/export?type=' + type;
+}
+
 async function loadPendingReports() {
   const res = await fetch('/api/report/pending/');
   const data = await res.json();
@@ -441,6 +614,7 @@ async function loadPendingReports() {
     const item = document.createElement('div');
     item.className = 'list-item';
     item.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><input type="checkbox" class="rpt-chk" data-id="${r.id}" style="width:15px;height:15px;"> <span style="color:#8ab4ff;font-size:12px;">#${r.id}</span></div>
       <img src="/api/report/view?key=${escapeHtml(r.image_key)}" style="max-width:150px;border-radius:8px;margin-bottom:8px;" />
       <div class="meta">${escapeHtml(r.created_at)}</div>
       <div class="content">${escapeHtml(r.caption) || '无配文'}</div>
@@ -464,6 +638,18 @@ async function moderate(id, pass, btn) {
   } catch(e) { alert('网络错误: ' + e.message); }
   loadPendingReports();
   loadApprovedReports();
+}
+
+async function batchModerateReports(pass) {
+  const ids = [...document.querySelectorAll('.rpt-chk:checked')].map(c => parseInt(c.dataset.id));
+  if (!ids.length) { alert('请先勾选返图'); return; }
+  if (!confirm('确定批量' + (pass ? '通过' : '拒绝') + ' ' + ids.length + ' 张返图？')) return;
+  const res = await fetch('/api/report/moderate', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ ids, status: pass ? 'approved' : 'rejected' }) });
+  const d = await res.json();
+  alert('已处理 ' + (d.count || 0) + ' 张');
+  loadPendingReports();
+  loadApprovedReports();
+  loadDashboard();
 }
 
 async function loadApprovedReports() {
@@ -766,7 +952,17 @@ async function loadUsers() {
     var adminTag = u.role === 'super_admin' ? '<span style="color:#f0ad4e;font-size:11px;">[站长]</span>' : ((u.is_admin || u.role === 'admin') ? '<span style="color:#8ab4ff;font-size:11px;">[管理员]</span>' : '');
     var banTag = u.banned ? '<span style="color:#dc3545;font-size:11px;">[已封禁]</span>' : '';
     // 仅站长（super_admin）显示管理按钮
-    var banBtn = (isSuperAdmin && !u.is_admin) ? '<button class="' + (u.banned ? 'btn-ok' : 'btn-danger') + '" onclick="banUser(' + u.id + ', ' + (u.banned ? 0 : 1) + ')">' + (u.banned ? '解禁' : '封禁') + '</button>' : '';
+    var banTag2 = u.ban_until ? '<span style="color:#e67e22;font-size:11px;">[封至 ' + escapeHtml(u.ban_until) + ']</span>' : '';
+    var banBtn = '';
+    if (isSuperAdmin && !u.is_admin) {
+      if (u.banned || u.ban_until) {
+        banBtn = '<button class="btn-ok" onclick="banUser(' + u.id + ', 0)">解禁</button>';
+      } else {
+        banBtn = '<button class="btn-danger" onclick="banUser(' + u.id + ', 1, 7)">封7天</button>' +
+                 '<button class="btn-danger" onclick="banUser(' + u.id + ', 1, 30)">封30天</button>' +
+                 '<button class="btn-danger" onclick="banUser(' + u.id + ', 1, 0)">永久封禁</button>';
+      }
+    }
     // 站内信：管理员与站长均可发，站长可发给任意用户（含管理员/站长），不能发给自己
     var msgBtn = (u.id !== currentAdminId) ? '<button class="btn-warn" onclick="sendMsg(' + u.id + ')">发站内信</button>' : '';
     var adminBtn = isSuperAdmin
@@ -778,7 +974,7 @@ async function loadUsers() {
     var delBtn = (isSuperAdmin && !u.is_admin && u.id !== currentAdminId) ? '<button class="btn-danger" onclick="deleteUser(' + u.id + ')">删除</button>' : '';
     return '<div class="list-item">' +
       '<div style="display:flex;align-items:center;">' + av + '<div>' +
-        '<div class="title">' + dot + '@' + safeName + ' ' + adminTag + ' ' + banTag + '</div>' +
+        '<div class="title">' + dot + '@' + safeName + ' ' + adminTag + ' ' + banTag + ' ' + banTag2 + '</div>' +
         '<div class="content">积分：' + u.points + ' ' + (u.qq ? ' · QQ：' + escapeHtml(u.qq) : '') + ' · ' + statusText + '</div>' +
       '</div></div>' +
       '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">' +
@@ -797,10 +993,17 @@ async function givePts(userId) {
   loadUsers();
 }
 
-async function banUser(userId, ban) {
-  if (!confirm(ban ? '确定封禁该用户？' : '确定解禁该用户？')) return;
-  await fetch('/api/admin/users', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId, action: ban ? 'ban' : 'unban' }) });
+async function banUser(userId, ban, days) {
+  if (ban) {
+    const label = days === 0 ? '永久封禁' : '封禁 ' + days + ' 天';
+    if (!confirm('确定' + label + '该用户？')) return;
+    await fetch('/api/admin/users', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId, action: 'ban', days: days }) });
+  } else {
+    if (!confirm('确定解禁该用户？')) return;
+    await fetch('/api/admin/users', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId, action: 'unban' }) });
+  }
   loadUsers();
+  loadDashboard();
 }
 
 async function setAdmin(userId, isAdmin) {

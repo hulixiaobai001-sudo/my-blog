@@ -1,3 +1,5 @@
+import { getLevel, checkBanned } from '../../_lib.js';
+
 export async function onRequestGet(context) {
   const { request, env } = context;
   const cookie = request.headers.get('Cookie') || '';
@@ -8,8 +10,13 @@ export async function onRequestGet(context) {
   if (!session) return new Response(JSON.stringify({ user: null }));
 
   const { userId } = JSON.parse(session);
-  const user = await env.DB.prepare('SELECT id, username, is_admin, points, role, banned FROM users WHERE id = ?').bind(userId).first();
-  // 已封禁或已注销的账号视为未登录
-  if (user && user.banned) return new Response(JSON.stringify({ user: null }));
+  const user = await env.DB.prepare('SELECT id, username, is_admin, points, role, banned, ban_until FROM users WHERE id = ?').bind(userId).first();
+  // 封禁检查（限期到期自动解封），已封禁视为未登录
+  if (user) {
+    const banErr = await checkBanned(env, user.id);
+    if (banErr) return new Response(JSON.stringify({ user: null }));
+    user.level = getLevel(user.points);
+    user.ban_until = user.ban_until || null;
+  }
   return new Response(JSON.stringify({ user }));
 }

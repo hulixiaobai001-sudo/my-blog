@@ -69,3 +69,7 @@ buildFuture = true
     name = '隐私政策'
     url = 'https://my.feishu.cn/docx/PhKsdqFqMoPWxwxQ6wHc5Po0ndh'
     weight = 20
+
+
+[outputs]
+  home = ['HTML', 'RSS', 'JSON']

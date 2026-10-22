@@ -1,3 +1,5 @@
+import { getSensitiveWords, checkBanned } from '../_lib.js';
+
 // 站内信：读取、已读、发送（任意登录用户可发）
 export async function onRequestGet(context) {
   const { request, env } = context;
@@ -29,7 +31,8 @@ export async function onRequestPost(context) {
   const { userId } = JSON.parse(sess);
   const me = await env.DB.prepare('SELECT banned FROM users WHERE id = ?').bind(userId).first();
   if (!me) return Response.json({ error: '用户不存在' }, { status: 403 });
-  if (me.banned) return Response.json({ error: '账号已被封禁' }, { status: 403 });
+  const banErr = await checkBanned(env, userId);
+  if (banErr) return Response.json({ error: banErr }, { status: 403 });
 
   const body = await request.json();
 
@@ -38,6 +41,8 @@ export async function onRequestPost(context) {
     const toUserId = parseInt(body.toUserId);
     const title = String(body.title || '').trim().slice(0, 200);
     const content = String(body.content || '').trim().slice(0, 2000);
+    const sensitiveWords = await getSensitiveWords(env);
+    if (sensitiveWords.some(w => (title + content).includes(w))) return Response.json({ error: '内容包含违禁词，无法发送' }, { status: 400 });
     if (!toUserId) return Response.json({ error: '收件人无效' }, { status: 400 });
     if (!title || !content) return Response.json({ error: '标题和内容不能为空' }, { status: 400 });
     if (toUserId === userId) return Response.json({ error: '不能给自己发站内信' }, { status: 400 });

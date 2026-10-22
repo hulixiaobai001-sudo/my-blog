@@ -1,4 +1,6 @@
-// 留言审核：待审核/已通过列表 + 通过/拒绝/删除
+import { logAdmin } from '../../_lib.js';
+
+// 留言审核：待审核/已通过列表 + 通过/拒绝/删除（支持批量）
 export async function onRequestGet(context) {
   const { request, env } = context;
   const cookie = request.headers.get('Cookie') || '';
@@ -40,6 +42,20 @@ export async function onRequestPost(context) {
 
   const body = await request.json();
   const { id, status } = body;
+
+  // 批量审核：ids 数组 + status
+  if (body.ids && Array.isArray(body.ids)) {
+    const ids = body.ids.map(Number).filter(Boolean);
+    const s2 = ['approved', 'rejected'].includes(status) ? status : 'approved';
+    if (ids.length > 0) {
+      for (const gid of ids) {
+        await env.DB.prepare('UPDATE guestbook SET status = ? WHERE id = ?').bind(s2, gid).run();
+      }
+      await logAdmin(env, userId, '留言审核', '批量' + (s2 === 'approved' ? '通过' : '拒绝') + ' ' + ids.length + ' 条');
+    }
+    return new Response(JSON.stringify({ ok: true, count: ids.length }));
+  }
+
   if (body.action === 'delete') {
     // 级联删除：主留言与其回复一并删除
     await env.DB.prepare('DELETE FROM guestbook WHERE id = ? OR reply_to = ?').bind(id, id).run();
@@ -49,5 +65,6 @@ export async function onRequestPost(context) {
   if (status !== 'approved' && status !== 'rejected') return new Response(JSON.stringify({ error: '状态错误' }), { status: 400 });
 
   await env.DB.prepare('UPDATE guestbook SET status = ? WHERE id = ?').bind(status, id).run();
+  await logAdmin(env, userId, '留言审核', (status === 'approved' ? '通过' : '拒绝') + ' 留言 #' + id);
   return new Response(JSON.stringify({ ok: true }));
 }

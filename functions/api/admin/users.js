@@ -1,4 +1,4 @@
-import { sanitize } from '../../_lib.js';
+import { sanitize, logAdmin } from '../../_lib.js';
 
 export async function onRequestGet(context) {
   const { request, env } = context;
@@ -18,7 +18,7 @@ export async function onRequestGet(context) {
   if (!dbUser || !dbUser.is_admin) return new Response(JSON.stringify({ error: '仅站长可访问' }), { status: 403 });
 
   try {
-    const { results } = await env.DB.prepare('SELECT id, username, points, qq, bio, avatar, show_qq, created_at, is_admin, banned, last_seen, role, online_status FROM users ORDER BY is_admin DESC, id ASC').all();
+    const { results } = await env.DB.prepare('SELECT id, username, points, qq, bio, avatar, show_qq, created_at, is_admin, banned, ban_until, last_seen, role, online_status FROM users ORDER BY is_admin DESC, id ASC').all();
     return new Response(JSON.stringify({ users: results }));
   } catch (e) {
     return new Response(JSON.stringify({ users: [] }));
@@ -45,6 +45,7 @@ export async function onRequestPost(context) {
     if (!target) return new Response(JSON.stringify({ error: '目标用户不存在' }), { status: 404 });
     await env.DB.prepare('INSERT INTO messages (user_id, title, content, created_at) VALUES (?, ?, ?, datetime(\'now\'))')
       .bind(target.id, sanitize(body.title, 200), sanitize(body.content, 2000)).run();
+    await logAdmin(env, adminId, '发送站内信', '发给用户 #' + target.id);
     return new Response(JSON.stringify({ ok: true }));
   }
 
@@ -58,13 +59,24 @@ export async function onRequestPost(context) {
     if (target.id === adminId) return new Response(JSON.stringify({ error: '不能删除自己' }), { status: 400 });
     if (target.is_admin) return new Response(JSON.stringify({ error: '请先取消该用户的管理员身份' }), { status: 400 });
     await deleteUser(env, target.id);
+    await logAdmin(env, adminId, '删除用户', '删除用户 #' + target.id);
     return new Response(JSON.stringify({ ok: true }));
   }
 
-  // 封禁/解禁
+  // 封禁/解禁：支持限期（days）与永久
   if (body.action === 'ban' || body.action === 'unban') {
-    const banned = body.action === 'ban' ? 1 : 0;
-    await env.DB.prepare('UPDATE users SET banned = ? WHERE id = ? AND is_admin = 0').bind(banned, body.userId).run();
+    if (body.action === 'unban') {
+      await env.DB.prepare('UPDATE users SET banned = 0, ban_until = NULL WHERE id = ? AND is_admin = 0').bind(body.userId).run();
+      await logAdmin(env, adminId, '解封用户', '解封用户 #' + body.userId);
+      return new Response(JSON.stringify({ ok: true }));
+    }
+    try { await env.DB.exec("ALTER TABLE users ADD COLUMN ban_until TEXT DEFAULT ''"); } catch(e) {}
+    const days = parseInt(body.days) || 0;
+    const until = days > 0
+      ? new Date(Date.now() + days * 86400000).toISOString().slice(0, 19).replace('T', ' ')
+      : '';
+    await env.DB.prepare('UPDATE users SET banned = ?, ban_until = ? WHERE id = ? AND is_admin = 0').bind(days > 0 ? 1 : 1, until, body.userId).run();
+    await logAdmin(env, adminId, '封禁用户', '封禁用户 #' + body.userId + (days > 0 ? '，限期 ' + days + ' 天' : '（永久）'));
     return new Response(JSON.stringify({ ok: true }));
   }
 
@@ -76,6 +88,7 @@ export async function onRequestPost(context) {
   try {
     await env.DB.prepare('UPDATE users SET points = points + ? WHERE id = ?').bind(pts, userId).run();
     await env.DB.prepare('INSERT INTO points_log (user_id, amount, reason) VALUES (?, ?, ?)').bind(userId, pts, reason || '站长手动调整').run();
+    await logAdmin(env, adminId, '调整积分', '用户 #' + userId + ' ' + (pts >= 0 ? '+' : '') + pts + ' 分');
   } catch (e) {
     console.error('adjust points error', e);
     return new Response(JSON.stringify({ error: '服务器内部错误' }), { status: 500 });

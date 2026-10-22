@@ -25,8 +25,8 @@ export async function onRequestPost(context) {
   const { userId } = JSON.parse(session);
 
   // 封禁检查
-  const bannedUser = await env.DB.prepare('SELECT banned FROM users WHERE id = ?').bind(userId).first();
-  if (bannedUser && bannedUser.banned) return new Response(JSON.stringify({ error: '账号已被封禁' }), { status: 403 });
+  const banErr = await checkBanned(env, userId);
+  if (banErr) return new Response(JSON.stringify({ error: banErr }), { status: 403 });
 
   const { itemName } = await request.json();
   const costNum = getPrice(itemName);

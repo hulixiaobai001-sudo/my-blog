@@ -1,6 +1,4 @@
-import { sanitize } from '../_lib.js';
-
-const sensitiveWords = ['色情', '赌博', '毒品', '枪支', '暴力', '诈骗', '黑客', '刷单', '代孕', '迷药'];
+import { sanitize, getSensitiveWords, checkBanned, sendSystemMessage, getSiteSettings } from '../_lib.js';
 
 // 确保表结构齐全（兼容旧表）
 async function ensureTable(env) {
@@ -19,9 +17,13 @@ export async function onRequestPost(context) {
   const { userId } = JSON.parse(session);
   const user = await env.DB.prepare('SELECT username, banned FROM users WHERE id = ?').bind(userId).first();
   if (!user) return new Response(JSON.stringify({ error: '用户不存在' }), { status: 403 });
-  if (user.banned) return new Response(JSON.stringify({ error: '账号已被封禁' }), { status: 403 });
+  const banErr = await checkBanned(env, userId);
+  if (banErr) return new Response(JSON.stringify({ error: banErr }), { status: 403 });
 
   await ensureTable(env);
+
+  const settings = await getSiteSettings(env);
+  if (settings.guestbook_open !== '1') return new Response(JSON.stringify({ error: '留言墙暂未开放' }), { status: 403 });
 
   const body = await request.json();
   const content = sanitize(body.content, 500).trim();
@@ -40,6 +42,7 @@ export async function onRequestPost(context) {
 
   // 审核规则：匿名留言一律待审核；带图或含敏感词也待审核；普通文字直接显示
   let status = 'approved';
+  const sensitiveWords = await getSensitiveWords(env);
   const hitWord = sensitiveWords.find(w => content.includes(w));
   if (isAnonymous || hitWord || imageUrl) status = 'pending';
 
@@ -48,6 +51,14 @@ export async function onRequestPost(context) {
       .bind(userId, content, imageUrl, status, isAnonymous, replyTo).run();
   } catch (e) {
     return new Response(JSON.stringify({ error: '发布失败，请重试' }), { status: 500 });
+  }
+
+  // 楼中楼回复：给被回复者发系统通知（不通知自己）
+  if (replyTo) {
+    const target = await env.DB.prepare('SELECT user_id FROM guestbook WHERE id = ?').bind(replyTo).first();
+    if (target && target.user_id !== userId) {
+      await sendSystemMessage(env, target.user_id, '你的留言被回复了', '有人在留言墙回复了你的留言，点击查看：' + content.slice(0, 80));
+    }
   }
 
   return new Response(JSON.stringify({ ok: true, status: status }));

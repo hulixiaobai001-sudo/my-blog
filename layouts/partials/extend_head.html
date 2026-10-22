@@ -730,5 +730,79 @@ document.addEventListener('DOMContentLoaded', async function() {
   } catch(e) {}
 });
 </script>
+
+<script>
+// 全站文章搜索 + 未登录引导条
+(function() {
+  function esc(str) { return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  // 搜索层
+  var sBtn = document.createElement('button');
+  sBtn.id = 'site-search-btn';
+  sBtn.textContent = '搜索';
+  sBtn.style.cssText = 'position:fixed;right:16px;bottom:62px;z-index:980;padding:10px 16px;border-radius:20px;border:1px solid rgba(255,255,255,.3);background:rgba(0,0,0,.45);color:#fff;cursor:pointer;font-size:13px;backdrop-filter:blur(8px);';
+  document.body.appendChild(sBtn);
+
+  var mask = document.createElement('div');
+  mask.id = 'site-search-mask';
+  mask.style.cssText = 'display:none;position:fixed;inset:0;z-index:990;background:rgba(0,0,0,.72);backdrop-filter:blur(8px);padding:60px 20px;overflow-y:auto;';
+  mask.innerHTML =
+    '<div style="max-width:560px;margin:0 auto;">' +
+    '<input id="site-search-input" type="search" placeholder="搜索文章标题或内容..." style="width:100%;padding:14px 16px;border-radius:14px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;font-size:15px;box-sizing:border-box;outline:none;">' +
+    '<div id="site-search-results" style="margin-top:14px;"></div>' +
+    '</div>';
+  document.body.appendChild(mask);
+
+  var postCache = null;
+  function loadPosts() {
+    if (postCache) return Promise.resolve(postCache);
+    return fetch('/index.json').then(function(r) { return r.json(); }).then(function(d) { postCache = d || []; return postCache; }).catch(function() { postCache = []; return postCache; });
+  }
+  function doSearch() {
+    var q = document.getElementById('site-search-input').value.trim().toLowerCase();
+    var box = document.getElementById('site-search-results');
+    loadPosts().then(function(posts) {
+      if (!q) { box.innerHTML = '<div style="color:#888;font-size:13px;text-align:center;padding:20px;">输入关键词搜索全站文章</div>'; return; }
+      var hits = posts.filter(function(p) {
+        return (p.title || '').toLowerCase().includes(q) || (p.summary || '').toLowerCase().includes(q) || (p.content || '').toLowerCase().includes(q);
+      }).slice(0, 20);
+      if (!hits.length) { box.innerHTML = '<div style="color:#888;font-size:13px;text-align:center;padding:20px;">没有找到相关文章</div>'; return; }
+      box.innerHTML = hits.map(function(p) {
+        return '<a href="' + esc(p.permalink) + '" style="display:block;padding:12px 14px;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#fff;text-decoration:none;margin-bottom:8px;">' +
+          '<div style="font-size:15px;font-weight:600;">' + esc(p.title) + '</div>' +
+          '<div style="font-size:12px;color:#999;margin-top:4px;">' + esc(p.summary.replace(/<[^>]*>/g,'').slice(0,80)) + '</div></a>';
+      }).join('');
+    });
+  }
+  sBtn.onclick = function() { mask.style.display = 'block'; setTimeout(function() { document.getElementById('site-search-input').focus(); }, 50); };
+  mask.onclick = function(e) { if (e.target === mask) mask.style.display = 'none'; };
+  document.addEventListener('keydown', function(e) { if (e.key === 'Escape') mask.style.display = 'none'; });
+  document.addEventListener('DOMContentLoaded', function() {
+    var inp = document.getElementById('site-search-input');
+    if (inp) inp.addEventListener('input', doSearch);
+  });
+
+  // 维护模式横幅
+  fetch('/api/site-settings').then(function(r) { return r.json(); }).then(function(st) {
+    if (st && st.maintenance_mode) {
+      var bar = document.createElement('div');
+      bar.textContent = '站点维护中，部分功能可能暂时不可用';
+      bar.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;padding:10px;text-align:center;background:#e67e22;color:#fff;font-size:13px;';
+      document.body.appendChild(bar);
+    }
+  }).catch(function() {});
+
+  // 未登录引导条（登录后不显示）
+  fetch('/api/auth/me').then(function(r) { return r.json(); }).then(function(d) {
+    if (d.user) return;
+    var bar = document.createElement('div');
+    bar.id = 'login-hint-bar';
+    bar.style.cssText = 'position:fixed;left:12px;right:12px;bottom:12px;z-index:970;max-width:520px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;border-radius:14px;background:rgba(20,20,40,.88);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(10px);color:#fff;font-size:13px;box-shadow:0 6px 24px rgba(0,0,0,.35);';
+    bar.innerHTML = '<span style="opacity:.92;">登录后可返图、留言、扩列、发工单</span><a href="/login/" style="flex-shrink:0;padding:8px 16px;border-radius:10px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;text-decoration:none;font-size:13px;">登录 / 注册</a>';
+    document.body.appendChild(bar);
+    setTimeout(function() { try { bar.style.transition = 'opacity .6s'; bar.style.opacity = '0'; setTimeout(function(){ bar.remove(); }, 600); } catch(e) {} }, 8000);
+  }).catch(function() {});
+})();
+</script>
 <script src="/js/smooth-nav.js"></script>
 {{ end }}

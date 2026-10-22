@@ -11,8 +11,8 @@ export async function onRequestPost(context) {
   const { userId } = JSON.parse(session);
 
   // 封禁检查
-  const bannedUser = await env.DB.prepare('SELECT banned FROM users WHERE id = ?').bind(userId).first();
-  if (bannedUser && bannedUser.banned) return new Response(JSON.stringify({ error: '账号已被封禁' }), { status: 403 });
+  const banErr = await checkBanned(env, userId);
+  if (banErr) return new Response(JSON.stringify({ error: banErr }), { status: 403 });
 
   // 频率限制：每天3次
   const today = new Date().toISOString().slice(0, 10);

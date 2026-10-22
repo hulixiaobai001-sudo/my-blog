@@ -66,6 +66,7 @@
 <body>
   <div class="card">
     <div class="avatar"><img src="/images/avatar.jpg" alt="白沁"></div>
+    <div class="login-line" id="login-line" style="min-height:24px;font-size:14px;opacity:.9;margin-bottom:8px;"></div>
     <div class="typing"><span id="text"></span><span class="cursor"></span></div>
     <div class="btns" style="margin-top:30px;">
       <a href="/blog">博客</a>
@@ -74,10 +75,12 @@
       <a href="/gallery">返图墙</a>
       <a href="/expand">扩列墙</a>
       <a href="/tickets">工单</a>
+      <a href="javascript:void(0)" onclick="randomExplore()" style="grid-column:span 2;background:linear-gradient(135deg,#667eea,#764ba2);">随机逛逛</a>
     </div>
     <div class="foot">© 2026 白沁 BA3PKZ · Powered by Hugo & Cloudflare<br>全站浏览量：<span id="views">...</span></div>
   </div>
   <script>
+    function escapeHtml(str) { return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
     const hour = new Date().getHours();
     let msg;
     if (hour >= 6 && hour < 12) msg = "早上好！我是白沁，欢迎光临！";
@@ -91,6 +94,48 @@
     }
     type();
     fetch('/api/stats/views').then(r => r.json()).then(d => { document.getElementById('views').textContent = d.views; });
+
+    // 登录态显示 + 未登录引导
+    fetch('/api/auth/me').then(r => r.json()).then(d => {
+      const line = document.getElementById('login-line');
+      if (d.user) {
+        line.innerHTML = '<a href="/me/" style="color:#fff;text-decoration:none;">欢迎回来，' + escapeHtml(d.user.username) + ' · LV' + (d.user.level || 1) + ' · ' + (d.user.points || 0) + ' 分</a>';
+      } else {
+        line.innerHTML = '<a href="/login" style="color:#fff;text-decoration:none;">登录</a> <span style="opacity:.7">/</span> <a href="/login" style="color:#fff;text-decoration:none;">注册</a> <span style="opacity:.6;margin-left:6px;">登录后可返图、留言、扩列</span>';
+      }
+    });
+
+    // 随机逛逛：返图或文章
+    window.randomExplore = async function() {
+      if (Math.random() < 0.5) {
+        const r = await fetch('/api/report/random').then(r => r.json());
+        if (r.found) { location.href = '/gallery?id=' + r.id; return; }
+      }
+      try {
+        const xml = await fetch('/sitemap.xml').then(r => r.text());
+        const urls = [...xml.matchAll(/<loc>([^<]*\/blog\/[^<]*)<\/loc>/g)].map(m => m[1]);
+        if (urls.length) { location.href = urls[Math.floor(Math.random() * urls.length)]; return; }
+      } catch(e) {}
+      location.href = '/blog';
+    };
+
+    // 首页 BGM（后台可配置地址，未配置不显示）
+    fetch('/api/site-settings').then(r => r.json()).then(settings => {
+      if (!settings.bgm_url) return;
+      const btn = document.createElement('button');
+      btn.textContent = '♫ 播放 BGM';
+      btn.style.cssText = 'position:fixed;right:16px;bottom:16px;z-index:999;padding:10px 16px;border-radius:20px;border:1px solid rgba(255,255,255,.3);background:rgba(0,0,0,.4);color:#fff;cursor:pointer;font-size:13px;backdrop-filter:blur(8px);';
+      document.body.appendChild(btn);
+      const audio = document.createElement('audio');
+      audio.loop = true;
+      audio.src = settings.bgm_url;
+      const saved = localStorage.getItem('bgm_playing');
+      if (saved === '1') { audio.play().catch(()=>{}); btn.textContent = '♫ 暂停 BGM'; }
+      btn.onclick = () => {
+        if (audio.paused) { audio.play().catch(()=>{}); btn.textContent = '♫ 暂停 BGM'; localStorage.setItem('bgm_playing','1'); }
+        else { audio.pause(); btn.textContent = '♫ 播放 BGM'; localStorage.setItem('bgm_playing','0'); }
+      };
+    });
 
     // 隐私政策弹窗
     fetch('/api/privacy-version').then(r => r.json()).then(data => {

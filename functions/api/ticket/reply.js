@@ -1,4 +1,4 @@
-import { sanitize } from '../../_lib.js';
+import { sanitize, logAdmin, sendSystemMessage } from '../../_lib.js';
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -44,6 +44,11 @@ export async function onRequestPost(context) {
     } else {
       await env.DB.prepare("UPDATE tickets SET reply = ?, status = 'closed', result = ?, points_adjust = ?, reviewer_id = ?, archive_no = ?, updated_at = datetime('now') WHERE id = ?")
         .bind(cleanReply, resultVal, pts, userId, archiveNo, id).run();
+    }
+    const resultLabel = resultVal === 'fixed' ? '已处理' : (resultVal === 'useful' ? '建议采纳' : (resultVal === 'malicious' ? '恶意工单' : '无需处理'));
+    if (!wasClosed) {
+      await logAdmin(env, userId, '处理工单', '关闭工单 #' + id + '（' + resultLabel + '，积分 ' + (pts >= 0 ? '+' : '') + pts + '）');
+      await sendSystemMessage(env, ticket.user_id, '工单已处理', '你的工单「' + sanitize(ticket.title, 60) + '」已处理完成（' + resultLabel + '，积分调整 ' + (pts >= 0 ? '+' : '') + pts + '），档案编号 ' + archiveNo);
     }
     return new Response(JSON.stringify({ ok: true, points_adjust: wasClosed ? (ticket.points_adjust || 0) : pts }));
   } else {

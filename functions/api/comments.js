@@ -1,4 +1,4 @@
-import { sanitize } from '../_lib.js';
+import { sanitize, checkBanned } from '../_lib.js';
 
 export async function onRequestGet(context) {
   const { request, env } = context;
@@ -28,7 +28,8 @@ export async function onRequestPost(context) {
   // 封禁用户禁止评论
   const me = await env.DB.prepare('SELECT banned FROM users WHERE id = ?').bind(userId).first();
   if (!me) return new Response(JSON.stringify({ error: '用户不存在' }), { status: 403 });
-  if (me.banned) return new Response(JSON.stringify({ error: '账号已被封禁' }), { status: 403 });
+  const banErr = await checkBanned(env, userId);
+  if (banErr) return new Response(JSON.stringify({ error: banErr }), { status: 403 });
 
   // 频率限制：1分钟1条
   const rateKey = `rate:comment:${userId}`;

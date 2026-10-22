@@ -192,7 +192,7 @@ async function loadGallery() {
   const me = await fetch('/api/auth/me');
   const meData = await me.json();
   isAdmin = !!(meData.user && meData.user.is_admin);
-  const meId = meData.user ? meData.user.id : 0;
+  window.meId = meData.user ? meData.user.id : 0;
   if (meData.user) {
     document.getElementById('points-badge').textContent = '我的积分：' + (meData.user.points || 0) + ' 分';
   } else {
@@ -234,12 +234,33 @@ async function loadGallery() {
         <div class="who">@${escapeHtml(s.username)}</div>
         <div class="what">${escapeHtml(s.caption || '')}</div>
         <div class="when">${fmtTime(s.created_at)}</div>
+        <button onclick="event.stopPropagation();toggleLike(${s.id}, this)" style="margin-top:8px;padding:6px 12px;border-radius:8px;border:1px solid ${s.liked ? '#f06292' : 'rgba(255,255,255,.25)'};background:${s.liked ? 'rgba(240,98,146,.25)' : 'rgba(255,255,255,.06)'};color:#fff;cursor:pointer;font-size:12px;">${s.liked ? '♥ 已赞' : '♡ 赞'} ${s.likes || 0}</button>
       </div>
     </div>
   `).join('');
   dots.innerHTML = slides.map((_, i) => `<div class="dot ${i === 0 ? 'active' : ''}" data-i="${i}"></div>`).join('');
   dots.querySelectorAll('.dot').forEach(d => d.onclick = () => goTo(parseInt(d.dataset.i)));
-  setInterval(next, 4000);
+  // 随机逛逛定位：?id=N 直接跳到对应返图
+  const qid = parseInt(new URLSearchParams(location.search).get('id'));
+  if (qid) {
+    const idx = slides.findIndex(s => s.id === qid);
+    if (idx >= 0) goTo(idx);
+  } else {
+    setInterval(next, 4000);
+  }
+}
+
+async function toggleLike(id, btn) {
+  if (!window.meId) { alert('请先登录再点赞'); return; }
+  const res = await fetch('/api/report/like', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id }) });
+  const data = await res.json();
+  if (data.ok) {
+    btn.innerHTML = data.liked ? '♥ 已赞 ' + data.likes : '♡ 赞 ' + data.likes;
+    btn.style.borderColor = data.liked ? '#f06292' : 'rgba(255,255,255,.25)';
+    btn.style.background = data.liked ? 'rgba(240,98,146,.25)' : 'rgba(255,255,255,.06)';
+  } else {
+    alert(data.error || '操作失败');
+  }
 }
 
 async function delReport(id) {

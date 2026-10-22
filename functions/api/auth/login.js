@@ -1,4 +1,4 @@
-import { randomToken } from '../../_lib.js';
+import { randomToken, checkBanned, getSiteSettings } from '../../_lib.js';
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -18,8 +18,10 @@ export async function onRequestPost(context) {
       await env.AUTH_KV.put(failKey, String(fails + 1), { expirationTtl: 900 });
       return new Response(JSON.stringify({ error: '用户名或密码错误' }), { status: 401 });
     }
-    if (user.banned) {
-      return new Response(JSON.stringify({ error: '账号已被封禁或已注销' }), { status: 403 });
+    // 限期封禁/永久封禁统一检查（到期自动解封）
+    const banErr = await checkBanned(env, user.id);
+    if (banErr) {
+      return new Response(JSON.stringify({ error: banErr }), { status: 403 });
     }
 
     const hash = await sha256(password);

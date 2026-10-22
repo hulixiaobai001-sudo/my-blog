@@ -1,8 +1,12 @@
-import { randomToken } from '../../_lib.js';
+import { randomToken, getSiteSettings } from '../../_lib.js';
 
 export async function onRequestPost(context) {
   const { request, env } = context;
   try {
+    const settings = await getSiteSettings(env);
+    if (settings.registration_open !== '1') {
+      return new Response(JSON.stringify({ error: '注册通道暂未开放' }), { status: 403 });
+    }
     const { username, password, qq } = await request.json();
 
     if (!username || !password || username.length < 2 || password.length < 6) {

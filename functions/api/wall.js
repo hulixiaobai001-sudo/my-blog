@@ -1,4 +1,4 @@
-import { sanitize } from '../_lib.js';
+import { sanitize, checkBanned } from '../_lib.js';
 
 export async function onRequestGet(context) {
   const { request, env } = context;
@@ -27,7 +27,8 @@ export async function onRequestPost(context) {
   const { userId } = JSON.parse(session);
   const user = await env.DB.prepare('SELECT username, banned FROM users WHERE id = ?').bind(userId).first();
   if (!user) return new Response(JSON.stringify({ error: '用户不存在' }), { status: 400 });
-  if (user.banned) return new Response(JSON.stringify({ error: '账号已被封禁' }), { status: 403 });
+  const banErr = await checkBanned(env, userId);
+  if (banErr) return new Response(JSON.stringify({ error: banErr }), { status: 403 });
 
   // 频率限制：30秒1条
   const rateKey = `rate:wall:${userId}`;

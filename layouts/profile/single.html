@@ -1,26 +1,62 @@
 {{ define "main" }}
 <style>
   .profile-wrap { max-width: 600px; margin: 20px auto; padding: 0 20px; position: relative; z-index: 1; }
-  .points-card {
+  .profile-card {
     background: rgba(255,255,255,.06); backdrop-filter: blur(20px);
     border: 1px solid rgba(255,255,255,.12); border-radius: 20px;
-    padding: 30px; text-align: center; margin-bottom: 20px;
+    padding: 30px 26px; text-align: center; margin-bottom: 20px;
   }
+  .profile-card .avatar {
+    width: 84px; height: 84px; border-radius: 50%; object-fit: cover;
+    border: 2px solid rgba(255,255,255,.35); margin: 0 auto 12px; display: block;
+    background: rgba(255,255,255,.1);
+  }
+  .profile-card .name { color: #fff; font-size: 22px; font-weight: 700; }
+  .level-badge {
+    display: inline-block; margin: 8px 4px 0; padding: 4px 12px; border-radius: 20px;
+    font-size: 12px; color: #fff;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+  }
+  .points-row { color: #f0ad4e; font-size: 15px; margin-top: 10px; }
+  .progress-wrap { margin-top: 16px; text-align: left; }
+  .progress-bar { height: 8px; border-radius: 6px; background: rgba(255,255,255,.12); overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 6px; background: linear-gradient(90deg, #667eea, #764ba2); transition: width .4s; }
+  .progress-text { color: #999; font-size: 12px; margin-top: 6px; text-align: center; }
+  .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 18px 0 4px; }
+  .stat-box { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); border-radius: 12px; padding: 10px 4px; }
+  .stat-box .num { color: #fff; font-size: 18px; font-weight: 700; }
+  .stat-box .label { color: #888; font-size: 11px; margin-top: 4px; }
+  .points-card { background: rgba(255,255,255,.06); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,.12); border-radius: 20px; padding: 30px; text-align: center; margin-bottom: 20px; }
   .points-card .label { color: #888; font-size: 14px; }
   .points-card .num { color: #f0ad4e; font-size: 48px; font-weight: 700; margin: 10px 0; }
   .log-list { display: flex; flex-direction: column; gap: 10px; }
-  .log-item {
-    background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08);
-    border-radius: 12px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center;
-  }
+  .log-item { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); border-radius: 12px; padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; }
   .log-item .reason { color: #ddd; font-size: 13px; }
   .log-item .time { color: #888; font-size: 11px; margin-top: 4px; }
   .log-item .amount-pos { color: #2ecc71; font-size: 18px; font-weight: 600; }
   .log-item .amount-neg { color: #e74c3c; font-size: 18px; font-weight: 600; }
   .empty { color: #666; text-align: center; padding: 30px 0; font-size: 13px; }
+  @media (max-width: 480px) { .stats-grid { grid-template-columns: repeat(3, 1fr); } }
 </style>
 
 <div class="profile-wrap">
+  <div class="profile-card">
+    <img class="avatar" id="p-avatar" alt="头像">
+    <div class="name" id="p-name">--</div>
+    <div><span class="level-badge" id="p-level">LV-</span></div>
+    <div class="points-row">积分：<b id="p-points">--</b></div>
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="p-progress" style="width:0%;"></div></div>
+      <div class="progress-text" id="p-progress-text">--</div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-box"><div class="num" id="s-reports">-</div><div class="label">返图</div></div>
+      <div class="stat-box"><div class="num" id="s-guest">-</div><div class="label">留言</div></div>
+      <div class="stat-box"><div class="num" id="s-tickets">-</div><div class="label">工单</div></div>
+      <div class="stat-box"><div class="num" id="s-likes">-</div><div class="label">获赞</div></div>
+      <div class="stat-box"><div class="num" id="s-days">-</div><div class="label">天数</div></div>
+    </div>
+  </div>
   <div class="points-card">
     <div class="label">当前总积分</div>
     <div class="num" id="total-points">--</div>
@@ -34,15 +70,31 @@
 
 <script>
 (async () => {
-  const res = await fetch('/api/points/log');
+  const res = await fetch('/api/profile/stats');
   const data = await res.json();
   if (data.error) { document.getElementById('log-list').innerHTML = '<p class="empty">请先登录</p>'; return; }
+
+  document.getElementById('p-name').textContent = data.username;
+  document.getElementById('p-avatar').src = data.avatar || '/images/avatar.jpg';
+  document.getElementById('p-level').textContent = 'LV' + data.level;
+  document.getElementById('p-points').textContent = data.points;
+  document.getElementById('p-progress').style.width = (data.progress || 0) + '%';
+  document.getElementById('p-progress-text').textContent =
+    data.level >= 5 ? '已满级' : ('距 LV' + (data.level + 1) + ' 还差 ' + (data.next_level_points - data.points) + ' 分（' + data.progress + '%）');
+  document.getElementById('s-reports').textContent = data.reports;
+  document.getElementById('s-guest').textContent = data.guestbooks;
+  document.getElementById('s-tickets').textContent = data.tickets;
+  document.getElementById('s-likes').textContent = data.likes_received;
+  document.getElementById('s-days').textContent = data.reg_days;
   document.getElementById('total-points').textContent = data.points;
-  if (!data.logs || data.logs.length === 0) {
+
+  const pl = await fetch('/api/points/log');
+  const pd = await pl.json();
+  if (!pd.logs || pd.logs.length === 0) {
     document.getElementById('log-list').innerHTML = '<p class="empty">还没有积分记录</p>';
     return;
   }
-  document.getElementById('log-list').innerHTML = data.logs.map(l => `
+  document.getElementById('log-list').innerHTML = pd.logs.map(l => `
     <div class="log-item">
       <div>
         <div class="reason">${escapeHtml(l.reason)}</div>
