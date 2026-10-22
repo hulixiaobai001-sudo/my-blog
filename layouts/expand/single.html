@@ -1,29 +1,34 @@
 {{ define "main" }}
 <style>
-  .expand-wrap { max-width: 800px; margin: 20px auto; padding: 0 20px; position: relative; z-index: 1; }
+  .expand-wrap { max-width: 860px; margin: 20px auto; padding: 0 20px; position: relative; z-index: 1; }
   .expand-wrap h1 { color: #fff; font-size: 24px; margin: 20px 0 8px; text-align: center; }
   .expand-wrap .sub { color: #888; text-align: center; font-size: 13px; margin-bottom: 24px; }
-  .expand-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
-  .user-card { background: rgba(255,255,255,.06); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,.1); border-radius: 16px; padding: 20px; text-align: center; }
-  .user-card .avatar { width: 60px; height: 60px; border-radius: 50%; margin: 0 auto 10px; background: linear-gradient(135deg,#667eea,#764ba2); display: flex; align-items: center; justify-content: center; font-size: 24px; color: #fff; }
+  .expand-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  .user-card { background: rgba(255,255,255,.06); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,.1); border-radius: 16px; padding: 18px 16px; text-align: center; display: flex; flex-direction: column; align-items: center; }
+  .user-card .avatar { width: 52px; height: 52px; border-radius: 50%; margin: 0 auto 10px; background: linear-gradient(135deg,#667eea,#764ba2); display: flex; align-items: center; justify-content: center; font-size: 22px; color: #fff; flex-shrink: 0; }
   .user-card .avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
-  .user-card .name { color: #fff; font-size: 15px; margin-bottom: 6px; }
-  .user-card .bio { color: #999; font-size: 12px; margin-bottom: 14px; min-height: 32px; }
-  .add-btn { display: block; padding: 8px 16px; border-radius: 10px; background: rgba(102,126,234,.2); border: 1px solid rgba(102,126,234,.3); color: #8ab4ff; text-decoration: none; font-size: 13px; transition: background .2s; margin-bottom: 8px; }
-  .add-btn:hover { background: rgba(102,126,234,.3); }
-  .msg-btn { display: block; padding: 8px 16px; border-radius: 10px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.15); color: #aaa; font-size: 13px; cursor: pointer; transition: background .2s; }
+  .user-card .name { color: #fff; font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .user-card .bio { color: #999; font-size: 12px; line-height: 1.5; margin-bottom: 14px; min-height: 36px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .expand-btn { display: block; width: 100%; padding: 10px 16px; border-radius: 10px; background: linear-gradient(135deg,#667eea,#764ba2); border: none; color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity .2s, transform .1s; }
+  .expand-btn:hover { opacity: .85; }
+  .expand-btn:active { transform: scale(.97); }
+  .msg-btn { display: block; width: 100%; margin-top: 8px; padding: 7px 16px; border-radius: 10px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.15); color: #999; font-size: 12px; cursor: pointer; transition: background .2s; }
   .msg-btn:hover { background: rgba(255,255,255,.1); color: #fff; }
   .empty { color: #666; text-align: center; padding: 40px 0; }
   .load-more-btn { display: block; width: 100%; padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,.15); background: rgba(255,255,255,.05); color: #aaa; font-size: 14px; cursor: pointer; margin-top: 16px; transition: all .2s; grid-column: 1 / -1; }
   .load-more-btn:hover { background: rgba(255,255,255,.1); color: #fff; }
   .load-more-btn:disabled { opacity: .5; cursor: not-allowed; }
+  @media (max-width: 480px) {
+    .expand-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .user-card { padding: 14px 10px; }
+    .expand-btn { padding: 9px 8px; font-size: 13px; }
+  }
 </style>
 
 <div class="expand-wrap">
   <h1>扩列墙</h1>
-  <p class="sub">点击卡片发起QQ加好友，不展示QQ号</p>
+  <p class="sub">点击扩列即加QQ好友，不展示QQ号</p>
   <div class="expand-grid" id="grid">
-    <div class="skeleton-card" style="height:160px;"></div>
     <div class="skeleton-card" style="height:160px;"></div>
     <div class="skeleton-card" style="height:160px;"></div>
   </div>
@@ -49,7 +54,7 @@ var expandLoggedIn = false;
 
 function renderExpandSkeleton() {
   var html = '';
-  for (var i = 0; i < 6; i++) {
+  for (var i = 0; i < 4; i++) {
     html += '<div class="user-card" style="opacity:.5;"><div class="skeleton skeleton-avatar" style="margin:0 auto 10px;"></div><div class="skeleton skeleton-line" style="width:60%;margin:0 auto 8px;"></div><div class="skeleton skeleton-line" style="width:80%;margin:0 auto;"></div></div>';
   }
   return html;
@@ -76,7 +81,7 @@ async function loadExpand() {
         '<div class="avatar">' + (u.avatar ? '<img src="' + escapeHtml(u.avatar) + '" onerror="this.style.display=\'none\'">' : escapeHtml(u.username).charAt(0).toUpperCase()) + '</div>' +
         '<div class="name">' + escapeHtml(u.username) + '</div>' +
         '<div class="bio">' + escapeHtml(u.bio) || '这个人很懒，什么都没写' + '</div>' +
-        '<a class="add-btn" href="mqqapi://card/show_pslcard?src_type=internal&version=1&uin=' + escapeHtml(u.qq) + '" target="_blank">加好友</a>' +
+        '<button class="expand-btn" onclick="expandAction(' + u.id + ',\'' + escapeHtml(u.qq) + '\')">扩列</button>' +
         msgBtn +
       '</div>';
     }).join('');
@@ -106,6 +111,18 @@ async function loadExpand() {
   }
   expandLoading = false;
 }
+
+// 扩列：注册用户无限制；游客限制 1 个
+function expandAction(userId, qq) {
+  if (!expandLoggedIn) {
+    var c = parseInt(localStorage.getItem('expand_count') || '0');
+    if (c >= 1) { showToast('游客仅可扩列1位，登录后无限制', 'warning'); return; }
+    localStorage.setItem('expand_count', String(c + 1));
+  }
+  window.open('mqqapi://card/show_pslcard?src_type=internal&version=1&uin=' + encodeURIComponent(qq), '_blank');
+}
+
+window.expandAction = expandAction;
 
 async function sendExpandMsg(userId, username) {
   if (!expandLoggedIn) { showToast('请先登录', 'warning'); return; }
