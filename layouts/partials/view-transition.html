@@ -1,14 +1,17 @@
 <style>
-/* 跨文档视图过渡：支持时导航不整页刷新（淡入淡出），不支持则正常刷新，属渐进增强 */
+/* 跨文档视图过渡：支持时导航不整页刷新（带质感转场），不支持则正常刷新，属渐进增强 */
 @view-transition {
   navigation: auto;
 }
 @keyframes vt-old-out {
-  to { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 0; transform: translateY(-10px) scale(.985); filter: brightness(.9); }
 }
 @keyframes vt-new-in {
-  from { opacity: 0; transform: translateY(6px); }
+  from { opacity: 0; transform: translateY(16px) scale(.99); }
 }
-::view-transition-old(root) { animation: vt-old-out .18s ease both; }
-::view-transition-new(root) { animation: vt-new-in .22s ease both; }
+::view-transition-old(root) { animation: vt-old-out .22s ease both; }
+::view-transition-new(root) { animation: vt-new-in .3s cubic-bezier(.22,1,.36,1) both; }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
+}
 </style>
