@@ -3,6 +3,19 @@
   .report-wrap { max-width: 600px; margin: 20px auto; padding: 0 20px; }
   .report-card { background: rgba(255,255,255,.1); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,.15); border-radius: 16px; padding: 24px; }
   .report-card h1 { color: #fff; font-size: 22px; margin: 0 0 16px; }
+  .board { margin-bottom: 24px; background: rgba(255,255,255,.06); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,.12); border-radius: 16px; padding: 16px 20px; }
+  .board h2 { color: #fff; font-size: 17px; margin: 0 0 4px; }
+  .board .sub { color: #999; font-size: 12px; margin-bottom: 12px; }
+  .board-item { display: flex; align-items: center; gap: 12px; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,.06); font-size: 14px; }
+  .board-item:last-child { border-bottom: none; }
+  .board-item .rank { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; flex-shrink: 0; }
+  .rank-1 { background: linear-gradient(135deg,#f6d365,#fda085); color: #7a4a00; }
+  .rank-2 { background: linear-gradient(135deg,#cfd9df,#e2ebf0); color: #4a5a66; }
+  .rank-3 { background: linear-gradient(135deg,#e0a36a,#d68956); color: #5b3a1a; }
+  .rank-n { background: rgba(255,255,255,.12); color: #bbb; }
+  .board-item .uname { color: #fff; flex: 1; }
+  .board-item .cnt { color: #8ab4ff; font-size: 13px; }
+  .board-empty { color: #888; font-size: 13px; padding: 8px 0; }
   .report-card input[type=text], .report-card textarea { width: 100%; padding: 10px 12px; margin: 8px 0; border: 1px solid rgba(255,255,255,.2); border-radius: 10px; background: rgba(255,255,255,.1); color: #fff; font-size: 14px; box-sizing: border-box; }
   .report-card textarea { min-height: 60px; resize: vertical; }
   .report-card input::placeholder, .report-card textarea::placeholder { color: rgba(255,255,255,.5); }
@@ -20,6 +33,11 @@
 </style>
 
 <div class="report-wrap">
+  <div class="board">
+    <h2>返图贡献榜</h2>
+    <div class="sub">已通过返图数量排行 · 感谢每一位创作者</div>
+    <div id="board-list"><div class="board-empty">加载中...</div></div>
+  </div>
   <div class="report-card">
     <h1>上传返图</h1>
     <input type="file" id="file" accept="image/*" onchange="compressImg(this)" />
@@ -86,6 +104,7 @@ async function loadList() {
   `).join('');
 }
 
+loadBoard();
 loadList();
 </script>
 {{ end }}
