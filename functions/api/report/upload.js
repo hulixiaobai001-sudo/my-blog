@@ -1,4 +1,4 @@
-import { sanitize, checkBanned, addActivity } from '../_lib.js';
+import { sanitize, checkBanned, addActivity } from '../../_lib.js';
 
 export async function onRequestPost(context) {
   const { request, env } = context;

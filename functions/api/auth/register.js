@@ -7,7 +7,7 @@ export async function onRequestPost(context) {
     if (settings.registration_open !== '1') {
       return new Response(JSON.stringify({ error: '注册通道暂未开放' }), { status: 403 });
     }
-    const { username, password, qq, agree, phone, sms_code } = await request.json();
+    const { username, password, qq, agree, phone, sms_code, captcha_token, captcha_answer } = await request.json();
 
     if (!username || !password || username.length < 2 || password.length < 6) {
       return new Response(JSON.stringify({ error: '用户名至少2字符，密码至少6位' }), { status: 400 });
@@ -16,7 +16,16 @@ export async function onRequestPost(context) {
     if (!agree) {
       return new Response(JSON.stringify({ error: '请先阅读并同意用户协议与隐私政策' }), { status: 400 });
     }
-    // 短信验证码：开启 SMS_ENABLED 时必填手机号+验证码；填了手机号则必须通过验证
+    // 自研图形验证码：必填（零成本防机器人）
+    if (!captcha_token || !captcha_answer) {
+      return new Response(JSON.stringify({ error: '请完成图形验证码' }), { status: 400 });
+    }
+    const savedCode = await env.AUTH_KV.get('captcha:' + captcha_token);
+    if (!savedCode || savedCode !== String(captcha_answer).trim().toUpperCase()) {
+      return new Response(JSON.stringify({ error: '验证码错误，请重试' }), { status: 400 });
+    }
+    await env.AUTH_KV.delete('captcha:' + captcha_token);
+    // 短信验证码：开启 SMS_ENABLED 时必填手机号+验证码（可选增强，默认关闭）
     const smsEnabled = env.SMS_ENABLED === '1';
     if (smsEnabled) {
       if (!phone || !sms_code) {

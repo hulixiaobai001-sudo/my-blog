@@ -28,8 +28,8 @@ export async function onRequest(context) {
       const path = url.pathname;
       const skipPrefixes = ['/api/', '/images/', '/img/', '/css/', '/js/', '/fonts/', '/favicon', '/robots.txt', '/sitemap'];
       const skipExts = ['.js', '.css', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.ico', '.woff', '.woff2', '.ttf', '.mp3', '.mp4', '.txt', '.xml', '.webmanifest'];
-      if (skipPrefixes.some(p => path.startsWith(p))) return finalize();
-      if (skipExts.some(e => path.toLowerCase().endsWith(e))) return finalize();
+      if (skipPrefixes.some(p => path.startsWith(p))) return response;
+      if (skipExts.some(e => path.toLowerCase().endsWith(e))) return response;
 
       const ip = request.headers.get('CF-Connecting-IP') || '';
       const ua = request.headers.get('User-Agent') || '';
