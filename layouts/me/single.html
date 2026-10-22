@@ -115,12 +115,12 @@ async function delMyMsg(id) {
   loadMyMsgs();
 }
 
-function levelOf(p) {
-  p = Number(p) || 0;
-  if (p >= 3000) return 5;
-  if (p >= 1000) return 4;
-  if (p >= 500) return 3;
-  if (p >= 100) return 2;
+function levelOf(a) {
+  a = Number(a) || 0;
+  if (a >= 1500) return 5;
+  if (a >= 600) return 4;
+  if (a >= 200) return 3;
+  if (a >= 50) return 2;
   return 1;
 }
 
@@ -128,7 +128,7 @@ function levelOf(p) {
   const res = await fetch('/api/me');
   const data = await res.json();
   if (data.error) { location.href = '/login/'; return; }
-  document.getElementById('my-level-badge').textContent = 'LV' + levelOf(data.points) + ' · ' + (data.points || 0) + '积分';
+  document.getElementById('my-level-badge').textContent = 'LV' + levelOf(data.activity) + ' · 活跃度 ' + (data.activity || 0) + ' · ' + (data.points || 0) + '积分';
   document.getElementById('bio').value = data.bio || '';
   document.getElementById('nickname').value = data.nickname || '';
   document.getElementById('short-name').value = data.short_name || '';

@@ -1,4 +1,5 @@
 {{ if not .IsHome }}
+{{ partial "view-transition.html" . }}
 <style>
   :root {
     --content: #e8e8e8;
@@ -268,6 +269,23 @@
   }
 </style>
 <script>
+// 轻量安全 Markdown 渲染（正文插图/标题/加粗/列表/链接/代码块），先整体转义再放行白名单标签
+window.renderMd = function(src) {
+  const esc = String(src || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  let h = esc
+    .replace(/```([\s\S]*?)```/g, '<pre style="background:rgba(0,0,0,.35);padding:12px;border-radius:10px;overflow-x:auto;font-size:13px;">$1</pre>')
+    .replace(/!\[([^\]]*)\]\((https?:\/\/[^)\s]+)\)/g, '<img src="$2" alt="$1" style="max-width:100%;border-radius:10px;margin:10px 0;" loading="lazy">')
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener" style="color:#8ab4ff;">$1</a>')
+    .replace(/^### (.*)$/gm, '<h4 style="color:#fff;margin:14px 0 6px;font-size:15px;">$1</h4>')
+    .replace(/^## (.*)$/gm, '<h3 style="color:#fff;margin:16px 0 6px;font-size:16px;">$1</h3>')
+    .replace(/^# (.*)$/gm, '<h2 style="color:#fff;margin:18px 0 8px;font-size:18px;">$1</h2>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/^[-*] (.*)$/gm, '<div style="padding-left:1em;margin:4px 0;">• $1</div>')
+    .replace(/\n/g, '<br>');
+  return h;
+};
+</script>
+<script>
 document.addEventListener('DOMContentLoaded', function() {
   const menu = document.getElementById('menu');
   if (!menu) return;
@@ -305,6 +323,7 @@ document.addEventListener('DOMContentLoaded', function() {
         '<a href="/me/">个人资料</a>' +
         '<a href="/notice/">公告</a>' +
         '<a href="/profile/">我的积分</a>' +
+        '<a href="/points-rules/">积分规则</a>' +
         '<a href="/shop/">积分商店</a>' +
         '<button id="logout-btn">退出登录</button>' +
         '</div>';

@@ -11,3 +11,4 @@ _build_check/
 
 draft_*/
 doc-fetch-resources/
+public_build/

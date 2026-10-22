@@ -1,4 +1,4 @@
-import { sanitize } from '../../_lib.js';
+import { sanitize, checkBanned, addActivity } from '../../_lib.js';
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -50,6 +50,7 @@ export async function onRequestPost(context) {
     }
   }
   await env.AUTH_KV.put(rateKey, String(todayCount + 1), { expirationTtl: 86400 * 2 });
+  await addActivity(env, userId, 2);
   return new Response(JSON.stringify({ ok: true }));
 }
 

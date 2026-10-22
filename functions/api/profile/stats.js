@@ -11,12 +11,17 @@ export async function onRequestGet(context) {
   const { userId } = JSON.parse(session);
 
   try {
-    const me = await env.DB.prepare('SELECT id, username, avatar, points, created_at, banned, ban_until FROM users WHERE id = ?').bind(userId).first();
+    await env.DB.exec("ALTER TABLE users ADD COLUMN activity INTEGER DEFAULT 0"); 
+  } catch (e) {}
+  try {
+    const me = await env.DB.prepare('SELECT id, username, avatar, points, activity, created_at, banned, ban_until FROM users WHERE id = ?').bind(userId).first();
     if (!me) return new Response(JSON.stringify({ error: '用户不存在' }), { status: 404 });
-    const level = getLevel(me.points);
-    const thresholds = [0, 100, 500, 1000, 3000];
+    const activity = me.activity || 0;
+    const level = getLevel(activity);
+    const thresholds = [0, 50, 200, 600, 1500];
     const next = level < 5 ? thresholds[level] : null;
     const prev = thresholds[level - 1];
+    const progress = next ? Math.min(100, Math.round(((activity - prev) / (next - prev)) * 100)) : 100;
 
     let reports = 0, guestbooks = 0, tickets = 0, likesReceived = 0;
     try {
@@ -40,10 +45,11 @@ export async function onRequestGet(context) {
       username: me.username,
       avatar: me.avatar,
       points: me.points || 0,
+      activity: activity,
       level: level,
       next_level_points: next,
       prev_level_points: prev,
-      progress: next ? Math.min(100, Math.round(((me.points - prev) / (next - prev)) * 100)) : 100,
+      progress: progress,
       reports: reports,
       guestbooks: guestbooks,
       tickets: tickets,

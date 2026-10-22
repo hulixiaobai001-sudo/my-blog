@@ -38,14 +38,25 @@ export function json(body, status) {
   });
 }
 
-// 社区等级：按积分划分 LV1~LV5
-export function getLevel(points) {
-  const p = Number(points) || 0;
-  if (p >= 3000) return 5;
-  if (p >= 1000) return 4;
-  if (p >= 500) return 3;
-  if (p >= 100) return 2;
+// 社区等级：按活跃度划分 LV1~LV5（与积分脱钩，积分只作货币）
+// 活跃度来源：登录+1 / 留言+2 / 回复+1 / 返图+3 / 工单+2 / 扩列+2
+export function getLevel(activity) {
+  const a = Number(activity) || 0;
+  if (a >= 1500) return 5;
+  if (a >= 600) return 4;
+  if (a >= 200) return 3;
+  if (a >= 50) return 2;
   return 1;
+}
+
+// 给用户增加活跃度（等级只看活跃度，积分不受影响）
+export async function addActivity(env, userId, n) {
+  try {
+    await env.DB.exec("ALTER TABLE users ADD COLUMN activity INTEGER DEFAULT 0");
+  } catch (e) {}
+  try {
+    await env.DB.prepare('UPDATE users SET activity = activity + ? WHERE id = ?').bind(n || 1, userId).run();
+  } catch (e) {}
 }
 
 // 统一错误日志：写入 D1 error_log 表，供监控 Cron 检查

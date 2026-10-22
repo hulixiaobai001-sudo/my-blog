@@ -115,7 +115,7 @@ async function openPost(id) {
     currentPostId = id;
     document.getElementById('modal-title').textContent = data.post.title;
     document.getElementById('modal-date').textContent = fmtTime(data.post.created_at);
-    document.getElementById('modal-body').textContent = data.post.content;
+    document.getElementById('modal-body').innerHTML = window.renderMd ? window.renderMd(data.post.content) : String(data.post.content).replace(/[<>]/g, '');
     document.getElementById('modal').classList.add('open');
     history.replaceState(null, '', '/blog/?post=' + id);
     const sr = await fetch('/api/stats/?post_id=' + id);

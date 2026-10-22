@@ -1,4 +1,4 @@
-import { randomToken, checkBanned, getSiteSettings } from '../../_lib.js';
+import { randomToken, checkBanned, getSiteSettings, addActivity } from '../../_lib.js';
 
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -37,6 +37,9 @@ export async function onRequestPost(context) {
   await env.AUTH_KV.delete(failKey);
   const token = randomToken() + randomToken();
   await env.AUTH_KV.put(`session:${token}`, JSON.stringify({ userId: user.id, isAdmin: user.is_admin }), { expirationTtl: 60 * 60 * 24 * 30 });
+
+  // 登录计入活跃度
+  await addActivity(env, user.id, 1);
 
   return new Response(JSON.stringify({ token, user: { id: user.id, username: user.username, is_admin: user.is_admin } }), {
     headers: { 'Set-Cookie': `session=${token}; Path=/; HttpOnly; Secure; Max-Age=2592000; SameSite=Lax`, 'Content-Type': 'application/json' }

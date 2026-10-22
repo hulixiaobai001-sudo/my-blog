@@ -15,71 +15,77 @@
   .pr-badge { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 11px; margin-left: 8px; }
   .pr-badge.daily { background: rgba(74,222,128,.15); color: #4ade80; }
   .pr-badge.one-time { background: rgba(138,180,255,.15); color: #8ab4ff; }
+  .lv-table { width: 100%; border-collapse: collapse; }
+  .lv-table th, .lv-table td { text-align: left; padding: 9px 4px; border-bottom: 1px solid rgba(255,255,255,.06); font-size: 13px; color: #ddd; }
+  .lv-table th { color: #999; font-weight: 600; }
 </style>
 
 <div class="pr-wrap">
-  <h1>积分规则</h1>
-  <p class="sub">了解如何赚取积分、消耗积分，以及积分兑换规则</p>
+  <h1>积分与等级规则</h1>
+  <p class="sub">等级看活跃度，积分当货币花</p>
 
   <div class="pr-card">
-    <h2>💰 赚取积分</h2>
-    <div class="pr-row">
-      <span class="name">上传返图并通过审核<span class="pr-badge one-time">每次</span></span>
-      <span class="points plus">+5 分</span>
-    </div>
-    <div class="pr-row">
-      <span class="name">每日登录<span class="pr-badge daily">每日</span></span>
-      <span class="points plus">+1 分</span>
-    </div>
-    <div class="pr-row">
-      <span class="name">留言墙发言<span class="pr-badge one-time">每次</span></span>
-      <span class="points plus">+1 分</span>
-    </div>
+    <h2>社区等级（按活跃度）</h2>
+    <table class="lv-table">
+      <tr><th>等级</th><th>活跃度</th><th>说明</th></tr>
+      <tr><td>LV1</td><td>0 起</td><td>初来乍到</td></tr>
+      <tr><td>LV2</td><td>50</td><td>开始活跃</td></tr>
+      <tr><td>LV3</td><td>200</td><td>常驻成员</td></tr>
+      <tr><td>LV4</td><td>600</td><td>核心成员</td></tr>
+      <tr><td>LV5</td><td>1500</td><td>元老</td></tr>
+    </table>
     <div class="pr-note">
-      积分通过系统自动发放，无需手动领取。返图审核通过后即时到账。
+      等级与积分无关，只看活跃度。活跃度来源：每日登录 +1、留言墙发言 +2、回复他人留言 +1、上传返图 +3、提交工单 +2、扩列互动 +2、文章评论 +1。
     </div>
   </div>
 
   <div class="pr-card">
-    <h2>📉 消耗积分</h2>
+    <h2>赚取积分</h2>
+    <div class="pr-row">
+      <span class="name">上传返图并通过审核（第1张）<span class="pr-badge one-time">每次</span></span>
+      <span class="points plus">+5 分</span>
+    </div>
+    <div class="pr-row">
+      <span class="name">上传返图并通过审核（之后每张）<span class="pr-badge one-time">每次</span></span>
+      <span class="points plus">+10 分</span>
+    </div>
+    <div class="pr-row">
+      <span class="name">工单处理奖励<span class="pr-badge one-time">按评估</span></span>
+      <span class="points plus">+1~100 分</span>
+    </div>
+    <div class="pr-note">
+      积分通过系统自动发放或管理员评估发放，无需手动领取。返图审核通过后即时到账。
+    </div>
+  </div>
+
+  <div class="pr-card">
+    <h2>消耗积分</h2>
     <div class="pr-row">
       <span class="name">提交工单<span class="pr-badge one-time">每次</span></span>
       <span class="points minus">-10 分</span>
     </div>
     <div class="pr-row">
-      <span class="name">兑换「一杯奶茶」<span class="pr-badge one-time">兑换</span></span>
-      <span class="points minus">-1000 分</span>
-    </div>
-    <div class="pr-row">
-      <span class="name">兑换「一份周边物料」<span class="pr-badge one-time">兑换</span></span>
-      <span class="points minus">-1500 分</span>
+      <span class="name">兑换商店商品<span class="pr-badge one-time">兑换</span></span>
+      <span class="points minus">按商品定价</span>
     </div>
     <div class="pr-note">
-      工单提交时积分不足 10 分仍可提交，但不扣分。兑换商品后积分即时扣除，订单进入待处理状态。
+      工单提交时积分不足 10 分仍可提交，不扣分；工单关闭时会按处理结果返还或调整。兑换商品后积分即时扣除，订单进入待处理状态。
     </div>
   </div>
 
   <div class="pr-card">
-    <h2>🎁 积分兑换</h2>
-    <div class="pr-row">
-      <span class="name">一杯奶茶</span>
-      <span class="points minus">1000 分</span>
-    </div>
-    <div class="pr-row">
-      <span class="name">一份周边物料</span>
-      <span class="points minus">1500 分</span>
-    </div>
+    <h2>积分兑换</h2>
     <div class="pr-note">
-      兑换后站长会在 3 个工作日内联系你发放奖励。具体兑换物品以积分商店实时展示为准。
+      可兑换物品与价格以积分商店实时展示为准，站长会不定期上架/下架商品。兑换后站长会在 3 个工作日内联系你发放奖励。
     </div>
   </div>
 
   <div class="pr-card">
-    <h2>📋 其他说明</h2>
+    <h2>其他说明</h2>
     <div class="pr-note">
       • 积分目前无过期时间，可长期累积<br>
-      • 恶意刷分（包括但不限于使用脚本、多个账号互刷）一经发现，将扣除全部积分并封禁账号<br>
-      • 站长有权根据运营情况调整积分规则，调整后会在公告区通知<br>
+      • 恶意刷分（包括但不限于使用脚本、多个账号互刷、恶意工单）一经发现，将扣除全部积分并封禁账号<br>
+      • 站长有权根据运营情况调整积分与等级规则，调整后会在公告区通知<br>
       • 对积分有疑问可提交工单咨询
     </div>
   </div>

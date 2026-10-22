@@ -1,0 +1,14 @@
+<style>
+/* 跨文档视图过渡：支持时导航不整页刷新（淡入淡出），不支持则正常刷新，属渐进增强 */
+@view-transition {
+  navigation: auto;
+}
+@keyframes vt-old-out {
+  to { opacity: 0; transform: translateY(-6px); }
+}
+@keyframes vt-new-in {
+  from { opacity: 0; transform: translateY(6px); }
+}
+::view-transition-old(root) { animation: vt-old-out .18s ease both; }
+::view-transition-new(root) { animation: vt-new-in .22s ease both; }
+</style>

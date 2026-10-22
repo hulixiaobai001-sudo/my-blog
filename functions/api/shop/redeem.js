@@ -1,17 +1,13 @@
-import { sanitize } from '../../_lib.js';
+import { sanitize, checkBanned } from '../../_lib.js';
 
-// 服务端定价表：兑换价格以服务端为准，不接受客户端传入
-const ITEM_PRICES = [
-  { match: '奶茶', cost: 1000 },
-  { match: '周边', cost: 1500 }
-];
-
-function getPrice(itemName) {
-  const name = String(itemName || '');
-  for (const item of ITEM_PRICES) {
-    if (name.includes(item.match)) return item.cost;
+async function getItemByName(env, itemName) {
+  try {
+    await env.DB.exec("CREATE TABLE IF NOT EXISTS shop_items (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE, cost INTEGER, desc TEXT DEFAULT '', active INTEGER DEFAULT 1, sort INTEGER DEFAULT 0)");
+    const row = await env.DB.prepare('SELECT id, name, cost FROM shop_items WHERE name = ? AND active = 1').bind(String(itemName || '')).first();
+    return row || null;
+  } catch (e) {
+    return null;
   }
-  return null;
 }
 
 export async function onRequestPost(context) {
@@ -29,8 +25,9 @@ export async function onRequestPost(context) {
   if (banErr) return new Response(JSON.stringify({ error: banErr }), { status: 403 });
 
   const { itemName } = await request.json();
-  const costNum = getPrice(itemName);
-  if (!itemName || costNum === null) return new Response(JSON.stringify({ error: '商品不存在' }), { status: 400 });
+  const item = await getItemByName(env, itemName);
+  if (!itemName || !item) return new Response(JSON.stringify({ error: '商品不存在或已下架' }), { status: 400 });
+  const costNum = item.cost;
   const cleanName = sanitize(itemName, 50);
 
   try {

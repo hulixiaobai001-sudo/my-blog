@@ -27,7 +27,8 @@ export async function onRequestGet(context) {
       await env.DB.exec("ALTER TABLE users ADD COLUMN nickname TEXT DEFAULT ''");
       await env.DB.exec("ALTER TABLE users ADD COLUMN contact TEXT DEFAULT ''");
       await env.DB.exec("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'");
-      const user = await env.DB.prepare('SELECT id, username, qq, bio, avatar, avatar_url, short_name, nickname, contact, show_qq, points, role FROM users WHERE id = ?').bind(userId).first();
+      await env.DB.exec("ALTER TABLE users ADD COLUMN activity INTEGER DEFAULT 0");
+      const user = await env.DB.prepare('SELECT id, username, qq, bio, avatar, avatar_url, short_name, nickname, contact, show_qq, points, activity, role FROM users WHERE id = ?').bind(userId).first();
       return new Response(JSON.stringify(user || {}));
     } catch(e2) {
       return new Response(JSON.stringify({}));

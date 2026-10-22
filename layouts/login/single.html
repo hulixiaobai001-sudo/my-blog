@@ -28,9 +28,22 @@
     <input type="password" id="password" placeholder="密码（至少6位）" />
     <div id="register-fields" class="hidden">
       <input type="text" id="qq" placeholder="QQ号（方便联系）" />
+      <div style="display:flex;gap:8px;margin-top:8px;align-items:center;">
+        <input type="text" id="phone" placeholder="手机号（短信验证码用，可选）" style="flex:1;margin:0;" />
+        <button type="button" id="sms-btn" onclick="sendSms()" style="width:auto;padding:12px 12px;margin:0;white-space:nowrap;background:rgba(255,255,255,.15);">获取验证码</button>
+      </div>
+      <input type="text" id="sms-code" placeholder="短信验证码" />
       <div class="captcha-row">
         <span id="captcha-q"></span>
         <input type="text" id="captcha" placeholder="答案" />
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:8px;margin-top:10px;font-size:12px;color:#aaa;text-align:left;">
+        <input type="checkbox" id="agree" style="width:16px;height:16px;margin:2px 0 0 0;flex-shrink:0;" />
+        <span>我已阅读并同意
+          <a href="https://my.feishu.cn/docx/VmeXdDj3kofQJjxC2FqcTvHunab" target="_blank" style="color:#8ab4ff;text-decoration:none;">《用户协议》</a>
+          与
+          <a href="https://my.feishu.cn/docx/PhKsdqFqMoPWxwxQ6wHc5Po0ndh" target="_blank" style="color:#8ab4ff;text-decoration:none;">《隐私政策》</a>
+        </span>
       </div>
     </div>
     <button onclick="submit()">提交</button>
@@ -63,6 +76,23 @@ function switchTab(m) {
   if (m === 'register') genCaptcha();
 }
 
+async function sendSms() {
+  const phone = document.getElementById('phone').value.trim();
+  if (!/^1\d{10}$/.test(phone)) { document.getElementById('msg').textContent = '请填写正确的11位手机号'; return; }
+  const btn = document.getElementById('sms-btn');
+  btn.disabled = true;
+  const res = await fetch('/api/auth/sms-send', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ phone }) });
+  const data = await res.json();
+  if (data.error) { document.getElementById('msg').textContent = data.error; btn.disabled = false; return; }
+  document.getElementById('msg').textContent = '验证码已发送，5分钟内有效';
+  let s = 60;
+  const timer = setInterval(function() {
+    s--;
+    btn.textContent = s + 's';
+    if (s <= 0) { clearInterval(timer); btn.disabled = false; btn.textContent = '获取验证码'; }
+  }, 1000);
+}
+
 async function submit() {
   const u = document.getElementById('username').value.trim();
   const p = document.getElementById('password').value;
@@ -70,8 +100,16 @@ async function submit() {
   if (p.length < 6) { document.getElementById('msg').textContent = '密码至少6位'; return; }
   let body = { username: u, password: p };
   if (mode === 'register') {
+    if (!document.getElementById('agree').checked) { document.getElementById('msg').textContent = '请先勾选同意用户协议和隐私政策'; return; }
     const qq = document.getElementById('qq').value.trim();
     if (qq) body.qq = qq;
+    const phone = document.getElementById('phone').value.trim();
+    const smsCode = document.getElementById('sms-code').value.trim();
+    if (phone) {
+      if (!/^1\d{10}$/.test(phone)) { document.getElementById('msg').textContent = '请填写正确的11位手机号'; return; }
+      if (!smsCode) { document.getElementById('msg').textContent = '请填写短信验证码'; return; }
+      body.phone = phone; body.sms_code = smsCode;
+    }
     const ans = parseInt(document.getElementById('captcha').value.trim());
     if (ans !== captchaA + captchaB) { document.getElementById('msg').textContent = '验证答案错误'; genCaptcha(); return; }
   }

@@ -1,4 +1,4 @@
-import { getLevel } from '../_lib.js';
+import { getLevel, addActivity } from '../_lib.js';
 
 export async function onRequestGet(context) {
   const { request, env } = context;
@@ -14,10 +14,22 @@ export async function onRequestGet(context) {
     const params = q ? ['%' + q + '%', '%' + q + '%'] : [];
     const countRow = await env.DB.prepare('SELECT COUNT(*) as c FROM users ' + where).bind(...params).first();
     const total = countRow ? countRow.c : 0;
-    const { results } = await env.DB.prepare('SELECT id, username, bio, avatar, qq, points FROM users ' + where + ' ORDER BY id ASC LIMIT ? OFFSET ?').bind(...params, pageSize, offset).all();
-    const list = results.map(u => ({ id: u.id, username: u.username, bio: u.bio, avatar: u.avatar, qq: u.qq, points: u.points || 0, level: getLevel(u.points) }));
+    const { results } = await env.DB.prepare('SELECT id, username, bio, avatar, qq, points, activity FROM users ' + where + ' ORDER BY id ASC LIMIT ? OFFSET ?').bind(...params, pageSize, offset).all();
+    const list = results.map(u => ({ id: u.id, username: u.username, bio: u.bio, avatar: u.avatar, qq: u.qq, points: u.points || 0, activity: u.activity || 0, level: getLevel(u.activity) }));
     return new Response(JSON.stringify({ users: list, total: total, hasMore: offset + results.length < total }));
   } catch (e) {
     return new Response(JSON.stringify({ users: [], total: 0, hasMore: false }));
   }
+}
+
+export async function onRequestPost(context) {
+  const { request, env } = context;
+  const cookie = request.headers.get('Cookie') || '';
+  const token = cookie.match(/session=([^;]+)/)?.[1];
+  if (!token) return new Response(JSON.stringify({ error: '未登录' }), { status: 401 });
+  const session = await env.AUTH_KV.get(`session:${token}`);
+  if (!session) return new Response(JSON.stringify({ error: '登录已过期' }), { status: 401 });
+  const { userId } = JSON.parse(session);
+  await addActivity(env, userId, 2);
+  return new Response(JSON.stringify({ ok: true }));
 }

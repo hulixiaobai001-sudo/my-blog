@@ -1,4 +1,4 @@
-import { sanitize, getSensitiveWords, checkBanned, sendSystemMessage, getSiteSettings } from '../_lib.js';
+import { sanitize, getSensitiveWords, checkBanned, sendSystemMessage, getSiteSettings, addActivity } from '../_lib.js';
 
 // 确保表结构齐全（兼容旧表）
 async function ensureTable(env) {
@@ -53,12 +53,15 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: '发布失败，请重试' }), { status: 500 });
   }
 
-  // 楼中楼回复：给被回复者发系统通知（不通知自己）
+  // 楼中楼回复：给被回复者发系统通知（不通知自己）；活跃度：新留言+2，回复+1
   if (replyTo) {
+    await addActivity(env, userId, 1);
     const target = await env.DB.prepare('SELECT user_id FROM guestbook WHERE id = ?').bind(replyTo).first();
     if (target && target.user_id !== userId) {
       await sendSystemMessage(env, target.user_id, '你的留言被回复了', '有人在留言墙回复了你的留言，点击查看：' + content.slice(0, 80));
     }
+  } else {
+    await addActivity(env, userId, 2);
   }
 
   return new Response(JSON.stringify({ ok: true, status: status }));

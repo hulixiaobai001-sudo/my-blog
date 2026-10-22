@@ -1,3 +1,5 @@
+import { sanitize, checkBanned, addActivity } from '../_lib.js';
+
 export async function onRequestPost(context) {
   const { request, env } = context;
   const cookie = request.headers.get('Cookie') || '';
@@ -46,6 +48,7 @@ export async function onRequestPost(context) {
   await env.DB.prepare('INSERT INTO reports (user_id, image_key, caption) VALUES (?, ?, ?)')
     .bind(userId, imageKey, sanitize(caption, 200)).run();
   await env.AUTH_KV.put(rateKey, String(todayCount + 1), { expirationTtl: 86400 * 2 });
+  await addActivity(env, userId, 3);
 
   return new Response(JSON.stringify({ ok: true, key: imageKey }));
 }

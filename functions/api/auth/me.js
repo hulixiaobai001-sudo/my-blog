@@ -17,10 +17,11 @@ export async function onRequestGet(context) {
   try { await env.DB.exec("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'"); } catch(e) {}
   try { await env.DB.exec("ALTER TABLE users ADD COLUMN banned INTEGER DEFAULT 0"); } catch(e) {}
   try { await env.DB.exec("ALTER TABLE users ADD COLUMN ban_until TEXT DEFAULT ''"); } catch(e) {}
+  try { await env.DB.exec("ALTER TABLE users ADD COLUMN activity INTEGER DEFAULT 0"); } catch(e) {}
 
   let user;
   try {
-    user = await env.DB.prepare('SELECT id, username, is_admin, points, role, banned, ban_until FROM users WHERE id = ?').bind(userId).first();
+    user = await env.DB.prepare('SELECT id, username, is_admin, points, activity, role, banned, ban_until FROM users WHERE id = ?').bind(userId).first();
   } catch (e) {
     // 查询异常时降级为未登录，避免前端渲染中断
     return new Response(JSON.stringify({ user: null }));
@@ -31,7 +32,7 @@ export async function onRequestGet(context) {
   const banErr = await checkBanned(env, user.id);
   if (banErr) return new Response(JSON.stringify({ user: null }));
 
-  user.level = getLevel(user.points);
+  user.level = getLevel(user.activity);
   user.ban_until = user.ban_until || null;
   return new Response(JSON.stringify({ user }));
 }

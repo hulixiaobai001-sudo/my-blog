@@ -80,7 +80,7 @@
   document.getElementById('p-points').textContent = data.points;
   document.getElementById('p-progress').style.width = (data.progress || 0) + '%';
   document.getElementById('p-progress-text').textContent =
-    data.level >= 5 ? '已满级' : ('距 LV' + (data.level + 1) + ' 还差 ' + (data.next_level_points - data.points) + ' 分（' + data.progress + '%）');
+    data.level >= 5 ? '已满级' : ('距 LV' + (data.level + 1) + ' 还差 ' + (data.next_level_points - data.activity) + ' 活跃度（' + data.progress + '%）');
   document.getElementById('s-reports').textContent = data.reports;
   document.getElementById('s-guest').textContent = data.guestbooks;
   document.getElementById('s-tickets').textContent = data.tickets;

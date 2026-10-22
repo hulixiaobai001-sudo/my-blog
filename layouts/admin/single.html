@@ -126,6 +126,8 @@
     <button class="nav-btn" data-panel="panel-users" onclick="switchPanel('panel-users', this)">用户管理</button>
     <button class="nav-btn" data-panel="panel-words" onclick="switchPanel('panel-words', this)">敏感词库</button>
     <button class="nav-btn" data-panel="panel-logs" onclick="switchPanel('panel-logs', this)">管理日志</button>
+    <button class="nav-btn" data-panel="panel-seclog" onclick="switchPanel('panel-seclog', this)">安全日志</button>
+    <button class="nav-btn" data-panel="panel-shop" onclick="switchPanel('panel-shop', this)">商店管理</button>
     <button class="nav-btn" data-panel="panel-settings" onclick="switchPanel('panel-settings', this)">站点设置</button>
   </aside>
 
@@ -231,6 +233,29 @@
       <div id="user-list"><p class="empty">加载中...</p></div>
     </div>
 
+    <div class="panel" id="panel-seclog">
+      <h2>安全日志（404 异常访问审核）</h2>
+      <div style="display:flex;gap:8px;margin-bottom:16px;">
+        <button class="btn-ok" onclick="secLogTab('0')" id="sec-tab-0">未处理</button>
+        <button class="btn-warn" onclick="secLogTab('1')" id="sec-tab-1">已处理</button>
+        <button class="btn-warn" onclick="secLogTab('')" id="sec-tab-">全部</button>
+      </div>
+      <div id="sec-log-list"><p class="empty">加载中...</p></div>
+      <div class="result-msg" id="sec-log-result"></div>
+    </div>
+
+    <div class="panel" id="panel-shop">
+      <h2>商店管理（积分商品上下架）</h2>
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+        <input id="shop-name" placeholder="商品名称" style="width:200px;margin:0;" />
+        <input id="shop-cost" placeholder="积分价格" type="number" style="width:120px;margin:0;" />
+        <input id="shop-desc" placeholder="说明（如何发货/联系方式）" style="flex:1;min-width:200px;margin:0;" />
+        <button class="btn-ok" onclick="saveShopItem()">新增商品</button>
+      </div>
+      <div id="shop-admin-list"><p class="empty">加载中...</p></div>
+      <div class="result-msg" id="shop-admin-result"></div>
+    </div>
+
     <div class="panel" id="panel-settings">
       <h2>站点设置</h2>
       <h3 style="color:#bbb;font-size:15px;margin:0 0 10px;">个人页状态</h3>
@@ -334,11 +359,34 @@ document.addEventListener('DOMContentLoaded', () => {
   if (window.EasyMDE) {
     mde = new EasyMDE({
       element: document.getElementById('blog-content'),
-      toolbar: ['bold','italic','heading','|','quote','unordered-list','ordered-list','|','link','image','|','preview','guide']
+      toolbar: ['bold','italic','heading','|','quote','unordered-list','ordered-list','|',{ name: 'upload-image', action: uploadImageToEditor, className: 'fa fa-picture-o', title: '上传图片插入正文' },'|','preview','guide']
     });
   }
   checkAdmin();
 });
+
+function uploadImageToEditor() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = async function() {
+    const file = input.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { document.getElementById('blog-result').textContent = '图片过大（最大5MB）'; return; }
+    const reader = new FileReader();
+    reader.onload = async function() {
+      const res = await fetch('/api/upload/image', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ imageBase64: reader.result }) });
+      const data = await res.json();
+      if (data.error) { document.getElementById('blog-result').textContent = data.error; return; }
+      document.getElementById('blog-result').textContent = '图片已插入正文';
+      if (mde) {
+        mde.codemirror.replaceSelection('\n![](' + data.url + ')\n');
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+}
 
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('open');
@@ -349,6 +397,10 @@ function switchPanel(id, btn) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   btn.classList.add('active');
+  if (id === 'panel-seclog') loadSecLogs();
+  if (id === 'panel-shop') loadShopAdmin();
+  if (id === 'panel-logs') loadLogs();
+  if (id === 'panel-users') loadUsers();
   if (window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('open');
 }
 
@@ -1129,7 +1181,125 @@ async function savePrivacyVer() {
 }
 
 // 把需要onclick调用的函数挂到全局（先挂关键导航函数，避免后续意外中断影响面板切换）
+window.secLogTab = secLogTab;
+window.markSecLog = markSecLog;
+window.loadShopAdmin = loadShopAdmin;
+window.saveShopItem = saveShopItem;
+window.toggleShopItem = toggleShopItem;
+window.delShopItem = delShopItem;
 window.switchPanel = switchPanel;
+// ---- 商店管理 ----
+async function loadShopAdmin() {
+  const el = document.getElementById('shop-admin-list');
+  el.innerHTML = '<p class="empty">加载中...</p>';
+  try {
+    const res = await fetch('/api/shop/items?all=1');
+    const data = await res.json();
+    if (data.error) { el.innerHTML = '<p class="empty">' + data.error + '</p>'; return; }
+    if (!data.items || data.items.length === 0) { el.innerHTML = '<p class="empty">暂无商品</p>'; return; }
+    el.innerHTML = '';
+    for (const item of data.items) {
+      const div = document.createElement('div');
+      div.className = 'list-item';
+      div.innerHTML =
+        '<div class="title">' + item.name + (item.active ? '' : ' <span style="color:#f87171;">【已下架】</span>') + ' <span style="color:#f0ad4e;">' + item.cost + ' 分</span></div>' +
+        '<div class="content">' + (item.desc || '') + '</div>' +
+        '<div style="margin-top:8px;display:flex;gap:6px;align-items:center;">' +
+        '<button class="' + (item.active ? 'btn-warn' : 'btn-ok') + '" onclick="toggleShopItem(' + item.id + ',' + (item.active ? 0 : 1) + ')">' + (item.active ? '下架' : '上架') + '</button>' +
+        '<button class="btn-ok" onclick="editShopItem(' + item.id + ')">改价/改名</button>' +
+        '<button class="btn-danger" onclick="delShopItem(' + item.id + ')">删除</button>' +
+        '</div>';
+      el.appendChild(div);
+    }
+  } catch (e) { el.innerHTML = '<p class="empty">加载失败</p>'; }
+}
+async function saveShopItem() {
+  const name = document.getElementById('shop-name').value.trim();
+  const cost = document.getElementById('shop-cost').value;
+  const desc = document.getElementById('shop-desc').value.trim();
+  if (!name || !cost) { document.getElementById('shop-admin-result').textContent = '请填写名称与价格'; return; }
+  try {
+    const res = await fetch('/api/shop/items', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ name, cost: parseInt(cost), desc, active: 1 }) });
+    const data = await res.json();
+    document.getElementById('shop-admin-result').textContent = data.error || '已新增';
+    if (data.ok) { document.getElementById('shop-name').value = ''; document.getElementById('shop-cost').value = ''; document.getElementById('shop-desc').value = ''; await loadShopAdmin(); }
+  } catch (e) { document.getElementById('shop-admin-result').textContent = '操作失败'; }
+}
+async function toggleShopItem(id, active) {
+  const item = document.querySelector('#shop-admin-list .list-item');
+  try {
+    const all = await (await fetch('/api/shop/items?all=1')).json();
+    const it = (all.items || []).find(x => x.id === id);
+    if (!it) return;
+    const res = await fetch('/api/shop/items', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id, name: it.name, cost: it.cost, desc: it.desc, active }) });
+    const data = await res.json();
+    document.getElementById('shop-admin-result').textContent = data.error || (active ? '已上架' : '已下架');
+    await loadShopAdmin();
+  } catch (e) { document.getElementById('shop-admin-result').textContent = '操作失败'; }
+}
+async function editShopItem(id) {
+  const name = prompt('修改名称：');
+  if (name === null) return;
+  const cost = prompt('修改积分价格：');
+  if (cost === null) return;
+  const desc = prompt('修改说明：');
+  if (desc === null) return;
+  const res = await fetch('/api/shop/items', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id, name: name.trim(), cost: parseInt(cost) || 0, desc, active: 1 }) });
+  const data = await res.json();
+  document.getElementById('shop-admin-result').textContent = data.error || '已保存';
+  await loadShopAdmin();
+}
+async function delShopItem(id) {
+  if (!confirm('确定删除该商品？')) return;
+  const res = await fetch('/api/shop/items?id=' + id, { method: 'DELETE' });
+  const data = await res.json();
+  document.getElementById('shop-admin-result').textContent = data.error || '已删除';
+  await loadShopAdmin();
+}
+// ---- 安全日志 ----
+let secLogStatus = '0';
+async function secLogTab(status) {
+  secLogStatus = status;
+  document.querySelectorAll('#sec-tab-0,#sec-tab-1,#sec-tab-').forEach(b => b.style.opacity = .5);
+  const el = document.getElementById('sec-tab-' + status);
+  if (el) el.style.opacity = 1;
+  await loadSecLogs();
+}
+async function loadSecLogs() {
+  const el = document.getElementById('sec-log-list');
+  el.innerHTML = '<p class="empty">加载中...</p>';
+  try {
+    const res = await fetch('/api/admin/security-logs?handled=' + secLogStatus + '&pageSize=50');
+    const data = await res.json();
+    if (data.error) { el.innerHTML = '<p class="empty">' + data.error + '</p>'; return; }
+    if (!data.logs || data.logs.length === 0) { el.innerHTML = '<p class="empty">暂无记录</p>'; return; }
+    el.innerHTML = '';
+    for (const log of data.logs) {
+      const div = document.createElement('div');
+      div.className = 'list-item';
+      const badge = log.intent === '疑似扫描' ? '<span style="color:#f87171;font-weight:700;">' + log.intent + '</span>' : '<span style="color:#fbbf24;">' + log.intent + '</span>';
+      div.innerHTML =
+        '<div class="title">' + badge + ' <code style="color:#8ab4ff;">' + log.path + '</code>' + (log.handled ? ' <span style="color:#34d399;">已处理</span>' : '') + '</div>' +
+        '<div class="meta">IP: ' + log.ip + ' · ' + log.created_at + (log.referer ? ' · 来源: ' + log.referer : '') + '</div>' +
+        '<div class="content" style="font-size:12px;color:#999;">UA: ' + log.ua + '</div>' +
+        '<div style="margin-top:8px;display:flex;gap:6px;align-items:center;">' +
+        (log.handled
+          ? '<button class="btn-warn" onclick="markSecLog(' + log.id + ',0)">重新打开</button>'
+          : '<button class="btn-ok" onclick="markSecLog(' + log.id + ',1)">标记已处理</button>') +
+        '</div>';
+      el.appendChild(div);
+    }
+  } catch (e) { el.innerHTML = '<p class="empty">加载失败</p>'; }
+}
+async function markSecLog(id, handled) {
+  try {
+    const res = await fetch('/api/admin/security-logs', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id, handled }) });
+    const data = await res.json();
+    if (data.error) { document.getElementById('sec-log-result').textContent = data.error; return; }
+    document.getElementById('sec-log-result').textContent = '已更新';
+    await loadSecLogs();
+  } catch (e) { document.getElementById('sec-log-result').textContent = '操作失败'; }
+}
 window.moderate = moderate;
 window.replyTicket = replyTicket;
 window.givePts = givePts;

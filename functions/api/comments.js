@@ -1,4 +1,4 @@
-import { sanitize, checkBanned } from '../_lib.js';
+import { sanitize, checkBanned, addActivity } from '../_lib.js';
 
 export async function onRequestGet(context) {
   const { request, env } = context;
@@ -46,6 +46,7 @@ export async function onRequestPost(context) {
     await env.DB.prepare('INSERT INTO comments (post_id, user_id, content) VALUES (?, ?, ?)').bind(post_id, userId, clean).run();
   }
   await env.AUTH_KV.put(rateKey, '1', { expirationTtl: 60 });
+  await addActivity(env, userId, 1);
   return new Response(JSON.stringify({ ok: true }));
 }
 

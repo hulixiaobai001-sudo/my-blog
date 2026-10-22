@@ -7,10 +7,26 @@ export async function onRequestPost(context) {
     if (settings.registration_open !== '1') {
       return new Response(JSON.stringify({ error: '注册通道暂未开放' }), { status: 403 });
     }
-    const { username, password, qq } = await request.json();
+    const { username, password, qq, agree, phone, sms_code } = await request.json();
 
     if (!username || !password || username.length < 2 || password.length < 6) {
       return new Response(JSON.stringify({ error: '用户名至少2字符，密码至少6位' }), { status: 400 });
+    }
+    // 必须同意用户协议与隐私政策
+    if (!agree) {
+      return new Response(JSON.stringify({ error: '请先阅读并同意用户协议与隐私政策' }), { status: 400 });
+    }
+    // 短信验证码：开启 SMS_ENABLED 时必填手机号+验证码；填了手机号则必须通过验证
+    const smsEnabled = env.SMS_ENABLED === '1';
+    if (smsEnabled) {
+      if (!phone || !sms_code) {
+        return new Response(JSON.stringify({ error: '请填写手机号与短信验证码' }), { status: 400 });
+      }
+      const saved = await env.AUTH_KV.get('sms_code:' + phone);
+      if (!saved || saved !== String(sms_code).trim()) {
+        return new Response(JSON.stringify({ error: '短信验证码错误或已过期' }), { status: 400 });
+      }
+      await env.AUTH_KV.delete('sms_code:' + phone);
     }
 
     const existing = await env.DB.prepare('SELECT id FROM users WHERE username = ?').bind(username).first();
@@ -21,11 +37,12 @@ export async function onRequestPost(context) {
     const hash = await sha256(password);
     // 新用户默认在扩列区展示（show_qq=1），如不愿展示可在个人资料关闭
     try {
-      await env.DB.prepare('INSERT INTO users (username, password_hash, qq, show_qq) VALUES (?, ?, ?, 1)').bind(username, hash, qq || '').run();
+      await env.DB.prepare('INSERT INTO users (username, password_hash, qq, phone, show_qq) VALUES (?, ?, ?, ?, 1)').bind(username, hash, qq || '', phone || '').run();
     } catch (e) {
       try { await env.DB.exec('ALTER TABLE users ADD COLUMN qq TEXT DEFAULT \'\''); } catch(e2) {}
       try { await env.DB.exec('ALTER TABLE users ADD COLUMN show_qq INTEGER DEFAULT 1'); } catch(e3) {}
-      await env.DB.prepare('INSERT INTO users (username, password_hash, qq, show_qq) VALUES (?, ?, ?, 1)').bind(username, hash, qq || '').run();
+      try { await env.DB.exec('ALTER TABLE users ADD COLUMN phone TEXT DEFAULT \'\''); } catch(e4) {}
+      await env.DB.prepare('INSERT INTO users (username, password_hash, qq, phone, show_qq) VALUES (?, ?, ?, ?, 1)').bind(username, hash, qq || '', phone || '').run();
     }
     const user = await env.DB.prepare('SELECT id, username, is_admin FROM users WHERE username = ?').bind(username).first();
 
