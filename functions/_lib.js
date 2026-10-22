@@ -42,10 +42,10 @@ export function json(body, status) {
 // 活跃度来源：登录+1 / 留言+2 / 回复+1 / 返图+3 / 工单+2 / 扩列+2
 export function getLevel(activity) {
   const a = Number(activity) || 0;
-  if (a >= 1500) return 5;
-  if (a >= 600) return 4;
-  if (a >= 200) return 3;
-  if (a >= 50) return 2;
+  if (a >= 400) return 5;
+  if (a >= 150) return 4;
+  if (a >= 60) return 3;
+  if (a >= 20) return 2;
   return 1;
 }
 

@@ -18,7 +18,7 @@ export async function onRequestGet(context) {
     if (!me) return new Response(JSON.stringify({ error: '用户不存在' }), { status: 404 });
     const activity = me.activity || 0;
     const level = getLevel(activity);
-    const thresholds = [0, 50, 200, 600, 1500];
+    const thresholds = [0, 20, 60, 150, 400];
     const next = level < 5 ? thresholds[level] : null;
     const prev = thresholds[level - 1];
     const progress = next ? Math.min(100, Math.round(((activity - prev) / (next - prev)) * 100)) : 100;
