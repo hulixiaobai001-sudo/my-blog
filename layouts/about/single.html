@@ -77,10 +77,8 @@
 
   <div class="about-card">
     <h2>兽装相册</h2>
-    <div class="gallery">
-      <img src="/images/fursuit-1.jpg" alt="兽聚合照">
-      <img src="/images/fursuit-2.jpg" alt="FurShion">
-      <img src="/images/fursuit-3.jpg" alt="户外出毛">
+    <div class="gallery" id="fursuit-gallery">
+      <p style="color:#888;font-size:13px;">加载中...</p>
     </div>
   </div>
 
@@ -120,6 +118,15 @@
   document.getElementById('cfg-activities').innerHTML = c.activities.map(i => '<div class="info-item"><b>' + i.label + '</b>' + i.value + '</div>').join('');
   document.getElementById('cfg-quote').textContent = c.quote;
   document.getElementById('cfg-contacts').innerHTML = c.contacts.map(x => '<a class="social-btn" href="' + x.url + '" target="_blank">' + x.name + '<small>' + x.sub + '</small></a>').join('');
+
+  const fr = await fetch('/api/fursuit');
+  const fd = await fr.json();
+  document.getElementById('fursuit-gallery').innerHTML = (fd.items || []).map(it =>
+    '<figure style="margin:0;position:relative;">' +
+      '<img src="' + escapeHtml(it.image_url) + '" alt="' + escapeHtml(it.caption || '') + '" style="width:100%;border-radius:10px;display:block;" onerror="this.style.display=\'none\'">' +
+      (it.caption ? '<figcaption style="color:#888;font-size:12px;text-align:center;margin-top:6px;">' + escapeHtml(it.caption) + '</figcaption>' : '') +
+    '</figure>'
+  ).join('') || '<p style="color:#888;font-size:13px;">相册空空如也</p>';
 })();
 </script>
 {{ end }}

@@ -38,6 +38,9 @@
 <div class="expand-wrap">
   <h1>扩列墙</h1>
   <p class="sub">点击扩列即加QQ好友，不展示QQ号</p>
+  <div style="max-width:520px;margin:0 auto 20px;">
+    <input id="expand-search" type="search" placeholder="搜索昵称或简介..." style="width:100%;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:#fff;font-size:14px;box-sizing:border-box;" onkeydown="if(event.key==='Enter')searchExpand()">
+  </div>
   <div class="expand-grid" id="grid">
     <div class="skeleton-card" style="height:120px;"></div>
     <div class="skeleton-card" style="height:120px;"></div>
@@ -49,6 +52,16 @@ var expandPage = 1;
 var expandLoading = false;
 var expandMeId = 0;
 var expandLoggedIn = false;
+var expandQ = '';
+
+function searchExpand() {
+  expandQ = document.getElementById('expand-search').value.trim().slice(0, 30);
+  expandPage = 1;
+  grid.innerHTML = '';
+  loadExpand();
+}
+
+window.searchExpand = searchExpand;
 
 (async function() {
   try {
@@ -72,11 +85,15 @@ async function loadExpand() {
   expandLoading = true;
   var grid = document.getElementById('grid');
   try {
-    var res = await fetch('/api/expand?page=' + expandPage + '&pageSize=20');
+    var res = await fetch('/api/expand?page=' + expandPage + '&pageSize=20' + (expandQ ? '&q=' + encodeURIComponent(expandQ) : ''));
     var data = await res.json();
     var users = data.users || [];
     if (expandPage === 1 && users.length === 0) {
-      grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">🐾</div><div class="empty-text">还没有小伙伴上墙</div><div class="empty-hint">登录后去个人资料开启展示吧</div><a class="empty-action" href="/me/">去设置</a></div>';
+      if (expandQ) {
+        grid.innerHTML = '<div class="empty" style="grid-column:1/-1;">没有找到相关用户，换个关键词试试</div>';
+      } else {
+        grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">🐾</div><div class="empty-text">还没有小伙伴上墙</div><div class="empty-hint">登录后去个人资料开启展示吧</div><a class="empty-action" href="/me/">去设置</a></div>';
+      }
       expandLoading = false;
       return;
     }
