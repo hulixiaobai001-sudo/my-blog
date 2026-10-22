@@ -319,6 +319,7 @@ document.addEventListener('DOMContentLoaded', function() {
         '<span class="uname">' + data.user.username + '</span>' +
         '<span class="dropdown-arrow">▾</span>' +
         '<div id="user-menu-content">' +
+        '<div id="user-menu-stats" style="padding:8px 14px;margin-bottom:4px;border-bottom:1px solid rgba(255,255,255,.08);color:#fff;font-size:13px;">等级加载中…</div>' +
         adminLink +
         '<a href="/me/">个人资料</a>' +
         '<a href="/notice/">公告</a>' +
@@ -344,6 +345,19 @@ document.addEventListener('DOMContentLoaded', function() {
       wrap.onclick = () => { location.href = '/login/'; };
     }
     document.body.appendChild(wrap);
+    // 悬浮球内嵌等级/积分概览（登录后拉取，实时刷新）
+    if (data.user) {
+      (async function() {
+        try {
+          const sr = await fetch('/api/profile/stats');
+          const sd = await sr.json();
+          if (sd && !sd.error) {
+            const sel = document.getElementById('user-menu-stats');
+            if (sel) sel.innerHTML = 'LV' + sd.level + ' · 积分 ' + sd.points;
+          }
+        } catch(e) {}
+      })();
+    }
   } catch(e) {}
 
   // 点页面其他地方关闭下拉
