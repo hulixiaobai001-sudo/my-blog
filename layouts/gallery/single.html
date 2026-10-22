@@ -287,9 +287,19 @@ async function downloadWithWatermark() {
     canvas.width = im.width;
     canvas.height = im.height;
     ctx.drawImage(im, 0, 0);
-    ctx.font = Math.floor(im.width / 30) + 'px sans-serif';
-    ctx.fillStyle = 'rgba(255,255,255,0.7)';
-    ctx.fillText('ba3pkz.top', 20, Math.floor(im.width / 15));
+    // 完整版权水印
+    const w = im.width, h = im.height;
+    const fs = Math.max(12, Math.round(w / 52));
+    const barH = Math.max(30, Math.round(fs * 2.4));
+    ctx.fillStyle = 'rgba(0,0,0,.5)';
+    ctx.fillRect(0, h - barH, w, barH);
+    ctx.fillStyle = 'rgba(255,255,255,.9)';
+    ctx.textBaseline = 'middle';
+    ctx.font = fs + 'px "Microsoft YaHei", sans-serif';
+    ctx.fillText('狐狸小白工作室 - 白沁委托授权', 12, h - barH + barH * 0.36);
+    ctx.fillStyle = 'rgba(255,255,255,.68)';
+    ctx.font = Math.max(9, Math.round(fs * .8)) + 'px "Microsoft YaHei", sans-serif';
+    ctx.fillText('版权所有 · 仅供展示使用 · 不可用于其他用途', 12, h - barH + barH * 0.74);
     const a = document.createElement('a');
     a.href = canvas.toDataURL('image/jpeg', 0.9);
     a.download = 'ba3pkz-' + Date.now() + '.jpg';

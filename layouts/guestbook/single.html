@@ -136,9 +136,10 @@ async function uploadImg(input) {
       canvas.height = img.height * scale;
       canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
       var compressed = canvas.toDataURL('image/jpeg', 0.7);
+      var wm = await window.watermarkImage(compressed);
       var res = await fetch('/api/upload/image', {
         method: 'POST', headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ imageBase64: compressed })
+        body: JSON.stringify({ imageBase64: wm })
       });
       var data = await res.json();
       if (data.ok) {

@@ -160,5 +160,70 @@
       }, 800);
     });
   </script>
+  <script>
+  window.watermarkImage = function(dataUrl, small) {
+    return new Promise(function(resolve) {
+      var img = new Image();
+      img.onload = function() {
+        var maxW = small ? 480 : 1080;
+        var w = img.width, h = img.height;
+        if (w > maxW) { h = h * maxW / w; w = maxW; }
+        var c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        var ctx = c.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        var fs = Math.max(small ? 7 : 11, Math.round(w / 56));
+        var barH = Math.max(small ? 14 : 26, Math.round(fs * 2.2));
+        ctx.fillStyle = 'rgba(0,0,0,.5)';
+        ctx.fillRect(0, h - barH, w, barH);
+        ctx.fillStyle = 'rgba(255,255,255,.9)';
+        ctx.textBaseline = 'middle';
+        ctx.font = fs + 'px "Microsoft YaHei", sans-serif';
+        ctx.fillText('狐狸小白工作室 - 白沁委托授权', 8, h - barH + barH * 0.36);
+        ctx.fillStyle = 'rgba(255,255,255,.68)';
+        ctx.font = Math.max(8, Math.round(fs * .8)) + 'px "Microsoft YaHei", sans-serif';
+        ctx.fillText('版权所有 · 仅供展示使用 · 不可用于其他用途', 8, h - barH + barH * 0.74);
+        resolve(c.toDataURL('image/jpeg', 0.82));
+      };
+      img.onerror = function() { resolve(dataUrl); };
+      img.src = dataUrl;
+    });
+  };
+  </script>
+  <style>
+    #tech-intro { position: fixed; inset: 0; z-index: 99999; background: radial-gradient(circle at 50% 40%, #141a2e 0%, #0a0d1a 70%); display: flex; align-items: center; justify-content: center; flex-direction: column; cursor: pointer; overflow: hidden; }
+    #tech-intro::before { content: ''; position: absolute; inset: 0; background-image: linear-gradient(rgba(102,126,234,.12) 1px, transparent 1px), linear-gradient(90deg, rgba(102,126,234,.12) 1px, transparent 1px); background-size: 34px 34px; }
+    #tech-intro .scanline { position: absolute; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, rgba(102,126,234,.8), transparent); animation: scan 2.4s linear infinite; }
+    @keyframes scan { 0% { top: 0; opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
+    #tech-intro .frame { position: relative; width: 150px; height: 150px; border: 1px solid rgba(102,126,234,.4); border-radius: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 40px rgba(102,126,234,.25), inset 0 0 30px rgba(102,126,234,.08); animation: framePulse 2s ease-in-out infinite; }
+    @keyframes framePulse { 0%,100% { box-shadow: 0 0 40px rgba(102,126,234,.25), inset 0 0 30px rgba(102,126,234,.08); } 50% { box-shadow: 0 0 60px rgba(102,126,234,.45), inset 0 0 40px rgba(102,126,234,.15); } }
+    #tech-intro .frame::after { content: ''; position: absolute; width: 14px; height: 14px; border-top: 2px solid #8ab4ff; border-left: 2px solid #8ab4ff; top: -2px; left: -2px; }
+    #tech-intro .logo-text { color: #fff; font-size: 26px; font-weight: 600; letter-spacing: 4px; text-shadow: 0 0 16px rgba(102,126,234,.8); }
+    #tech-intro .bar { position: relative; width: 200px; height: 2px; background: rgba(255,255,255,.12); margin-top: 40px; border-radius: 2px; overflow: hidden; }
+    #tech-intro .bar i { position: absolute; left: 0; top: 0; bottom: 0; width: 40%; background: linear-gradient(90deg, transparent, #8ab4ff, #667eea); border-radius: 2px; animation: load 1.4s ease-in-out infinite; }
+    @keyframes load { 0% { left: -40%; } 100% { left: 100%; } }
+    #tech-intro .sub { color: rgba(255,255,255,.55); font-size: 12px; letter-spacing: 3px; margin-top: 14px; }
+    #tech-intro.done { opacity: 0; transition: opacity .5s ease; }
+  </style>
+  <div id="tech-intro" onclick="dismissIntro()">
+    <div class="scanline"></div>
+    <div class="frame"><div class="logo-text">狐狸小白工作室</div></div>
+    <div class="bar"><i></i></div>
+    <div class="sub">欢迎来到狐狸小白工作室</div>
+  </div>
+  <script>
+  function dismissIntro() {
+    var el = document.getElementById('tech-intro');
+    if (!el) return;
+    el.classList.add('done');
+    setTimeout(function() { el.remove(); }, 500);
+    try { sessionStorage.setItem('tech_intro_seen', '1'); } catch(e) {}
+  }
+  window.dismissIntro = dismissIntro;
+  document.addEventListener('DOMContentLoaded', function() {
+    try { if (sessionStorage.getItem('tech_intro_seen')) return; } catch(e) {}
+    setTimeout(dismissIntro, 2200);
+  });
+  </script>
 </body>
 </html>

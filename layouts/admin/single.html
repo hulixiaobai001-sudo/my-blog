@@ -206,6 +206,7 @@
       <h3 style="color:#bbb;font-size:15px;margin:0 0 10px;">工单</h3>
       <div style="display:flex;gap:8px;margin-bottom:16px;">
         <button class="btn-ok" onclick="ticketTab('pending')" id="tk-tab-pending">待处理</button>
+        <button class="btn-warn" onclick="ticketTab('all')" id="tk-tab-all">历史工单</button>
         <button class="btn-warn" onclick="ticketTab('closed')" id="tk-tab-closed">已关闭</button>
       </div>
       <div id="tickets"><p class="empty">加载中...</p></div>
@@ -375,7 +376,8 @@ function uploadImageToEditor() {
     if (file.size > 5 * 1024 * 1024) { document.getElementById('blog-result').textContent = '图片过大（最大5MB）'; return; }
     const reader = new FileReader();
     reader.onload = async function() {
-      const res = await fetch('/api/upload/image', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ imageBase64: reader.result }) });
+      const wm = await window.watermarkImage(reader.result);
+      const res = await fetch('/api/upload/image', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ imageBase64: wm }) });
       const data = await res.json();
       if (data.error) { document.getElementById('blog-result').textContent = data.error; return; }
       document.getElementById('blog-result').textContent = '图片已插入正文';
@@ -553,9 +555,10 @@ async function uploadFursuitImg(input) {
       canvas.width = w; canvas.height = h;
       canvas.getContext('2d').drawImage(img, 0, 0, w, h);
       const compressed = canvas.toDataURL('image/jpeg', 0.75);
+      const wm = await window.watermarkImage(compressed);
       const res = await fetch('/api/upload/image', {
         method: 'POST', headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ imageBase64: compressed })
+        body: JSON.stringify({ imageBase64: wm })
       });
       const data = await res.json();
       if (data.url) {
@@ -750,8 +753,10 @@ var ticketData = { pending: [], closed: [] };
 
 function ticketTab(view) {
   ticketView = view;
-  document.getElementById('tk-tab-pending').className = view === 'pending' ? 'btn-ok' : 'btn-warn';
-  document.getElementById('tk-tab-closed').className = view === 'closed' ? 'btn-ok' : 'btn-warn';
+  const isActive = v => (view === v ? 'btn-ok' : 'btn-warn');
+  document.getElementById('tk-tab-pending').className = isActive('pending');
+  document.getElementById('tk-tab-closed').className = isActive('closed');
+  if (document.getElementById('tk-tab-all')) document.getElementById('tk-tab-all').className = isActive('all');
   renderTickets();
 }
 
@@ -786,10 +791,32 @@ async function loadTickets() {
 
 function renderTickets() {
   const el = document.getElementById('tickets');
-  if (ticketView === 'pending') {
-    const list = ticketData.pending;
-    if (!list || list.length === 0) { el.innerHTML = '<p class="empty">没有待处理的工单</p>'; return; }
-    el.innerHTML = list.map(t => `
+  let list = [];
+  if (ticketView === 'pending') list = ticketData.pending || [];
+  else if (ticketView === 'closed') list = ticketData.closed || [];
+  else list = (ticketData.pending || []).concat(ticketData.closed || []).sort((a, b) => b.id - a.id);
+  if (!list || list.length === 0) {
+    const emptyMsg = ticketView === 'pending' ? '没有待处理的工单' : ticketView === 'closed' ? '还没有已关闭的工单' : '还没有任何工单记录';
+    el.innerHTML = '<p class="empty">' + emptyMsg + '</p>';
+    return;
+  }
+  el.innerHTML = list.map(t => {
+    const closed = t.status === 'closed';
+    if (closed) {
+      return `
+      <div class="list-item">
+        <div class="title">${escapeHtml(t.title)} <span style="color:#666;font-size:11px;">[已关闭]</span> <span style="color:#666;font-size:11px;">提交：@${escapeHtml(t.submitter)}</span></div>
+        <div style="color:#888;font-size:12px;margin-top:4px;">档案编号：${escapeHtml(t.archive_no || ('T-' + String(t.id).padStart(5, '0')))} · ${escapeHtml(t.updated_at || '')}</div>
+        <div class="content" style="margin:6px 0;">${escapeHtml(t.content)}</div>
+        ${t.reply ? `<div style="color:#8ab4ff;font-size:12px;margin-top:6px;">处理回复：${escapeHtml(t.reply)}</div>` : ''}
+        <div style="font-size:12px;margin-top:8px;display:flex;gap:16px;flex-wrap:wrap;">
+          <span>处理结果：${ticketResultLabel(t.result) || '—'}</span>
+          <span>积分调整：${ticketPointsLabel(t)}</span>
+          <span>审核人：${ticketReviewerLabel(t) || '—'}</span>
+        </div>
+      </div>`;
+    }
+    return `
       <div class="list-item">
         <div class="title">${escapeHtml(t.title)} <span style="color:#8ab4ff;font-size:11px;">[${t.status === 'open' ? '处理中' : '已回复'}]</span> <span style="color:#666;font-size:11px;">提交：@${escapeHtml(t.submitter)}</span></div>
         <div class="content">${escapeHtml(t.content)}</div>
@@ -809,25 +836,8 @@ function renderTickets() {
           <button class="btn-ok" onclick="replyTicket(${t.id},false)">回复</button>
           <button class="btn-danger" onclick="replyTicket(${t.id},true)">关闭工单</button>
         </div>
-      </div>
-    `).join('');
-  } else {
-    const list = ticketData.closed;
-    if (!list || list.length === 0) { el.innerHTML = '<p class="empty">还没有已关闭的工单</p>'; return; }
-    el.innerHTML = list.map(t => `
-      <div class="list-item">
-        <div class="title">${escapeHtml(t.title)} <span style="color:#666;font-size:11px;">[已关闭]</span></div>
-        <div style="color:#888;font-size:12px;margin-top:4px;">档案编号：${escapeHtml(t.archive_no || ('T-' + String(t.id).padStart(5, '0')))} · 提交：@${escapeHtml(t.submitter)}</div>
-        <div class="content" style="margin:6px 0;">${escapeHtml(t.content)}</div>
-        ${t.reply ? `<div style="color:#8ab4ff;font-size:12px;margin-top:6px;">处理回复：${escapeHtml(t.reply)}</div>` : ''}
-        <div style="font-size:12px;margin-top:8px;display:flex;gap:16px;flex-wrap:wrap;">
-          <span>处理结果：${ticketResultLabel(t.result) || '—'}</span>
-          <span>积分调整：${ticketPointsLabel(t)}</span>
-          <span>审核人：${ticketReviewerLabel(t) || '—'}</span>
-        </div>
-      </div>
-    `).join('');
-  }
+      </div>`;
+  }).join('');
 }
 
 function setDefaultPoints(id, result) {
@@ -900,13 +910,14 @@ async function uploadCover(input) {
       ctx.fillRect(0, 0, w, h);
       ctx.drawImage(img, 0, 0, w, h);
       const compressed = canvas.toDataURL('image/jpeg', 0.7);
+      const wm = await window.watermarkImage(compressed);
       const pimg = document.getElementById('cover-preview');
-      pimg.src = compressed;
+      pimg.src = wm;
       pimg.style.display = 'block';
       const res = await fetch('/api/upload/image', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ imageBase64: compressed })
+        body: JSON.stringify({ imageBase64: wm })
       });
       const data = await res.json();
       if (data.ok) {
@@ -950,6 +961,19 @@ function compressImage(file) {
         if (w > maxW) { h = h * maxW / w; w = maxW; }
         canvas.width = w; canvas.height = h;
         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        // 水印：底部半透明条 + 版权声明
+        var ctx = canvas.getContext('2d');
+        var fs = Math.max(11, Math.round(w / 56));
+        var barH = Math.max(26, Math.round(fs * 2.2));
+        ctx.fillStyle = 'rgba(0,0,0,.5)';
+        ctx.fillRect(0, h - barH, w, barH);
+        ctx.fillStyle = 'rgba(255,255,255,.9)';
+        ctx.textBaseline = 'middle';
+        ctx.font = fs + 'px "Microsoft YaHei", sans-serif';
+        ctx.fillText('狐狸小白工作室 - 白沁委托授权', 8, h - barH + barH * 0.36);
+        ctx.fillStyle = 'rgba(255,255,255,.68)';
+        ctx.font = Math.max(8, Math.round(fs * .8)) + 'px "Microsoft YaHei", sans-serif';
+        ctx.fillText('版权所有 · 仅供展示使用 · 不可用于其他用途', 8, h - barH + barH * 0.74);
         canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.7);
       };
       img.src = e.target.result;

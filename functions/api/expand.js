@@ -14,8 +14,8 @@ export async function onRequestGet(context) {
     const params = q ? ['%' + q + '%', '%' + q + '%'] : [];
     const countRow = await env.DB.prepare('SELECT COUNT(*) as c FROM users ' + where).bind(...params).first();
     const total = countRow ? countRow.c : 0;
-    const { results } = await env.DB.prepare('SELECT id, username, bio, avatar, qq, points, activity FROM users ' + where + ' ORDER BY id ASC LIMIT ? OFFSET ?').bind(...params, pageSize, offset).all();
-    const list = results.map(u => ({ id: u.id, username: u.username, bio: u.bio, avatar: u.avatar, qq: u.qq, points: u.points || 0, activity: u.activity || 0, level: getLevel(u.activity) }));
+    const { results } = await env.DB.prepare('SELECT u.id, u.username, u.bio, u.avatar, u.qq, u.points, u.activity, u.role, (SELECT COUNT(*) FROM reports r WHERE r.user_id = u.id AND r.status = \'approved\') AS approved_count FROM users u ' + where + ' ORDER BY u.id ASC LIMIT ? OFFSET ?').bind(...params, pageSize, offset).all();
+    const list = results.map(u => ({ id: u.id, username: u.username, bio: u.bio, avatar: u.avatar, qq: u.qq, points: u.points || 0, activity: u.activity || 0, level: getLevel(u.activity), role: u.role || '', verified: (u.approved_count || 0) > 0, approved_count: u.approved_count || 0 }));
     return new Response(JSON.stringify({ users: list, total: total, hasMore: offset + results.length < total }));
   } catch (e) {
     return new Response(JSON.stringify({ users: [], total: 0, hasMore: false }));

@@ -180,9 +180,10 @@ async function uploadAvatar(input) {
       canvas.width = size; canvas.height = size;
       canvas.getContext('2d').drawImage(img, 0, 0, size, size);
       const compressed = canvas.toDataURL('image/jpeg', 0.8);
+      const wm = await window.watermarkImage(compressed, true);
       const res = await fetch('/api/upload/image', {
         method: 'POST', headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ imageBase64: compressed })
+        body: JSON.stringify({ imageBase64: wm })
       });
       const data = await res.json();
       if (data.ok) {

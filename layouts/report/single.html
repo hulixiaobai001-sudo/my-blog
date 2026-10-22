@@ -58,7 +58,8 @@ function compressImg(input) {
 async function upload() {
   if (!compressedBase64) { document.getElementById('msg').textContent = '请先选择图片'; return; }
   const caption = document.getElementById('caption').value;
-  const res = await fetch('/api/report/upload', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ imageBase64: compressedBase64, caption }) });
+  const wm = await window.watermarkImage(compressedBase64);
+  const res = await fetch('/api/report/upload', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ imageBase64: wm, caption }) });
   const data = await res.json();
   if (data.error) { document.getElementById('msg').textContent = data.error; return; }
   document.getElementById('msg').textContent = '提交成功，等待审核';

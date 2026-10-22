@@ -21,6 +21,36 @@
   .expand-btn:active { transform: scale(.97); }
   .msg-btn { display: block; width: 100%; margin-top: 6px; padding: 6px 16px; border-radius: 10px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.15); color: #999; font-size: 12px; cursor: pointer; transition: background .2s; }
   .msg-btn:hover { background: rgba(255,255,255,.1); color: #fff; }
+  .user-card { cursor: pointer; transition: transform .15s, border-color .2s, background .2s; }
+  .user-card:hover { transform: translateY(-2px); border-color: rgba(102,126,234,.45); background: rgba(255,255,255,.09); }
+  .user-card .card-actions { display: flex; flex-direction: column; }
+  /* 认证标识 */
+  .v-badge { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; font-size: 11px; font-weight: 800; color: #fff; flex-shrink: 0; }
+  .v-gold { background: linear-gradient(135deg,#f6c445,#d99a1f); box-shadow: 0 0 6px rgba(246,196,69,.5); }
+  .v-blue { background: linear-gradient(135deg,#4aa3ff,#2f6fd0); box-shadow: 0 0 6px rgba(74,163,255,.5); }
+  .v-green { background: linear-gradient(135deg,#3ecf6f,#1f9a4c); box-shadow: 0 0 6px rgba(62,207,111,.5); }
+  /* 详情弹窗 */
+  #um-mask { display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,.65); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); align-items: center; justify-content: center; padding: 20px; }
+  #um-mask.show { display: flex; }
+  .um-box { width: 100%; max-width: 360px; background: rgba(28,30,50,.97); border: 1px solid rgba(255,255,255,.14); border-radius: 18px; padding: 24px 22px; box-shadow: 0 10px 40px rgba(0,0,0,.5); position: relative; animation: umIn .22s ease; }
+  @keyframes umIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+  .um-close { position: absolute; top: 10px; right: 14px; background: none; border: none; color: #999; font-size: 20px; cursor: pointer; padding: 6px; line-height: 1; }
+  .um-close:hover { color: #fff; }
+  .um-head { display: flex; align-items: center; gap: 14px; }
+  .um-avatar { width: 64px; height: 64px; border-radius: 50%; flex-shrink: 0; background: linear-gradient(135deg,#667eea,#764ba2); display: flex; align-items: center; justify-content: center; font-size: 26px; color: #fff; overflow: hidden; }
+  .um-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .um-name { color: #fff; font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .um-role { font-size: 11px; color: #8ab4ff; margin-top: 4px; }
+  .um-bio { color: #bbb; font-size: 13px; line-height: 1.6; margin: 14px 0; padding: 10px 12px; background: rgba(255,255,255,.05); border-radius: 10px; border: 1px solid rgba(255,255,255,.07); word-break: break-word; }
+  .um-stats { display: flex; gap: 18px; font-size: 12px; color: #999; margin-bottom: 16px; }
+  .um-stats b { color: #fff; font-size: 14px; }
+  /* 站内信弹窗 */
+  .um-field { width: 100%; box-sizing: border-box; padding: 10px 12px; margin: 6px 0; border: 1px solid rgba(255,255,255,.2); border-radius: 10px; background: rgba(255,255,255,.08); color: #fff; font-size: 14px; }
+  .um-field::placeholder { color: rgba(255,255,255,.45); }
+  .um-actions { display: flex; gap: 10px; margin-top: 12px; }
+  .um-actions button { flex: 1; padding: 10px 12px; border-radius: 10px; border: none; cursor: pointer; font-size: 14px; }
+  .um-primary { background: linear-gradient(135deg,#667eea,#764ba2); color: #fff; }
+  .um-ghost { background: rgba(255,255,255,.08); color: #ccc; border: 1px solid rgba(255,255,255,.12) !important; }
   .empty { color: #666; text-align: center; padding: 40px 0; }
   .load-more-btn { display: block; width: 100%; padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,.15); background: rgba(255,255,255,.05); color: #aaa; font-size: 14px; cursor: pointer; margin-top: 16px; transition: all .2s; grid-column: 1 / -1; }
   .load-more-btn:hover { background: rgba(255,255,255,.1); color: #fff; }
@@ -37,13 +67,47 @@
 
 <div class="expand-wrap">
   <h1>扩列墙</h1>
-  <p class="sub">点击扩列即加QQ好友，不展示QQ号</p>
+  <p class="sub">点击卡片查看详情，点击扩列即加QQ好友</p>
   <div style="max-width:520px;margin:0 auto 20px;">
     <input id="expand-search" type="search" placeholder="搜索昵称或简介..." style="width:100%;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:#fff;font-size:14px;box-sizing:border-box;" onkeydown="if(event.key==='Enter')searchExpand()">
   </div>
   <div class="expand-grid" id="grid">
     <div class="skeleton-card" style="height:120px;"></div>
     <div class="skeleton-card" style="height:120px;"></div>
+  </div>
+</div>
+
+<!-- 用户详情弹窗 -->
+<div id="um-mask" onclick="if(event.target===this)closeModal()">
+  <div class="um-box">
+    <button class="um-close" onclick="closeModal()">×</button>
+    <div class="um-head">
+      <div class="um-avatar" id="um-avatar"></div>
+      <div>
+        <div class="um-name" id="um-name"></div>
+        <div class="um-role" id="um-role"></div>
+      </div>
+    </div>
+    <div class="um-bio" id="um-bio"></div>
+    <div class="um-stats" id="um-stats"></div>
+    <div class="um-actions">
+      <button class="um-primary" id="um-expand" onclick="expandAction(window._umUser.id, window._umUser.qq)">扩列</button>
+      <button class="um-ghost" id="um-msg" onclick="openMsgModal(window._umUser.id, window._umUser.username)">发站内信</button>
+    </div>
+  </div>
+</div>
+
+<!-- 发站内信弹窗 -->
+<div id="msg-mask" style="display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this)closeMsgModal()">
+  <div class="um-box" style="max-width:340px;">
+    <button class="um-close" onclick="closeMsgModal()">×</button>
+    <div style="color:#fff;font-size:16px;font-weight:600;margin-bottom:10px;" id="msg-modal-title">发站内信</div>
+    <input class="um-field" id="msg-title" placeholder="标题" maxlength="50">
+    <textarea class="um-field" id="msg-content" placeholder="内容" style="min-height:90px;resize:vertical;" maxlength="500"></textarea>
+    <div class="um-actions">
+      <button class="um-primary" onclick="sendModalMsg()">发送</button>
+      <button class="um-ghost" onclick="closeMsgModal()">取消</button>
+    </div>
   </div>
 </div>
 
@@ -80,6 +144,20 @@ function lvClass(level) {
   return (level >= 2 && level <= 5) ? c : '';
 }
 
+function vBadge(u) {
+  if (u.role === 'super_admin') return '<span class="v-badge v-gold" title="站长认证">V</span>';
+  if (u.role === 'admin') return '<span class="v-badge v-blue" title="管理员认证">V</span>';
+  if (u.verified) return '<span class="v-badge v-green" title="返图过审认证">V</span>';
+  return '';
+}
+
+function roleName(u) {
+  if (u.role === 'super_admin') return '站长';
+  if (u.role === 'admin') return '管理员';
+  if (u.verified) return '认证用户（返图过审）';
+  return '';
+}
+
 async function loadExpand() {
   if (expandLoading) return;
   expandLoading = true;
@@ -99,14 +177,14 @@ async function loadExpand() {
     }
     var html = users.map(function(u) {
       var msgBtn = (expandLoggedIn && u.id !== expandMeId)
-        ? '<button class="msg-btn" onclick="sendExpandMsg(' + u.id + ',\'' + escapeHtml(u.username) + '\')">发站内信</button>'
+        ? '<button class="msg-btn" onclick="event.stopPropagation();sendExpandMsg(' + u.id + ',\'' + escapeHtml(u.username) + '\')">发站内信</button>'
         : '';
-      return '<div class="user-card">' +
+      return '<div class="user-card" onclick=\'openUserModal(' + JSON.stringify(u).replace(/'/g, '\\u0027') + ')\'>' +
         '<div class="avatar">' + (u.avatar ? '<img src="' + escapeHtml(u.avatar) + '" onerror="this.style.display=\'none\'">' : escapeHtml(u.username).charAt(0).toUpperCase()) + '</div>' +
         '<div class="info">' +
-          '<div class="name">' + escapeHtml(u.username) + '<span class="lv-badge ' + lvClass(u.level) + '">LV' + u.level + '</span></div>' +
+          '<div class="name">' + escapeHtml(u.username) + vBadge(u) + '<span class="lv-badge ' + lvClass(u.level) + '">LV' + u.level + '</span></div>' +
           '<div class="bio">' + (escapeHtml(u.bio) || '这个人很懒，什么都没写') + '</div>' +
-          '<button class="expand-btn" onclick="expandAction(' + u.id + ',\'' + escapeHtml(u.qq) + '\')">扩列</button>' +
+          '<button class="expand-btn" onclick="event.stopPropagation();expandAction(' + u.id + ',\'' + escapeHtml(u.qq) + '\')">扩列</button>' +
           msgBtn +
         '</div>' +
       '</div>';
@@ -150,19 +228,68 @@ function expandAction(userId, qq) {
 
 window.expandAction = expandAction;
 
-async function sendExpandMsg(userId, username) {
-  if (!expandLoggedIn) { showToast('请先登录', 'warning'); return; }
-  var title = prompt('站内信标题（发给 @' + username + '）：', '你好');
-  if (!title) return;
-  var content = prompt('站内信内容：');
-  if (!content) return;
+// 用户详情弹窗
+function openUserModal(u) {
+  window._umUser = u;
+  document.getElementById('um-avatar').innerHTML = u.avatar
+    ? '<img src="' + escapeHtml(u.avatar) + '" onerror="this.innerHTML=\'' + escapeHtml(u.username).charAt(0).toUpperCase() + '\'">'
+    : escapeHtml(u.username).charAt(0).toUpperCase();
+  document.getElementById('um-name').innerHTML = escapeHtml(u.username) + vBadge(u) + '<span class="lv-badge ' + lvClass(u.level) + '">LV' + u.level + '</span>';
+  document.getElementById('um-role').textContent = roleName(u);
+  document.getElementById('um-bio').textContent = u.bio || '这个人很懒，什么都没写';
+  var stats = '<span>返图 <b>' + (u.approved_count || 0) + '</b></span><span>积分 <b>' + (u.points || 0) + '</b></span><span>活跃度 <b>' + (u.activity || 0) + '</b></span>';
+  document.getElementById('um-stats').innerHTML = stats;
+  var canMsg = expandLoggedIn && u.id !== expandMeId;
+  document.getElementById('um-msg').style.display = canMsg ? '' : 'none';
+  document.getElementById('um-mask').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('um-mask').classList.remove('show');
+  window._umUser = null;
+}
+
+window.openUserModal = openUserModal;
+window.closeModal = closeModal;
+
+// 发站内信弹窗
+var msgTargetId = 0;
+
+function openMsgModal(userId, username) {
+  msgTargetId = userId;
+  document.getElementById('msg-modal-title').textContent = '发站内信给 @' + username;
+  document.getElementById('msg-title').value = '';
+  document.getElementById('msg-content').value = '';
+  document.getElementById('msg-mask').style.display = 'flex';
+}
+
+function closeMsgModal() {
+  document.getElementById('msg-mask').style.display = 'none';
+  msgTargetId = 0;
+}
+
+async function sendModalMsg() {
+  if (!msgTargetId) return;
+  var title = document.getElementById('msg-title').value.trim();
+  var content = document.getElementById('msg-content').value.trim();
+  if (!title || !content) { showToast('请填写标题和内容', 'warning'); return; }
   var res = await fetch('/api/messages', {
     method: 'POST', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ action: 'send', toUserId: userId, title: title, content: content })
+    body: JSON.stringify({ action: 'send', toUserId: msgTargetId, title: title, content: content })
   });
   var data = await res.json();
   if (data.error) { showToast(data.error, 'error'); return; }
-  showToast('已发送给 @' + username, 'success');
+  showToast('已发送', 'success');
+  closeMsgModal();
+}
+
+window.openMsgModal = openMsgModal;
+window.closeMsgModal = closeMsgModal;
+window.sendModalMsg = sendModalMsg;
+
+async function sendExpandMsg(userId, username) {
+  if (!expandLoggedIn) { showToast('请先登录', 'warning'); return; }
+  openMsgModal(userId, username);
 }
 
 window.sendExpandMsg = sendExpandMsg;
