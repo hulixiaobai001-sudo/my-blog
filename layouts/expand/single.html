@@ -9,8 +9,10 @@
   .user-card .avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
   .user-card .name { color: #fff; font-size: 15px; margin-bottom: 6px; }
   .user-card .bio { color: #999; font-size: 12px; margin-bottom: 14px; min-height: 32px; }
-  .add-btn { display: block; padding: 8px 16px; border-radius: 10px; background: rgba(102,126,234,.2); border: 1px solid rgba(102,126,234,.3); color: #8ab4ff; text-decoration: none; font-size: 13px; transition: background .2s; }
+  .add-btn { display: block; padding: 8px 16px; border-radius: 10px; background: rgba(102,126,234,.2); border: 1px solid rgba(102,126,234,.3); color: #8ab4ff; text-decoration: none; font-size: 13px; transition: background .2s; margin-bottom: 8px; }
   .add-btn:hover { background: rgba(102,126,234,.3); }
+  .msg-btn { display: block; padding: 8px 16px; border-radius: 10px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.15); color: #aaa; font-size: 13px; cursor: pointer; transition: background .2s; }
+  .msg-btn:hover { background: rgba(255,255,255,.1); color: #fff; }
   .empty { color: #666; text-align: center; padding: 40px 0; }
   .load-more-btn { display: block; width: 100%; padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,.15); background: rgba(255,255,255,.05); color: #aaa; font-size: 14px; cursor: pointer; margin-top: 16px; transition: all .2s; grid-column: 1 / -1; }
   .load-more-btn:hover { background: rgba(255,255,255,.1); color: #fff; }
@@ -30,6 +32,20 @@
 <script>
 var expandPage = 1;
 var expandLoading = false;
+var expandMeId = 0;
+var expandLoggedIn = false;
+
+(async function() {
+  try {
+    var res = await fetch('/api/auth/me/');
+    var data = await res.json();
+    if (data.user) {
+      expandLoggedIn = true;
+      expandMeId = data.user.id;
+    }
+  } catch(e) {}
+  loadExpand();
+})();
 
 function renderExpandSkeleton() {
   var html = '';
@@ -53,11 +69,15 @@ async function loadExpand() {
       return;
     }
     var html = users.map(function(u) {
+      var msgBtn = (expandLoggedIn && u.id !== expandMeId)
+        ? '<button class="msg-btn" onclick="sendExpandMsg(' + u.id + ',\'' + escapeHtml(u.username) + '\')">发站内信</button>'
+        : '';
       return '<div class="user-card">' +
         '<div class="avatar">' + (u.avatar ? '<img src="' + escapeHtml(u.avatar) + '" onerror="this.style.display=\'none\'">' : escapeHtml(u.username).charAt(0).toUpperCase()) + '</div>' +
         '<div class="name">' + escapeHtml(u.username) + '</div>' +
         '<div class="bio">' + escapeHtml(u.bio) || '这个人很懒，什么都没写' + '</div>' +
         '<a class="add-btn" href="mqqapi://card/show_pslcard?src_type=internal&version=1&uin=' + escapeHtml(u.qq) + '" target="_blank">加好友</a>' +
+        msgBtn +
       '</div>';
     }).join('');
     if (expandPage === 1) {
@@ -86,6 +106,23 @@ async function loadExpand() {
   }
   expandLoading = false;
 }
+
+async function sendExpandMsg(userId, username) {
+  if (!expandLoggedIn) { showToast('请先登录', 'warning'); return; }
+  var title = prompt('站内信标题（发给 @' + username + '）：', '你好');
+  if (!title) return;
+  var content = prompt('站内信内容：');
+  if (!content) return;
+  var res = await fetch('/api/messages', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ action: 'send', toUserId: userId, title: title, content: content })
+  });
+  var data = await res.json();
+  if (data.error) { showToast(data.error, 'error'); return; }
+  showToast('已发送给 @' + username, 'success');
+}
+
+window.sendExpandMsg = sendExpandMsg;
 
 loadExpand();
 </script>

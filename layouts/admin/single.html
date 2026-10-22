@@ -174,6 +174,10 @@
 
     <div class="panel" id="panel-guestbook">
       <h2>留言审核</h2>
+      <div style="display:flex;gap:8px;margin-bottom:16px;">
+        <button class="btn-ok" onclick="gbTab('pending')" id="gb-tab-pending">待审核</button>
+        <button class="btn-warn" onclick="gbTab('approved')" id="gb-tab-approved">已通过</button>
+      </div>
       <div id="gb-list"><p class="empty">加载中...</p></div>
     </div>
 
@@ -254,24 +258,40 @@ function contentTab(t) {
   document.getElementById('ct-manage').className = t === 'manage' ? 'btn-ok' : 'btn-warn';
 }
 
+var gbCurrentStatus = 'pending';
+
+function gbTab(status) {
+  gbCurrentStatus = status;
+  document.getElementById('gb-tab-pending').className = status === 'pending' ? 'btn-ok' : 'btn-warn';
+  document.getElementById('gb-tab-approved').className = status === 'approved' ? 'btn-ok' : 'btn-warn';
+  loadGuestbook();
+}
+window.gbTab = gbTab;
+
 async function loadGuestbook() {
-  var res = await fetch('/api/admin/moderate-guestbook');
+  var res = await fetch('/api/admin/moderate-guestbook?status=' + gbCurrentStatus);
   var data = await res.json();
   var el = document.getElementById('gb-list');
   if (!data.messages || data.messages.length === 0) {
-    el.innerHTML = '<p class="empty">没有待审核留言</p>';
+    el.innerHTML = '<p class="empty">' + (gbCurrentStatus === 'pending' ? '没有待审核留言' : '没有已通过的留言') + '</p>';
     return;
   }
   el.innerHTML = data.messages.map(function(m) {
-    return '<div class="list-item"><div class="title">@' + escapeHtml(m.username) + ' <span style="color:#f0ad4e;font-size:11px;">[待审核]</span></div>' +
+    var anonTag = m.is_anonymous ? '<span style="color:#8ab4ff;font-size:11px;">[匿名]</span>' : '';
+    var replyTag = m.reply_to ? '<span style="color:#aaa;font-size:11px;">[回复]</span>' : '';
+    var statusTag = gbCurrentStatus === 'pending'
+      ? '<span style="color:#f0ad4e;font-size:11px;">[待审核]</span>'
+      : '<span style="color:#2ecc71;font-size:11px;">[已通过]</span>';
+    var buttons = gbCurrentStatus === 'pending'
+      ? '<button class="btn-ok" onclick="moderateGb(' + m.id + ',\'approved\')">通过</button>' +
+        '<button class="btn-danger" onclick="moderateGb(' + m.id + ',\'rejected\')">拒绝</button>' +
+        '<button class="btn-danger" style="background:#555;" onclick="deleteGb(' + m.id + ')">删除</button>'
+      : '<button class="btn-danger" onclick="deleteGb(' + m.id + ')">删除</button>';
+    return '<div class="list-item"><div class="title">@' + escapeHtml(m.username) + ' ' + anonTag + replyTag + statusTag + '</div>' +
       '<div class="content">' + escapeHtml(m.content) + '</div>' +
       (m.image_url ? '<img src="' + escapeHtml(m.image_url) + '" style="max-width:200px;border-radius:8px;margin-top:6px;">' : '') +
       '<div class="content" style="color:#666;font-size:11px;">' + escapeHtml(m.created_at) + '</div>' +
-      '<div style="margin-top:10px;display:flex;gap:8px;">' +
-      '<button class="btn-ok" onclick="moderateGb(' + m.id + ',\'approved\')">通过</button>' +
-      '<button class="btn-danger" onclick="moderateGb(' + m.id + ',\'rejected\')">拒绝</button>' +
-      '<button class="btn-danger" style="background:#555;" onclick="deleteGb(' + m.id + ')">删除</button>' +
-      '</div></div>';
+      '<div style="margin-top:10px;display:flex;gap:8px;">' + buttons + '</div></div>';
   }).join('');
 }
 

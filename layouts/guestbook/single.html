@@ -3,8 +3,8 @@
   .gb-wrap { max-width: 600px; margin: 20px auto; padding: 0 20px; position: relative; z-index: 1; }
   .gb-wrap h1 { color: #fff; font-size: 24px; margin: 20px 0 8px; text-align: center; }
   .gb-wrap .sub { color: #888; text-align: center; font-size: 13px; margin-bottom: 24px; }
-  .gb-tabs { display: flex; gap: 8px; margin-bottom: 16px; justify-content: center; }
-  .gb-tabs button { padding: 8px 18px; border-radius: 20px; border: 1px solid rgba(255,255,255,.15); background: rgba(255,255,255,.05); color: #aaa; font-size: 13px; cursor: pointer; transition: all .2s; }
+  .gb-tabs { display: flex; gap: 8px; margin-bottom: 16px; justify-content: center; flex-wrap: wrap; }
+  .gb-tabs button { padding: 8px 18px; border-radius: 20px; border: 1px solid rgba(255,255,255,.15); background: rgba(255,255,255,.05); color: #aaa; font-size: 13px; cursor: pointer; transition: all .2s; min-height: 40px; }
   .gb-tabs button.active { background: linear-gradient(135deg,#667eea,#764ba2); color: #fff; border-color: transparent; }
   .gb-form { background: rgba(255,255,255,.06); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,.1); border-radius: 16px; padding: 20px; margin-bottom: 24px; }
   .gb-form textarea { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,.15); background: rgba(255,255,255,.05); color: #fff; font-size: 14px; box-sizing: border-box; min-height: 80px; resize: vertical; }
@@ -24,6 +24,21 @@
   .gb-list .content { color: #ddd; font-size: 14px; line-height: 1.6; }
   .gb-list .content img { max-width: 100%; border-radius: 10px; margin-top: 8px; }
   .gb-list .del-btn { background: none; border: none; color: #dc3545; cursor: pointer; font-size: 12px; padding: 4px 8px; }
+  .gb-list .reply-btn { background: none; border: none; color: #8ab4ff; cursor: pointer; font-size: 12px; padding: 4px 8px; }
+  /* 回复区 */
+  .reply-wrap { margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(255,255,255,.1); }
+  .reply-item { display: flex; gap: 8px; align-items: flex-start; padding: 6px 0; font-size: 13px; }
+  .reply-item .r-av { width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0; background: linear-gradient(135deg,#667eea,#764ba2); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 11px; overflow: hidden; }
+  .reply-item .r-av img { width: 100%; height: 100%; object-fit: cover; }
+  .reply-item .r-body { flex: 1; min-width: 0; }
+  .reply-item .r-name { color: #8ab4ff; font-size: 12px; margin-bottom: 2px; }
+  .reply-item .r-text { color: #bbb; line-height: 1.5; word-break: break-word; }
+  .reply-item .r-time { color: #555; font-size: 10px; margin-top: 2px; }
+  .reply-item .del-btn { color: #dc3545; background: none; border: none; cursor: pointer; font-size: 11px; padding: 0 4px; }
+  .reply-input-row { display: none; gap: 8px; margin-top: 10px; align-items: center; }
+  .reply-input-row.open { display: flex; }
+  .reply-input-row input { flex: 1; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.15); background: rgba(255,255,255,.05); color: #fff; font-size: 13px; box-sizing: border-box; min-width: 0; }
+  .reply-input-row button { padding: 8px 14px; border: none; border-radius: 8px; background: linear-gradient(135deg,#667eea,#764ba2); color: #fff; font-size: 13px; cursor: pointer; }
   .load-more-btn { display: block; width: 100%; padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,.15); background: rgba(255,255,255,.05); color: #aaa; font-size: 14px; cursor: pointer; margin-top: 12px; transition: all .2s; }
   .load-more-btn:hover { background: rgba(255,255,255,.1); color: #fff; }
   .load-more-btn:disabled { opacity: .5; cursor: not-allowed; }
@@ -45,18 +60,20 @@
   <h1>留言墙</h1>
   <p class="sub">留下你的脚印 · 支持匿名树洞 · 捞个漂流瓶</p>
   <div class="gb-tabs">
-    <button id="tab-normal" class="active" onclick="switchTab('normal')">💬 公开留言</button>
-    <button id="tab-anon" onclick="switchTab('anon')">🌲 匿名树洞</button>
+    <button id="tab-normal" class="active" onclick="switchTab('normal')">公开留言</button>
+    <button id="tab-anon" onclick="switchTab('anon')">匿名树洞</button>
+    <button id="tab-mine" onclick="switchTab('mine')">我的留言</button>
   </div>
   <div class="gb-form">
     <textarea id="gb-content" placeholder="说点什么..."></textarea>
     <div class="row">
-      <button onclick="document.getElementById('gb-img').click()">📷 传图</button>
+      <button onclick="document.getElementById('gb-img').click()">传图</button>
       <input type="file" id="gb-img" accept="image/*" style="display:none;" onchange="uploadImg(this)">
       <img id="gb-preview" class="img-preview">
       <label class="anon-check" id="anon-label"><input type="checkbox" id="gb-anon"> 匿名发送</label>
       <button id="gb-submit" onclick="submit()">提交</button>
     </div>
+    <div style="color:#777;font-size:12px;margin-top:10px;" id="gb-tip">匿名留言需站长审核通过后显示</div>
   </div>
   <div class="gb-list" id="list">
     <div class="skeleton-card"></div>
@@ -86,13 +103,20 @@ var gbImageUrl = '';
 var currentPage = 1;
 var currentTab = 'normal';
 var loading = false;
+var currentUserId = null;
+var currentUserIsAdmin = false;
+var msgAnonMap = {};
 
 function switchTab(tab) {
   currentTab = tab;
   currentPage = 1;
   document.getElementById('tab-normal').classList.toggle('active', tab === 'normal');
   document.getElementById('tab-anon').classList.toggle('active', tab === 'anon');
-  document.getElementById('gb-anon').checked = (tab === 'anon');
+  document.getElementById('tab-mine').classList.toggle('active', tab === 'mine');
+  var isAnonTab = tab === 'anon';
+  document.getElementById('gb-anon').checked = isAnonTab;
+  document.getElementById('anon-label').style.display = isAnonTab ? '' : 'none';
+  document.getElementById('gb-tip').textContent = isAnonTab ? '匿名留言需站长审核通过后显示' : '含图片或敏感词的留言需人工审核';
   document.getElementById('list').innerHTML = '<div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div>';
   document.getElementById('load-more').style.display = 'none';
   loadList();
@@ -145,12 +169,17 @@ async function submit() {
     var data = await res.json();
     if (data.error) { showToast(data.error, 'error'); }
     else {
-      showToast(isAnon ? '匿名留言已提交，审核通过后显示' : '发言已提交，含图片或敏感词需人工审核', 'success');
+      showToast(isAnon ? '匿名留言已提交，审核通过后显示' : (data.status === 'pending' ? '已提交，含图片或敏感词需人工审核' : '发言成功'), 'success');
       document.getElementById('gb-content').value = '';
       gbImageUrl = '';
       document.getElementById('gb-preview').style.display = 'none';
-      currentPage = 1;
-      loadList();
+      if (isAnon && currentTab === 'anon') {
+        document.getElementById('list').innerHTML = '<div class="empty-state"><div class="empty-text">已提交，等待审核</div><div class="empty-hint">匿名留言需站长审核通过后才会显示在这里</div></div>';
+        document.getElementById('load-more').style.display = 'none';
+      } else {
+        currentPage = 1;
+        loadList();
+      }
     }
   } catch(e) { showToast('提交失败，请重试', 'error'); }
   btn.disabled = false;
@@ -169,6 +198,25 @@ function renderEmpty() {
   return '<div class="empty-state"><div class="empty-icon">🌙</div><div class="empty-text">还没有留言</div><div class="empty-hint">来抢沙发，留下你的第一句话吧</div><button class="empty-action" onclick="document.getElementById(\'gb-content\').focus()">写第一条留言</button></div>';
 }
 
+function renderReplies(m, replies) {
+  var list = replies[m.id] || [];
+  if (list.length === 0) return '';
+  var html = '<div class="reply-wrap">';
+  html += list.map(function(r) {
+    var isAnonR = r.is_anonymous || !r.username;
+    var av = isAnonR
+      ? '<div class="r-av">🌲</div>'
+      : (r.avatar ? '<div class="r-av"><img src="' + escapeHtml(r.avatar) + '"></div>' : '<div class="r-av">' + escapeHtml(r.username).charAt(0).toUpperCase() + '</div>');
+    var name = isAnonR ? '<span class="anon-tag">匿名</span>' : '<span>' + escapeHtml(r.username) + '</span>';
+    var del = ((r.user_id && r.user_id === currentUserId) || currentUserIsAdmin) ? '<button class="del-btn" onclick="delMsg(' + r.id + ')">删除</button>' : '';
+    return '<div class="reply-item">' + av + '<div class="r-body"><div class="r-name">' + name + '</div>' +
+      '<div class="r-text">' + escapeHtml(r.content) + '</div>' +
+      '<div class="r-time">' + escapeHtml(r.created_at) + del + '</div></div></div>';
+  }).join('');
+  html += '</div>';
+  return html;
+}
+
 async function loadList() {
   if (loading) return;
   loading = true;
@@ -177,28 +225,45 @@ async function loadList() {
   try {
     var url = '/api/guestbook?page=' + currentPage + '&pageSize=20';
     if (currentTab === 'anon') url += '&anon=1';
+    if (currentTab === 'mine') url += '&mine=1';
     var res = await fetch(url);
     var data = await res.json();
     var msgs = data.messages || [];
+    currentUserId = data.currentUserId || null;
+    currentUserIsAdmin = !!data.currentUserIsAdmin;
     if (currentPage === 1 && msgs.length === 0) {
-      el.innerHTML = renderEmpty();
+      el.innerHTML = currentTab === 'mine' ? '<div class="empty-state"><div class="empty-text">你还没有留言</div><div class="empty-hint">去公开留言或树洞留下你的第一句话吧</div></div>' : renderEmpty();
       loadBtn.style.display = 'none';
       return;
     }
+    var replies = data.replies || {};
     var html = msgs.map(function(m) {
-      var isAnon = m.is_anonymous || !m.username;
+      msgAnonMap[m.id] = !!(m.is_anonymous || !m.username);
+      var isAnon = msgAnonMap[m.id];
       var av = isAnon
         ? '<div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;">🌲</div>'
         : (m.avatar ? '<img src="' + escapeHtml(m.avatar) + '">' : '<img src="data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'><circle cx=\'50\' cy=\'50\' r=\'50\' fill=\'%23667eea\'/></svg>">');
       var name = isAnon ? '<span class="anon-tag">匿名</span>' : '<span class="un">@' + escapeHtml(m.username) + '</span>';
-      var delBtn = (!isAnon && m.user_id && data.currentUserId && m.user_id === data.currentUserId)
+      var statusTag = '';
+      if (currentTab === 'mine') {
+        statusTag = m.status === 'approved' ? '<span style="color:#2ecc71;font-size:11px;">已通过</span>'
+          : m.status === 'pending' ? '<span style="color:#f0ad4e;font-size:11px;">审核中</span>'
+          : '<span style="color:#dc3545;font-size:11px;">已拒绝</span>';
+      }
+      var delBtn = ((m.user_id && m.user_id === currentUserId) || currentUserIsAdmin)
         ? '<button class="del-btn" onclick="delMsg(' + m.id + ')">删除</button>'
         : '';
-      return '<div class="gb-item"><div class="head">' + av + name +
+      var replyBtn = currentUserId ? '<button class="reply-btn" onclick="toggleReply(' + m.id + ')">回复</button>' : '';
+      var replyRow = currentUserId
+        ? '<div class="reply-input-row" id="reply-row-' + m.id + '">' +
+          '<input id="reply-text-' + m.id + '" placeholder="写下你的回复..." maxlength="500">' +
+          '<button onclick="replyMsg(' + m.id + ')">发送</button></div>'
+        : '';
+      return '<div class="gb-item"><div class="head">' + av + name + statusTag +
         '<span class="time">' + escapeHtml(m.created_at) + '</span>' + delBtn + '</div>' +
         '<div class="content">' + escapeHtml(m.content) +
         (m.image_url ? '<img src="' + escapeHtml(m.image_url) + '">' : '') +
-        '</div></div>';
+        '</div>' + renderReplies(m, replies) + replyBtn + replyRow + '</div>';
     }).join('');
     if (currentPage === 1) {
       el.innerHTML = html;
@@ -222,12 +287,39 @@ async function loadMore() {
   await loadList();
 }
 
+function toggleReply(id) {
+  var row = document.getElementById('reply-row-' + id);
+  row.classList.toggle('open');
+  if (row.classList.contains('open')) document.getElementById('reply-text-' + id).focus();
+}
+
+async function replyMsg(id) {
+  var input = document.getElementById('reply-text-' + id);
+  var content = input.value.trim();
+  if (!content) { showToast('写点内容吧', 'warning'); return; }
+  // 树洞（匿名留言）里的回复默认匿名保持匿名性；站长/管理员回复署名，便于识别官方回复
+  var anon = msgAnonMap[id] && !currentUserIsAdmin ? true : false;
+  var res = await fetch('/api/guestbook', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ content: content, reply_to: id, is_anonymous: anon })
+  });
+  var data = await res.json();
+  if (data.error) { showToast(data.error, 'error'); return; }
+  showToast(data.status === 'pending' ? '回复已提交，审核通过后显示' : '回复成功', 'success');
+  input.value = '';
+  document.getElementById('reply-row-' + id).classList.remove('open');
+  currentPage = 1;
+  loadList();
+}
+
 async function delMsg(id) {
   if (!confirm('确定删除这条留言？')) return;
-  await fetch('/api/guestbook', {
+  var res = await fetch('/api/guestbook', {
     method: 'DELETE', headers: {'Content-Type':'application/json'},
     body: JSON.stringify({ id: id })
   });
+  var data = await res.json();
+  if (data.error) { showToast(data.error, 'error'); return; }
   showToast('已删除', 'success');
   currentPage = 1;
   loadList();

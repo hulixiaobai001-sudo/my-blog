@@ -85,7 +85,7 @@ function switchTab(tab, el) {
 async function loadMyMsgs() {
   var el = document.getElementById('my-msgs');
   try {
-    var res = await fetch('/api/messages?mine=1');
+    var res = await fetch('/api/guestbook?mine=1');
     var data = await res.json();
     if (!data.messages || data.messages.length === 0) {
       el.innerHTML = '<p style="color:#666;font-size:13px;">还没有留言记录</p>';
@@ -95,13 +95,24 @@ async function loadMyMsgs() {
       var st = m.status === 'approved' ? '<span class="msg-status" style="background:#2ecc7133;color:#2ecc71;">已通过</span>'
         : m.status === 'pending' ? '<span class="msg-status" style="background:#f0ad4e33;color:#f0ad4e;">审核中</span>'
         : '<span class="msg-status" style="background:#dc354533;color:#dc3545;">已拒绝</span>';
-      return '<div class="msg-item"><div>' + escapeHtml(m.content) + st + '</div>' +
+      var anonTag = m.is_anonymous ? '<span class="msg-status" style="background:#667eea33;color:#8ab4ff;">匿名</span>' : '';
+      var replyTag = m.reply_to ? '<span class="msg-status" style="background:#88888822;color:#aaa;">回复</span>' : '';
+      return '<div class="msg-item"><div>' + escapeHtml(m.content) + anonTag + replyTag + st + '</div>' +
         (m.image_url ? '<img src="' + escapeHtml(m.image_url) + '" style="max-width:100%;border-radius:8px;margin-top:6px;" onerror="this.style.display=\'none\'">' : '') +
-        '<div style="color:#666;font-size:11px;margin-top:4px;">' + escapeHtml(m.created_at) + '</div></div>';
+        '<div style="color:#666;font-size:11px;margin-top:4px;">' + escapeHtml(m.created_at) + ' <button onclick="delMyMsg(' + m.id + ')" style="background:none;border:none;color:#dc3545;cursor:pointer;font-size:11px;padding:0;">删除</button></div></div>';
     }).join('');
   } catch(e) {
     el.innerHTML = '<p style="color:#666;font-size:13px;">加载失败</p>';
   }
+}
+
+async function delMyMsg(id) {
+  if (!confirm('确定删除这条留言？')) return;
+  await fetch('/api/guestbook', {
+    method: 'DELETE', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ id: id })
+  });
+  loadMyMsgs();
 }
 
 (async () => {
