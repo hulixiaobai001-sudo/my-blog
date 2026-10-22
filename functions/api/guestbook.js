@@ -64,6 +64,16 @@ export async function onRequestPost(context) {
     await addActivity(env, userId, 2);
   }
 
+  // 敏感词命中：给所有管理员发站内信预警
+  if (hitWord) {
+    try {
+      const { results: admins } = await env.DB.prepare('SELECT id FROM users WHERE is_admin = 1').all();
+      for (const a of (admins || [])) {
+        await sendSystemMessage(env, a.id, '留言墙敏感词预警', '检测到留言命中敏感词「' + hitWord + '」，已进入待审核：' + content.slice(0, 80));
+      }
+    } catch (e) {}
+  }
+
   return new Response(JSON.stringify({ ok: true, status: status }));
 }
 
