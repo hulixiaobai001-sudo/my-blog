@@ -33,7 +33,7 @@
     </div>
 
     <div id="tab-info">
-      <h1>个人资料</h1>
+      <h1>个人资料 <span id="my-level-badge" style="font-size:12px;font-weight:600;padding:3px 10px;border-radius:12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#ccc;vertical-align:middle;"></span></h1>
       <label>头像（上传后自动压缩）</label>
       <button onclick="document.getElementById('avatar-input').click()" style="padding:8px 16px;border-radius:8px;border:1px dashed rgba(255,255,255,.3);background:rgba(255,255,255,.05);color:#ddd;cursor:pointer;">选择头像</button>
       <input type="file" id="avatar-input" accept="image/*" style="display:none;" onchange="uploadAvatar(this)">
@@ -115,10 +115,20 @@ async function delMyMsg(id) {
   loadMyMsgs();
 }
 
+function levelOf(p) {
+  p = Number(p) || 0;
+  if (p >= 3000) return 5;
+  if (p >= 1000) return 4;
+  if (p >= 500) return 3;
+  if (p >= 100) return 2;
+  return 1;
+}
+
 (async () => {
   const res = await fetch('/api/me');
   const data = await res.json();
   if (data.error) { location.href = '/login/'; return; }
+  document.getElementById('my-level-badge').textContent = 'LV' + levelOf(data.points) + ' · ' + (data.points || 0) + '积分';
   document.getElementById('bio').value = data.bio || '';
   document.getElementById('nickname').value = data.nickname || '';
   document.getElementById('short-name').value = data.short_name || '';

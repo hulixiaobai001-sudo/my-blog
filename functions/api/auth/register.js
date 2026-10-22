@@ -15,11 +15,13 @@ export async function onRequestPost(context) {
     }
 
     const hash = await sha256(password);
+    // 新用户默认在扩列区展示（show_qq=1），如不愿展示可在个人资料关闭
     try {
-      await env.DB.prepare('INSERT INTO users (username, password_hash, qq) VALUES (?, ?, ?)').bind(username, hash, qq || '').run();
+      await env.DB.prepare('INSERT INTO users (username, password_hash, qq, show_qq) VALUES (?, ?, ?, 1)').bind(username, hash, qq || '').run();
     } catch (e) {
-      await env.DB.exec('ALTER TABLE users ADD COLUMN qq TEXT DEFAULT \'\'');
-      await env.DB.prepare('INSERT INTO users (username, password_hash, qq) VALUES (?, ?, ?)').bind(username, hash, qq || '').run();
+      try { await env.DB.exec('ALTER TABLE users ADD COLUMN qq TEXT DEFAULT \'\''); } catch(e2) {}
+      try { await env.DB.exec('ALTER TABLE users ADD COLUMN show_qq INTEGER DEFAULT 1'); } catch(e3) {}
+      await env.DB.prepare('INSERT INTO users (username, password_hash, qq, show_qq) VALUES (?, ?, ?, 1)').bind(username, hash, qq || '').run();
     }
     const user = await env.DB.prepare('SELECT id, username, is_admin FROM users WHERE username = ?').bind(username).first();
 

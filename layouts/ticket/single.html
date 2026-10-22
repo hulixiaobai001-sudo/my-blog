@@ -15,7 +15,13 @@
   .ticket-item .content { color: #ccc; font-size: 13px; margin: 6px 0; }
   .ticket-item .reply { color: #8ab4ff; font-size: 13px; margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,.1); }
   .status-open { color: #f0ad4e; font-size: 12px; }
+  .status-done { color: #8ab4ff; font-size: 12px; }
   .status-closed { color: #999; font-size: 12px; }
+  .ticket-meta { font-size: 12px; color: #999; margin-top: 8px; display: flex; gap: 14px; flex-wrap: wrap; }
+  .plus { color: #4caf50; }
+  .minus { color: #ef5350; }
+  .tmpl-btn { margin: 0 6px 6px 0; padding: 6px 12px; font-size: 12px; background: rgba(255,255,255,.1); color: #ccc; border: 1px solid rgba(255,255,255,.15); border-radius: 8px; cursor: pointer; }
+  .tmpl-btn:hover { background: rgba(255,255,255,.18); color: #fff; }
 </style>
 
 <div class="ticket-wrap">
@@ -23,10 +29,10 @@
     <h1>提交工单</h1>
     <div style="margin-bottom:12px;">
       <div style="font-size:13px;color:#aaa;margin-bottom:6px;">快速模板：</div>
-      <button onclick="useTemplate('bug')" style="margin-right:6px;margin-bottom:6px;padding:6px 12px;font-size:12px;background:rgba(255,255,255,.1);color:#ccc;border:1px solid rgba(255,255,255,.15);border-radius:8px;cursor:pointer;">🐛 Bug反馈</button>
-      <button onclick="useTemplate('suggest')" style="margin-right:6px;margin-bottom:6px;padding:6px 12px;font-size:12px;background:rgba(255,255,255,.1);color:#ccc;border:1px solid rgba(255,255,255,.15);border-radius:8px;cursor:pointer;">💡 功能建议</button>
-      <button onclick="useTemplate('appeal')" style="margin-right:6px;margin-bottom:6px;padding:6px 12px;font-size:12px;background:rgba(255,255,255,.1);color:#ccc;border:1px solid rgba(255,255,255,.15);border-radius:8px;cursor:pointer;">⚖️ 封禁申诉</button>
-      <button onclick="useTemplate('other')" style="margin-right:6px;margin-bottom:6px;padding:6px 12px;font-size:12px;background:rgba(255,255,255,.1);color:#ccc;border:1px solid rgba(255,255,255,.15);border-radius:8px;cursor:pointer;">💬 其他问题</button>
+      <button class="tmpl-btn" onclick="useTemplate('bug')">Bug反馈</button>
+      <button class="tmpl-btn" onclick="useTemplate('suggest')">功能建议</button>
+      <button class="tmpl-btn" onclick="useTemplate('appeal')">封禁申诉</button>
+      <button class="tmpl-btn" onclick="useTemplate('other')">其他问题</button>
     </div>
     <input type="text" id="title" placeholder="标题" />
     <textarea id="content" placeholder="描述你要反馈的问题或建议"></textarea>
@@ -65,9 +71,31 @@ async function submit() {
   const res = await fetch('/api/ticket/', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ title: t, content: c }) });
   const data = await res.json();
   if (data.error) { document.getElementById('msg').textContent = data.error; return; }
-  document.getElementById('msg').textContent = '提交成功';
+  document.getElementById('msg').textContent = '提交成功（提交扣10积分）';
   document.getElementById('title').value = ''; document.getElementById('content').value = '';
   loadList();
+}
+
+function resultLabel(r) {
+  if (!r) return '';
+  if (r === 'none') return '无需处理';
+  if (r === 'fixed') return '已处理';
+  if (r === 'useful') return '建议采纳';
+  if (r === 'malicious') return '恶意工单';
+  return r;
+}
+
+function reviewerLabel(t) {
+  if (!t.reviewer_name) return '';
+  var role = t.reviewer_role === 'super_admin' ? '站长' : (t.reviewer_role === 'admin' ? '管理员' : '');
+  return '@' + t.reviewer_name + (role ? '（' + role + '）' : '');
+}
+
+function pointsLabel(t) {
+  if (t.points_adjust == null) return '';
+  if (t.points_adjust > 0) return '<span class="plus">+' + t.points_adjust + ' 积分</span>';
+  if (t.points_adjust < 0) return '<span class="minus">' + t.points_adjust + ' 积分</span>';
+  return '0 积分';
 }
 
 async function loadList() {
@@ -75,13 +103,22 @@ async function loadList() {
   const data = await res.json();
   const el = document.getElementById('list');
   if (!data.tickets || data.tickets.length === 0) { el.innerHTML = '<p style="color:#999;font-size:13px;">还没有工单</p>'; return; }
-  el.innerHTML = data.tickets.map(t => `
+  el.innerHTML = data.tickets.map(t => {
+    var st = t.status === 'open' ? '<span class="status-open">处理中</span>' : t.status === 'done' ? '<span class="status-done">已回复</span>' : '<span class="status-closed">已关闭</span>';
+    var archive = t.status === 'closed' ? ('档案编号：' + escapeHtml(t.archive_no || ('T-' + String(t.id).padStart(5, '0')))) : '';
+    return `
     <div class="ticket-item">
-      <div class="title">${escapeHtml(t.title)} <span class="status-${t.status}">${t.status === 'open' ? '处理中' : '已关闭'}</span></div>
+      <div class="title">${escapeHtml(t.title)} ${st}</div>
       <div class="content">${escapeHtml(t.content)}</div>
-      ${t.reply ? `<div class="reply">站长回复：${escapeHtml(t.reply)}</div>` : ''}
+      ${t.reply ? `<div class="reply">处理回复：${escapeHtml(t.reply)}</div>` : ''}
+      ${t.status === 'closed' ? `<div class="ticket-meta">
+        <span>${archive}</span>
+        <span>结果：${resultLabel(t.result) || '—'}</span>
+        <span>积分：${pointsLabel(t)}</span>
+        <span>审核人：${reviewerLabel(t) || '—'}</span>
+      </div>` : ''}
     </div>
-  `).join('');
+  `; }).join('');
 }
 
 loadList();

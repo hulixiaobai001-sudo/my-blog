@@ -167,6 +167,10 @@
     <div class="panel" id="panel-tickets">
       <h2>事务处理</h2>
       <h3 style="color:#bbb;font-size:15px;margin:0 0 10px;">工单</h3>
+      <div style="display:flex;gap:8px;margin-bottom:16px;">
+        <button class="btn-ok" onclick="ticketTab('pending')" id="tk-tab-pending">待处理</button>
+        <button class="btn-warn" onclick="ticketTab('closed')" id="tk-tab-closed">已关闭</button>
+      </div>
       <div id="tickets"><p class="empty">加载中...</p></div>
       <h3 style="color:#bbb;font-size:15px;margin:24px 0 10px;">兑换发货</h3>
       <div id="redemptions"><p class="empty">加载中...</p></div>
@@ -403,30 +407,107 @@ async function editReport(id) {
   alert('已保存');
 }
 
+var ticketView = 'pending';
+var ticketData = { pending: [], closed: [] };
+
+function ticketTab(view) {
+  ticketView = view;
+  document.getElementById('tk-tab-pending').className = view === 'pending' ? 'btn-ok' : 'btn-warn';
+  document.getElementById('tk-tab-closed').className = view === 'closed' ? 'btn-ok' : 'btn-warn';
+  renderTickets();
+}
+
+function ticketResultLabel(r) {
+  if (!r) return '';
+  if (r === 'none') return '无需处理';
+  if (r === 'fixed') return '已处理';
+  if (r === 'useful') return '建议采纳';
+  if (r === 'malicious') return '恶意工单';
+  return r;
+}
+
+function ticketReviewerLabel(t) {
+  if (!t.reviewer_name) return '';
+  var role = t.reviewer_role === 'super_admin' ? '站长' : (t.reviewer_role === 'admin' ? '管理员' : '');
+  return '@' + t.reviewer_name + (role ? '（' + role + '）' : '');
+}
+
+function ticketPointsLabel(t) {
+  if (t.points_adjust == null) return '';
+  if (t.points_adjust > 0) return '<span style="color:#4caf50;">+' + t.points_adjust + ' 积分</span>';
+  if (t.points_adjust < 0) return '<span style="color:#ef5350;">' + t.points_adjust + ' 积分</span>';
+  return '0 积分';
+}
+
 async function loadTickets() {
   const res = await fetch('/api/ticket/');
   const data = await res.json();
+  ticketData = { pending: data.pending || [], closed: data.closed || [] };
+  renderTickets();
+}
+
+function renderTickets() {
   const el = document.getElementById('tickets');
-  if (!data.tickets || data.tickets.length === 0) { el.innerHTML = '<p class="empty">没有待处理的工单</p>'; return; }
-  el.innerHTML = data.tickets.map(t => `
-    <div class="list-item">
-      <div class="title">${escapeHtml(t.title)} <span style="color:#8ab4ff;font-size:11px;">[${t.status === 'open' ? '处理中' : t.status === 'done' ? '已回复' : '已关闭'}]</span></div>
-      <div class="content">${escapeHtml(t.content)}</div>
-      ${t.reply ? `<div style="color:#8ab4ff;font-size:12px;margin-top:6px;">回复：${escapeHtml(t.reply)}</div>` : ''}
-      <textarea style="margin-top:8px;height:70px;" id="reply-${t.id}" placeholder="回复内容...">${escapeHtml(t.reply || '')}</textarea>
-      <input type="number" id="refund-${t.id}" placeholder="采纳返还积分（0=不返还）" style="margin-top:6px;width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:#fff;font-size:13px;">
-      <div>
-        <button class="btn-ok" onclick="replyTicket(${t.id},false)">回复</button>
-        <button class="btn-danger" onclick="replyTicket(${t.id},true)">关闭工单</button>
+  if (ticketView === 'pending') {
+    const list = ticketData.pending;
+    if (!list || list.length === 0) { el.innerHTML = '<p class="empty">没有待处理的工单</p>'; return; }
+    el.innerHTML = list.map(t => `
+      <div class="list-item">
+        <div class="title">${escapeHtml(t.title)} <span style="color:#8ab4ff;font-size:11px;">[${t.status === 'open' ? '处理中' : '已回复'}]</span> <span style="color:#666;font-size:11px;">提交：@${escapeHtml(t.submitter)}</span></div>
+        <div class="content">${escapeHtml(t.content)}</div>
+        ${t.reply ? `<div style="color:#8ab4ff;font-size:12px;margin-top:6px;">回复：${escapeHtml(t.reply)}</div>` : ''}
+        <textarea style="margin-top:8px;height:70px;" id="reply-${t.id}" placeholder="回复内容...">${escapeHtml(t.reply || '')}</textarea>
+        <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;">
+          <select id="result-${t.id}" style="flex:1;min-width:120px;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:#fff;font-size:13px;" onchange="setDefaultPoints(${t.id}, this.value)">
+            <option value="none">无需处理</option>
+            <option value="fixed">已处理</option>
+            <option value="useful">建议采纳（积分奖励）</option>
+            <option value="malicious">恶意工单（扣分）</option>
+          </select>
+          <input type="number" id="points-${t.id}" placeholder="积分调整（正加负扣）" style="flex:1;min-width:110px;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:#fff;font-size:13px;">
+        </div>
+        <div style="color:#888;font-size:11px;margin-top:4px;">提交扣分：${t.deducted > 0 ? '-' + t.deducted + ' 分' : '未扣分（当时积分不足）'}</div>
+        <div style="margin-top:8px;">
+          <button class="btn-ok" onclick="replyTicket(${t.id},false)">回复</button>
+          <button class="btn-danger" onclick="replyTicket(${t.id},true)">关闭工单</button>
+        </div>
       </div>
-    </div>
-  `).join('');
+    `).join('');
+  } else {
+    const list = ticketData.closed;
+    if (!list || list.length === 0) { el.innerHTML = '<p class="empty">还没有已关闭的工单</p>'; return; }
+    el.innerHTML = list.map(t => `
+      <div class="list-item">
+        <div class="title">${escapeHtml(t.title)} <span style="color:#666;font-size:11px;">[已关闭]</span></div>
+        <div style="color:#888;font-size:12px;margin-top:4px;">档案编号：${escapeHtml(t.archive_no || ('T-' + String(t.id).padStart(5, '0')))} · 提交：@${escapeHtml(t.submitter)}</div>
+        <div class="content" style="margin:6px 0;">${escapeHtml(t.content)}</div>
+        ${t.reply ? `<div style="color:#8ab4ff;font-size:12px;margin-top:6px;">处理回复：${escapeHtml(t.reply)}</div>` : ''}
+        <div style="font-size:12px;margin-top:8px;display:flex;gap:16px;flex-wrap:wrap;">
+          <span>处理结果：${ticketResultLabel(t.result) || '—'}</span>
+          <span>积分调整：${ticketPointsLabel(t)}</span>
+          <span>审核人：${ticketReviewerLabel(t) || '—'}</span>
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+function setDefaultPoints(id, result) {
+  var pts = document.getElementById('points-' + id);
+  if (!pts) return;
+  var defaults = { none: 10, fixed: 10, useful: 100, malicious: -10 };
+  pts.value = defaults[result] != null ? defaults[result] : '';
 }
 
 async function replyTicket(id, close) {
   const reply = document.getElementById('reply-' + id).value;
-  const refund = document.getElementById('refund-' + id).value;
-  await fetch('/api/ticket/reply', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id, reply, close, refund_points: refund }) });
+  const result = (document.getElementById('result-' + id) || {}).value || 'none';
+  const points = (document.getElementById('points-' + id) || {}).value;
+  const body = { id, reply, close, result: close ? result : '', points: close ? points : undefined };
+  if (close && !confirm('确定关闭工单 #' + id + ' 吗？\n积分调整值：' + (points || '0') + '，关闭后不可重复调分。')) return;
+  const res = await fetch('/api/ticket/reply', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+  const data = await res.json();
+  if (data.error) { alert(data.error); return; }
   loadTickets();
 }
 
