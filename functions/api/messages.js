@@ -45,7 +45,7 @@ export async function onRequestPost(context) {
     if (sensitiveWords.some(w => (title + content).includes(w))) return Response.json({ error: '内容包含违禁词，无法发送' }, { status: 400 });
     if (!toUserId) return Response.json({ error: '收件人无效' }, { status: 400 });
     if (!title || !content) return Response.json({ error: '标题和内容不能为空' }, { status: 400 });
-    if (toUserId === userId) return Response.json({ error: '不能给自己发站内信' }, { status: 400 });
+    // 允许给自己发站内信（备忘/自测用途）
     const target = await env.DB.prepare('SELECT id FROM users WHERE id = ?').bind(toUserId).first();
     if (!target) return Response.json({ error: '收件人不存在' }, { status: 404 });
 

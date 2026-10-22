@@ -36,7 +36,7 @@
     </div>
     <input type="text" id="title" placeholder="标题" />
     <textarea id="content" placeholder="描述你要反馈的问题或建议"></textarea>
-    <button onclick="submit()">提交</button>
+    <button onclick="submitTicket()">提交</button>
     <div class="msg" id="msg"></div>
   </div>
   <div class="my-tickets">
@@ -64,17 +64,23 @@ function useTemplate(type) {
   }
 }
 
-async function submit() {
+async function submitTicket() {
   const t = document.getElementById('title').value.trim();
   const c = document.getElementById('content').value.trim();
-  if (!t || !c) { document.getElementById('msg').textContent = '标题和内容不能为空'; return; }
+  const msg = document.getElementById('msg');
+  if (!t || !c) { msg.textContent = '标题和内容不能为空'; return; }
   const res = await fetch('/api/ticket/', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ title: t, content: c }) });
   const data = await res.json();
-  if (data.error) { document.getElementById('msg').textContent = data.error; return; }
-  document.getElementById('msg').textContent = '提交成功（提交扣10积分）';
+  if (data.error) {
+    msg.textContent = data.error;
+    if (res.status === 401 && !window._myId) { setTimeout(function(){ location.href = '/login/'; }, 1500); }
+    return;
+  }
+  msg.textContent = '提交成功（提交扣10积分）';
   document.getElementById('title').value = ''; document.getElementById('content').value = '';
   loadList();
 }
+window.submitTicket = submitTicket;
 
 function resultLabel(r) {
   if (!r) return '';

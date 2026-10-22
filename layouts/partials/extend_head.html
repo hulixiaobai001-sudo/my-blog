@@ -292,6 +292,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const wrap = document.createElement('div');
     wrap.id = 'user-menu';
     if (data.user) {
+      window._myId = data.user.id;
       const initial = data.user.username.charAt(0).toUpperCase();
       let adminLink = '';
       if (data.user.is_admin) adminLink = '<a href="/admin/" class="admin-link">⚙️ 站长后台</a>';
@@ -467,6 +468,23 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!panel.contains(e.target) && e.target !== bell) { open = false; panel.style.display = 'none'; }
   });
 
+  // 写给自己：备忘录/自测
+  window.writeToSelf = function() {
+    if (!window._myId) { alert('请先登录'); location.href = '/login/'; return; }
+    var title = prompt('标题（给自己发站内信）：');
+    if (!title) return;
+    var content = prompt('内容：');
+    if (!content) return;
+    fetch('/api/messages', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ action: 'send', toUserId: window._myId, title: title, content: content }) })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d.error) { alert(d.error); return; }
+        alert('已发送给自己');
+        loadMsgs();
+      })
+      .catch(function(e) { alert('发送失败'); });
+  };
+
   async function loadMsgs() {
     try {
       var res = await fetch('/api/messages');
@@ -477,7 +495,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (unread > 0) bell.innerHTML = '📬<span style="position:absolute;top:-2px;right:-2px;width:16px;height:16px;border-radius:50%;background:#e74c3c;color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;">' + unread + '</span>';
       else bell.innerHTML = '📬';
       if (msgs.length === 0) { panel.innerHTML = '<div style="color:#666;font-size:13px;text-align:center;padding:20px;">没有站内信</div>'; return; }
-      panel.innerHTML = '<div style="color:#fff;font-size:14px;margin-bottom:10px;">站内信（' + unread + '条未读）</div>' +
+      panel.innerHTML = '<div style="color:#fff;font-size:14px;margin-bottom:10px;">站内信（' + unread + '条未读）<button onclick="writeToSelf()" style="float:right;background:none;border:1px solid rgba(255,255,255,.2);color:#8ab4ff;cursor:pointer;font-size:12px;border-radius:6px;padding:2px 8px;">写给自己</button></div>' +
         msgs.map(function(m) {
           var from = m.from_name ? '<span style="color:#8ab4ff;">来自 @' + escapeHtml(m.from_name) + '</span>' : '<span style="color:#666;">系统通知</span>';
           return '<div style="padding:10px;background:' + (m.read ? 'transparent' : 'rgba(102,126,234,.1)') + ';border-radius:8px;margin-bottom:6px;cursor:pointer;" onclick="notifyReadMsg(' + m.id + ')">' +

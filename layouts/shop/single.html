@@ -21,6 +21,7 @@
 
 <div class="shop-wrap">
   <h1>积分商店</h1>
+  <div class="my-points" id="my-points" style="text-align:center;margin-bottom:16px;font-size:14px;color:#8ab4ff;"></div>
   <div class="shop-item">
     <div>
       <div class="name">一杯奶茶</div>
@@ -49,13 +50,35 @@ async function redeem(name, cost) {
     body: JSON.stringify({ itemName: name, cost: cost })
   });
   const data = await res.json();
+  const msg = document.getElementById('msg');
   if (data.ok) {
-    document.getElementById('msg').textContent = '兑换成功，等待站长发货！';
-    document.getElementById('msg').style.color = '#2ecc71';
+    msg.textContent = '兑换成功，等待站长发货！';
+    msg.style.color = '#2ecc71';
+    loadPoints();
   } else {
-    document.getElementById('msg').textContent = data.error || '兑换失败';
-    document.getElementById('msg').style.color = '#e74c3c';
+    msg.textContent = data.error || '兑换失败';
+    msg.style.color = '#e74c3c';
+    if (res.status === 401 && !window._myId) {
+      alert('请先登录后再兑换');
+      setTimeout(function(){ location.href = '/login/'; }, 1500);
+    } else if (data.error) {
+      alert(data.error);
+    }
   }
 }
+
+async function loadPoints() {
+  const el = document.getElementById('my-points');
+  try {
+    const res = await fetch('/api/auth/me');
+    const data = await res.json();
+    if (data.user) {
+      el.textContent = '我的积分：' + data.user.points + ' 分 · LV' + (data.user.level || 1);
+    } else {
+      el.textContent = '登录后查看积分并兑换';
+    }
+  } catch(e) { el.textContent = ''; }
+}
+loadPoints();
 </script>
 {{ end }}
