@@ -104,6 +104,30 @@ async function loadList() {
   `).join('');
 }
 
+async function loadBoard() {
+  const el = document.getElementById('board-list');
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), 8000);
+  try {
+    const res = await fetch('/api/report/leaderboard', { signal: ctl.signal });
+    const data = await res.json();
+    clearTimeout(timer);
+    if (!data.list || data.list.length === 0) { el.innerHTML = '<div class="board-empty">还没有上榜返图，来抢第一</div>'; return; }
+    el.innerHTML = data.list.map((x, i) => {
+      const rankCls = i < 3 ? 'rank-' + (i + 1) : 'rank-n';
+      return `
+      <div class="board-item">
+        <div class="rank ${rankCls}">${i + 1}</div>
+        <div class="uname">${escapeHtml(x.username)}</div>
+        <div class="cnt">${x.count} 张</div>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    clearTimeout(timer);
+    el.innerHTML = '<div class="board-empty">贡献榜加载失败，<a href="javascript:loadBoard()" style="color:#8ab4ff;text-decoration:underline;">点此重试</a></div>';
+  }
+}
+
 loadBoard();
 loadList();
 </script>
