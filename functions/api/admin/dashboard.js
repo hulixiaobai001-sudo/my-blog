@@ -19,7 +19,7 @@ export async function onRequestGet(context) {
   try { out.approved_reports = (await env.DB.prepare("SELECT COUNT(*) as c FROM reports WHERE status = 'approved'").first()).c; } catch(e) { out.approved_reports = 0; }
   try { out.pending_guestbook = (await env.DB.prepare("SELECT COUNT(*) as c FROM guestbook WHERE status = 'pending'").first()).c; } catch(e) { out.pending_guestbook = 0; }
   try { out.total_guestbook = (await env.DB.prepare("SELECT COUNT(*) as c FROM guestbook").first()).c; } catch(e) { out.total_guestbook = 0; }
-  try { out.pending_tickets = (await env.DB.prepare("SELECT COUNT(*) as c FROM tickets WHERE status = 'open'").first()).c; } catch(e) { out.pending_tickets = 0; }
+  try { out.pending_tickets = (await env.DB.prepare("SELECT COUNT(*) as c FROM tickets WHERE status != 'closed'").first()).c; } catch(e) { out.pending_tickets = 0; }
   try { out.total_tickets = (await env.DB.prepare('SELECT COUNT(*) as c FROM tickets').first()).c; } catch(e) { out.total_tickets = 0; }
   try {
     await env.DB.exec('CREATE TABLE IF NOT EXISTS error_log (id INTEGER PRIMARY KEY AUTOINCREMENT, path TEXT, message TEXT, created_at TEXT)');

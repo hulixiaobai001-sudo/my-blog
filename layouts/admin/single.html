@@ -227,6 +227,7 @@
 
     <div class="panel" id="panel-users">
       <h2>用户管理 / 发放积分</h2>
+      <input id="user-search" placeholder="搜索用户名 / QQ..." oninput="filterUsers(this.value)" style="margin-bottom:12px;" />
       <div id="user-list"><p class="empty">加载中...</p></div>
     </div>
 
@@ -322,6 +323,12 @@ let mde = null;
 let isSuperAdmin = false;
 let currentAdminId = 0;
 let userCache = [];
+
+function escapeHtml(str) {
+  return String(str == null ? '' : str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   if (window.EasyMDE) {
@@ -787,6 +794,10 @@ async function replyTicket(id, close) {
   const res = await fetch('/api/ticket/reply', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
   const data = await res.json();
   if (data.error) { alert(data.error); return; }
+  if (close && data.points_adjust != null) {
+    const v = data.points_adjust;
+    alert('工单已关闭，积分调整 ' + (v > 0 ? '+' : '') + v + (v === 0 ? '（无调整）' : ''));
+  }
   loadTickets();
 }
 
@@ -939,7 +950,22 @@ async function loadUsers() {
   const el = document.getElementById('user-list');
   if (!data.users || data.users.length === 0) { el.innerHTML = '<p class="empty">暂无用户</p>'; return; }
   userCache = data.users;
-  el.innerHTML = data.users.map(function(u) {
+  renderUsers(userCache);
+}
+
+function filterUsers(q) {
+  const kw = (q || '').trim().toLowerCase();
+  if (!userCache.length) return;
+  if (!kw) { renderUsers(userCache); return; }
+  renderUsers(userCache.filter(function(u) {
+    return (u.username || '').toLowerCase().includes(kw) || (u.qq || '').toLowerCase().includes(kw);
+  }));
+}
+
+function renderUsers(users) {
+  const el = document.getElementById('user-list');
+  if (!users.length) { el.innerHTML = '<p class="empty">没有匹配的用户</p>'; return; }
+  el.innerHTML = users.map(function(u) {
     var last = u.last_seen ? new Date(u.last_seen.includes('Z') ? u.last_seen : u.last_seen + 'Z') : null;
     var online = last && (Date.now() - last.getTime()) < 300000;
     var dotColor = online ? '#2ecc71' : '#666';
@@ -989,7 +1015,9 @@ async function givePts(userId) {
   const val = parseInt(document.getElementById('pts-' + userId).value);
   if (!val) { alert('请输入分数'); return; }
   const reason = prompt('备注原因：', '站长手动调整');
-  await fetch('/api/admin/users', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId, amount: val, reason }) });
+  const res = await fetch('/api/admin/users', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId, amount: val, reason }) });
+  const d = await res.json();
+  if (d.error) { alert(d.error); return; }
   loadUsers();
 }
 
@@ -1100,7 +1128,8 @@ async function savePrivacyVer() {
   document.getElementById('pv-result').textContent = data.ok ? '已保存！所有用户下次访问会收到弹窗。' : '失败：' + (data.error || '');
 }
 
-// 把需要onclick调用的函数挂到全局
+// 把需要onclick调用的函数挂到全局（先挂关键导航函数，避免后续意外中断影响面板切换）
+window.switchPanel = switchPanel;
 window.moderate = moderate;
 window.replyTicket = replyTicket;
 window.givePts = givePts;
@@ -1112,12 +1141,7 @@ window.saveTrips = saveTrips;
 window.saveAboutCfg = saveAboutCfg;
 window.savePrivacyVer = savePrivacyVer;
 window.publishBlog = publishBlog;
-window.publishNotice = publishNotice;
-window.approveTicket = approveTicket;
-window.claimRedeem = claimRedeem;
-window.uploadAdminReport = uploadAdminReport;
 window.uploadCover = uploadCover;
 window.filterUsers = filterUsers;
-window.switchPanel = switchPanel;
 </script>
 {{ end }}
