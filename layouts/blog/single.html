@@ -26,6 +26,7 @@
   .comment-item .c-body { color: #ddd; font-size: 14px; margin-top: 4px; }
   .comment-input { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,.15); background: rgba(255,255,255,.05); color: #fff; margin: 8px 0; box-sizing: border-box; }
   .comment-btn { padding: 8px 16px; border-radius: 8px; background: rgba(102,126,234,.3); color: #fff; border: none; cursor: pointer; font-size: 13px; }
+  .progress-bar { position: sticky; top: 0; left: 0; height: 3px; width: 0; background: linear-gradient(90deg,#667eea,#8ab4ff); border-radius: 0 2px 2px 0; transition: width .12s ease-out; z-index: 6; }
 </style>
 
 <div class="blog-wrap">
@@ -38,6 +39,7 @@
 
 <div class="modal" id="modal">
   <div class="modal-content">
+    <div class="progress-bar" id="progress-bar"></div>
     <button class="close-btn" onclick="closeModal()">&times;</button>
     <h2 id="modal-title"></h2>
     <div class="date" id="modal-date"></div>
@@ -117,6 +119,7 @@ async function openPost(id) {
     document.getElementById('modal-date').textContent = fmtTime(data.post.created_at) + (data.post.views !== undefined ? ' · 阅读 ' + data.post.views : '');
     document.getElementById('modal-body').innerHTML = window.renderMd ? window.renderMd(data.post.content) : String(data.post.content).replace(/[<>]/g, '');
     document.getElementById('modal').classList.add('open');
+    bindProgress();
     history.replaceState(null, '', '/blog/?post=' + id);
     const sr = await fetch('/api/stats/?post_id=' + id);
     const sd = await sr.json();
@@ -182,8 +185,20 @@ async function likePost() {
   }
 }
 
+function bindProgress() {
+  const m = document.getElementById('modal');
+  const bar = document.getElementById('progress-bar');
+  m.onscroll = function() {
+    const max = m.scrollHeight - m.clientHeight;
+    bar.style.width = (max > 0 ? (m.scrollTop / max) * 100 : 0) + '%';
+  };
+  bar.style.width = '0%';
+}
+
 function closeModal() {
   document.getElementById('modal').classList.remove('open');
+  document.getElementById('progress-bar').style.width = '0%';
+  document.getElementById('modal').onscroll = null;
   currentPostId = null;
   history.replaceState(null, '', '/blog/');
 }
