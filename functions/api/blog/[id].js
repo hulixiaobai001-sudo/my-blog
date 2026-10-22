@@ -1,8 +1,26 @@
 export async function onRequestGet(context) {
-  const { env, params } = context;
+  const { request, env, params } = context;
   const post = await env.DB.prepare('SELECT * FROM posts WHERE id = ? AND published = 1').bind(params.id).first();
   if (!post) return new Response(JSON.stringify({ error: '文章不存在' }), { status: 404 });
-  return new Response(JSON.stringify({ post }), { headers: { 'Content-Type': 'application/json; charset=utf-8' } });
+
+  // 文章浏览计数：同 IP 每篇文章每天只计一次
+  let views = 0;
+  try {
+    await env.DB.exec('CREATE TABLE IF NOT EXISTS stats (article_id INTEGER PRIMARY KEY, likes INTEGER DEFAULT 0, views INTEGER DEFAULT 0)');
+    await env.DB.prepare('INSERT OR IGNORE INTO stats (article_id, likes, views) VALUES (?, 0, 0)').bind(params.id).run();
+    const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+    const today = new Date().toISOString().slice(0, 10);
+    const viewKey = `view:post:${params.id}:${ip}:${today}`;
+    const counted = await env.AUTH_KV.get(viewKey);
+    if (!counted) {
+      await env.AUTH_KV.put(viewKey, '1', { expirationTtl: 86400 * 2 });
+      await env.DB.prepare('UPDATE stats SET views = views + 1 WHERE article_id = ?').bind(params.id).run();
+    }
+    const row = await env.DB.prepare('SELECT views FROM stats WHERE article_id = ?').bind(params.id).first();
+    views = row?.views || 0;
+  } catch (e) {}
+
+  return new Response(JSON.stringify({ post: { ...post, views } }), { headers: { 'Content-Type': 'application/json; charset=utf-8' } });
 }
 
 export async function onRequestDelete(context) {
