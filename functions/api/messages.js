@@ -59,6 +59,16 @@ export async function onRequestPost(context) {
   // 标记已读（原有逻辑）
   const { id } = body;
   if (!id) return Response.json({ error: '参数错误' }, { status: 400 });
+  // 删除站内信（只能删自己收到的）
+  if (body.action === 'delete') {
+    const mid = parseInt(body.id);
+    if (!mid) return Response.json({ error: '参数错误' }, { status: 400 });
+    const msg = await env.DB.prepare('SELECT id FROM messages WHERE id = ? AND user_id = ?').bind(mid, userId).first();
+    if (!msg) return Response.json({ error: '站内信不存在' }, { status: 404 });
+    await env.DB.prepare('DELETE FROM messages WHERE id = ?').bind(mid).run();
+    return Response.json({ ok: true });
+  }
+
   await env.DB.prepare('UPDATE messages SET read = 1 WHERE id = ? AND user_id = ?').bind(id, userId).run();
   return Response.json({ ok: true });
 }

@@ -7,7 +7,7 @@ export async function onRequestGet(context) {
   if (!postId) return new Response(JSON.stringify({ comments: [] }));
   try {
     const { results } = await env.DB.prepare(`
-      SELECT c.id, c.content, c.created_at, u.username 
+      SELECT c.id, c.user_id, c.content, c.created_at, u.username 
       FROM comments c JOIN users u ON c.user_id = u.id 
       WHERE c.post_id = ? ORDER BY c.id ASC
     `).bind(postId).all();
@@ -45,5 +45,26 @@ export async function onRequestPost(context) {
     await env.DB.prepare('INSERT INTO comments (post_id, user_id, content) VALUES (?, ?, ?)').bind(post_id, userId, clean).run();
   }
   await env.AUTH_KV.put(rateKey, '1', { expirationTtl: 60 });
+  return new Response(JSON.stringify({ ok: true }));
+}
+
+// 删除评论：作者本人或管理员/站长
+export async function onRequestDelete(context) {
+  const { request, env } = context;
+  const cookie = request.headers.get('Cookie') || '';
+  const token = cookie.match(/session=([^;]+)/)?.[1];
+  if (!token) return new Response(JSON.stringify({ error: '请先登录' }), { status: 401 });
+  const session = await env.AUTH_KV.get(`session:${token}`);
+  if (!session) return new Response(JSON.stringify({ error: '登录已过期' }), { status: 401 });
+  const { userId, isAdmin } = JSON.parse(session);
+
+  const { id } = await request.json();
+  if (!id) return new Response(JSON.stringify({ error: '参数错误' }), { status: 400 });
+  const comment = await env.DB.prepare('SELECT user_id FROM comments WHERE id = ?').bind(id).first();
+  if (!comment) return new Response(JSON.stringify({ error: '评论不存在' }), { status: 404 });
+  if (!isAdmin && comment.user_id !== userId) {
+    return new Response(JSON.stringify({ error: '只能删除自己的评论' }), { status: 403 });
+  }
+  await env.DB.prepare('DELETE FROM comments WHERE id = ?').bind(id).run();
   return new Response(JSON.stringify({ ok: true }));
 }

@@ -192,6 +192,7 @@ async function loadGallery() {
   const me = await fetch('/api/auth/me');
   const meData = await me.json();
   isAdmin = !!(meData.user && meData.user.is_admin);
+  const meId = meData.user ? meData.user.id : 0;
   if (meData.user) {
     document.getElementById('points-badge').textContent = '我的积分：' + (meData.user.points || 0) + ' 分';
   } else {
@@ -228,7 +229,7 @@ async function loadGallery() {
   slider.innerHTML = slides.map((s, i) => `
     <div class="slide ${i === 0 ? 'active' : ''}" style="cursor:pointer;" onclick="openDetail(${i})">
       <img src="/api/report/view?key=${s.image_key}" />
-      ${isAdmin ? `<button onclick="event.stopPropagation();delReport(${s.id})" style="position:absolute;top:12px;right:12px;padding:6px 14px;background:rgba(217,83,79,.8);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:12px;">删除</button>` : ''}
+      ${(isAdmin || (meId && s.user_id === meId)) ? `<button onclick="event.stopPropagation();delReport(${s.id})" style="position:absolute;top:12px;right:12px;padding:6px 14px;background:rgba(217,83,79,.8);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:12px;">删除</button>` : ''}
       <div class="caption">
         <div class="who">@${escapeHtml(s.username)}</div>
         <div class="what">${escapeHtml(s.caption || '')}</div>

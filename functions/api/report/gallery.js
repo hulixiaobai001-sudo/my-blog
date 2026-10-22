@@ -8,7 +8,7 @@ export async function onRequestGet({ env }) {
       migrated = true;
     }
     const allUser = await env.DB.prepare(`
-      SELECT r.id, r.image_key, r.caption, r.created_at, r.note, r.featured, u.username
+      SELECT r.id, r.user_id, r.image_key, r.caption, r.created_at, r.note, r.featured, u.username
       FROM reports r JOIN users u ON r.user_id = u.id
       WHERE r.status = 'approved' AND (r.type = 'user' OR r.type IS NULL)
       ORDER BY r.id DESC

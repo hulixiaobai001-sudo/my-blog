@@ -125,6 +125,15 @@ async function openPost(id) {
   }
 }
 
+var commentMe = { id: 0, isAdmin: false };
+
+(async function() {
+  try {
+    var m = await (await fetch('/api/auth/me/')).json();
+    if (m.user) { commentMe.id = m.user.id; commentMe.isAdmin = !!(m.user.is_admin || m.user.role === 'admin' || m.user.role === 'super_admin'); }
+  } catch(e) {}
+})();
+
 async function loadComments(postId) {
   const res = await fetch('/api/comments/?post_id=' + postId);
   const data = await res.json();
@@ -133,12 +142,23 @@ async function loadComments(postId) {
     el.innerHTML = '<p style="color:#666;font-size:13px;">还没有评论，来抢沙发</p>';
     return;
   }
-  el.innerHTML = data.comments.map(c => `
+  el.innerHTML = data.comments.map(c => {
+    const canDel = commentMe.id && (c.user_id === commentMe.id || commentMe.isAdmin);
+    const delBtn = canDel ? `<button onclick="delComment(${c.id})" style="background:none;border:none;color:#dc3545;cursor:pointer;font-size:11px;margin-left:8px;padding:0;">删除</button>` : '';
+    return `
     <div class="comment-item">
-      <span class="c-user">@${escapeHtml(c.username)}</span><span class="c-time">${fmtTime(c.created_at)}</span>
+      <span class="c-user">@${escapeHtml(c.username)}</span><span class="c-time">${fmtTime(c.created_at)}</span>${delBtn}
       <div class="c-body">${escapeHtml(c.content)}</div>
     </div>
-  `).join('');
+  `; }).join('');
+}
+
+async function delComment(id) {
+  if (!confirm('确定删除这条评论？')) return;
+  const res = await fetch('/api/comments', { method: 'DELETE', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id }) });
+  const data = await res.json();
+  if (data.error) { alert(data.error); return; }
+  loadComments(currentPostId);
 }
 
 async function submitComment() {

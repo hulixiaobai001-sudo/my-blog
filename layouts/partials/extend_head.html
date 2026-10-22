@@ -481,7 +481,7 @@ document.addEventListener('DOMContentLoaded', function() {
         msgs.map(function(m) {
           var from = m.from_name ? '<span style="color:#8ab4ff;">来自 @' + escapeHtml(m.from_name) + '</span>' : '<span style="color:#666;">系统通知</span>';
           return '<div style="padding:10px;background:' + (m.read ? 'transparent' : 'rgba(102,126,234,.1)') + ';border-radius:8px;margin-bottom:6px;cursor:pointer;" onclick="readMsg(' + m.id + ')">' +
-            '<div style="color:#ddd;font-size:13px;">' + escapeHtml(m.title || '通知') + ' ' + from + '</div>' +
+            '<div style="color:#ddd;font-size:13px;">' + escapeHtml(m.title || '通知') + ' ' + from + ' <button onclick="event.stopPropagation();delMsg(' + m.id + ')" style="background:none;border:none;color:#dc3545;cursor:pointer;font-size:11px;padding:0;margin-left:4px;">删除</button></div>' +
             '<div style="color:#888;font-size:12px;margin-top:4px;">' + escapeHtml(m.content || '') + '</div>' +
             '<div style="color:#555;font-size:11px;margin-top:4px;">' + m.created_at + '</div>' +
           '</div>';
@@ -491,6 +491,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
   window.readMsg = async function(id) {
     await fetch('/api/messages', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id: id }) });
+    loadMsgs();
+  };
+
+  window.delMsg = async function(id) {
+    if (!confirm('确定删除这条站内信？')) return;
+    var r = await fetch('/api/messages', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ action: 'delete', id: id }) });
+    var d = await r.json();
+    if (d.error) { alert(d.error); return; }
     loadMsgs();
   };
 
