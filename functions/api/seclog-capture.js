@@ -1,15 +1,14 @@
-// catch-all：接管所有未匹配静态资源与具体 API 路由的请求
-// 这些请求在 Pages 平台层原本直接返回 404（不经 Functions），
-// 导致 _middleware.js 里的 404 风控记录分支永远无法执行。
-// 本函数统一接管并以 404 响应，同时自身完成安全日志写入（不依赖中间件）。
+// 404 风控捕获函数：由 _redirects 兜底规则（/* -> /api/seclog-capture 404）触发
+// 仅当请求未命中静态文件、也未命中具体 Functions 路由时才会进入这里，
+// 不会影响任何真实页面。负责写入安全日志并返回统一 404 页面。
 export async function onRequest(context) {
   const { request, env } = context;
   const url = new URL(request.url);
   const path = url.pathname;
 
-  // 跳过 API 与静态资源（与 _middleware 的过滤口径一致）
+  // 跳过 API 与静态资源扩展（与 _middleware 过滤口径一致，防噪声）
   const skipPrefixes = ['/api/', '/images/', '/img/', '/css/', '/js/', '/fonts/', '/favicon', '/robots.txt', '/sitemap'];
-  const skipExts = ['.js', '.css', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.ico', '.woff', '.woff2', '.ttf', '.mp3', '.mp4', '.txt', '.xml', '.webmanifest'];
+  const skipExts = ['.js', '.css', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.ico', '.woff', '.woff2', '.ttf', '.mp3', '.mp4', '.txt', '.xml', '.webmanifest', '.json', '.map'];
   if (skipPrefixes.some(p => path.startsWith(p)) || skipExts.some(e => path.toLowerCase().endsWith(e))) {
     return new Response('Not Found', { status: 404 });
   }
@@ -34,7 +33,6 @@ export async function onRequest(context) {
         .bind(path.slice(0, 300), String(ip).slice(0, 64), String(ua).slice(0, 300), String(referer).slice(0, 300), intent).run();
     }
   } catch (e) {
-    // 写入失败不阻塞 404 响应，但记录错误便于排查
     console.error('seclog write error:', e && e.message);
   }
 
