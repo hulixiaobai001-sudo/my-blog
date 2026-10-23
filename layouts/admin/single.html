@@ -37,6 +37,17 @@
   }
   .nav-btn:hover { background: rgba(255,255,255,.08); color: #fff; }
   .nav-btn.active { background: rgba(102,126,234,.25); color: #a5b4fc; }
+  .nav-group {
+    display: block; width: 100%; text-align: left;
+    background: transparent; border: none; color: #94a3b8;
+    padding: 11px 14px; border-radius: 10px; margin: 3px 0;
+    cursor: pointer; font-size: 14px; transition: all .2s;
+  }
+  .nav-group:hover { background: rgba(255,255,255,.08); color: #fff; }
+  .nav-group .arrow { display: inline-block; transition: transform .2s; margin-right: 6px; font-size: 11px; }
+  .nav-group.open .arrow { transform: rotate(90deg); }
+  .nav-sub { display: none; margin-left: 10px; padding-left: 8px; border-left: 1px solid rgba(255,255,255,.12); }
+  .nav-sub.open { display: block; }
 
   .content { flex: 1; padding: 28px; max-width: 900px; }
   .panel { display: none; }
@@ -121,14 +132,23 @@
     <button class="nav-btn active" data-panel="panel-dashboard" onclick="switchPanel('panel-dashboard', this)">总览</button>
     <button class="nav-btn" data-panel="panel-content" onclick="switchPanel('panel-content', this)">内容管理</button>
     <button class="nav-btn" data-panel="panel-gallery" onclick="switchPanel('panel-gallery', this)">返图管理</button>
-    <button class="nav-btn" data-panel="panel-tickets" onclick="switchPanel('panel-tickets', this)">事务处理</button>
-    <button class="nav-btn" data-panel="panel-guestbook" onclick="switchPanel('panel-guestbook', this)">留言审核</button>
-    <button class="nav-btn" data-panel="panel-users" onclick="switchPanel('panel-users', this)">用户管理</button>
-    <button class="nav-btn" data-panel="panel-words" onclick="switchPanel('panel-words', this)">敏感词库</button>
-    <button class="nav-btn" data-panel="panel-logs" onclick="switchPanel('panel-logs', this)">管理日志</button>
-    <button class="nav-btn" data-panel="panel-seclog" onclick="switchPanel('panel-seclog', this)">安全日志</button>
-    <button class="nav-btn" data-panel="panel-shop" onclick="switchPanel('panel-shop', this)">商店管理</button>
-    <button class="nav-btn" data-panel="panel-settings" onclick="switchPanel('panel-settings', this)">站点设置</button>
+    <button class="nav-group" data-group="grp-interact" onclick="toggleGroup('grp-interact')"><span class="arrow">▶</span>互动中心</button>
+    <div class="nav-sub" id="grp-interact">
+      <button class="nav-btn" data-panel="panel-guestbook" onclick="switchPanel('panel-guestbook', this)">留言审核</button>
+      <button class="nav-btn" data-panel="panel-tickets" onclick="switchPanel('panel-tickets', this)">事务处理</button>
+    </div>
+    <button class="nav-group" data-group="grp-safe" onclick="toggleGroup('grp-safe')"><span class="arrow">▶</span>用户与风控</button>
+    <div class="nav-sub" id="grp-safe">
+      <button class="nav-btn" data-panel="panel-users" onclick="switchPanel('panel-users', this)">用户管理</button>
+      <button class="nav-btn" data-panel="panel-words" onclick="switchPanel('panel-words', this)">敏感词库</button>
+      <button class="nav-btn" data-panel="panel-seclog" onclick="switchPanel('panel-seclog', this)">安全日志</button>
+    </div>
+    <button class="nav-group" data-group="grp-system" onclick="toggleGroup('grp-system')"><span class="arrow">▶</span>系统</button>
+    <div class="nav-sub" id="grp-system">
+      <button class="nav-btn" data-panel="panel-logs" onclick="switchPanel('panel-logs', this)">管理日志</button>
+      <button class="nav-btn" data-panel="panel-shop" onclick="switchPanel('panel-shop', this)">商店管理</button>
+      <button class="nav-btn" data-panel="panel-settings" onclick="switchPanel('panel-settings', this)">站点设置</button>
+    </div>
   </aside>
 
   <main class="content">
@@ -394,11 +414,31 @@ function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('open');
 }
 
+function toggleGroup(id) {
+  const el = document.getElementById(id);
+  const grp = document.querySelector('.nav-group[data-group="' + id + '"]');
+  if (!el || !grp) return;
+  el.classList.toggle('open');
+  grp.classList.toggle('open');
+}
+
+function openGroupOf(panelId) {
+  const btn = document.querySelector('.nav-btn[data-panel="' + panelId + '"]');
+  if (!btn) return;
+  const sub = btn.closest('.nav-sub');
+  if (sub) {
+    sub.classList.add('open');
+    const grp = document.querySelector('.nav-group[data-group="' + sub.id + '"]');
+    if (grp) grp.classList.add('open');
+  }
+}
+
 function switchPanel(id, btn) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   btn.classList.add('active');
+  openGroupOf(id);
   if (id === 'panel-seclog') loadSecLogs();
   if (id === 'panel-shop') loadShopAdmin();
   if (id === 'panel-logs') loadLogs();
@@ -1217,6 +1257,7 @@ window.saveShopItem = saveShopItem;
 window.toggleShopItem = toggleShopItem;
 window.delShopItem = delShopItem;
 window.switchPanel = switchPanel;
+window.toggleGroup = toggleGroup;
 // ---- 商店管理 ----
 async function loadShopAdmin() {
   const el = document.getElementById('shop-admin-list');
