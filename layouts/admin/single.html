@@ -661,6 +661,41 @@ async function saveWords() {
 
 var logPage = 1;
 
+// ---- 日志展示工具（人话化：相对时间 / 动作分类 / UA 摘要） ----
+function fmtTime(ts) {
+  if (!ts) return '';
+  const d = new Date(String(ts).replace(' ', 'T'));
+  if (isNaN(d.getTime())) return String(ts);
+  const diff = Date.now() - d.getTime();
+  if (diff < 60000) return '刚刚';
+  if (diff < 3600000) return Math.floor(diff / 60000) + ' 分钟前';
+  if (diff < 86400000) return Math.floor(diff / 3600000) + ' 小时前';
+  return String(ts).slice(5, 10) + ' ' + String(ts).slice(11, 16);
+}
+function logTone(action) {
+  const a = String(action || '');
+  if (/留言|树洞|评论|审核|返图/.test(a)) return { color: '#60a5fa', label: '内容' };
+  if (/用户|积分|封禁|敏感词|扩列/.test(a)) return { color: '#f472b6', label: '用户' };
+  if (/设置|状态|公告|工单|商店/.test(a)) return { color: '#34d399', label: '站点' };
+  return { color: '#94a3b8', label: '系统' };
+}
+function uaSummary(ua) {
+  if (!ua) return '未知设备';
+  let sys = '未知系统';
+  if (/Windows NT 10/.test(ua)) sys = 'Windows 10/11';
+  else if (/Windows NT 6\.[13]/.test(ua)) sys = 'Windows 7/8';
+  else if (/Android/.test(ua)) sys = 'Android';
+  else if (/iPhone|iPad|iPod/.test(ua)) sys = 'iOS';
+  else if (/Mac OS X/.test(ua)) sys = 'macOS';
+  let br = '未知客户端';
+  if (/Edg\//.test(ua)) br = 'Edge';
+  else if (/Chrome\//.test(ua)) br = 'Chrome';
+  else if (/Firefox\//.test(ua)) br = 'Firefox';
+  else if (/Safari\//.test(ua)) br = 'Safari';
+  else if (/curl|python|Go-http|wget|okhttp|axios|bot|spider/.test(ua)) br = '脚本/爬虫';
+  return sys + ' · ' + br;
+}
+
 async function loadLogs() {
   logPage = 1;
   await fetchLogs(true);
@@ -671,7 +706,21 @@ async function fetchLogs(reset) {
   const d = await res.json();
   const el = document.getElementById('admin-log-list');
   if (!d.logs || d.logs.length === 0) { el.innerHTML = '<p class="empty">还没有操作日志</p>'; return; }
-  const html = d.logs.map(l => '<div class="list-item"><div class="title">' + escapeHtml(l.action) + ' <span style="color:#8ab4ff;font-size:11px;">@' + escapeHtml(l.actor_name || ('#' + l.actor_id)) + '</span></div><div class="content">' + escapeHtml(l.detail || '') + '</div><div class="content" style="color:#666;font-size:11px;">' + escapeHtml(l.created_at || '') + '</div></div>').join('');
+  const html = d.logs.map(l => {
+    const tone = logTone(l.action);
+    const who = escapeHtml(l.actor_name || ('#' + l.actor_id));
+    return '<div style="display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.04);margin-bottom:8px;">' +
+      '<span style="flex:0 0 4px;align-self:stretch;border-radius:2px;background:' + tone.color + ';"></span>' +
+      '<div style="flex:1;min-width:0;">' +
+      '<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:baseline;font-size:13px;">' +
+      '<b style="color:#e2e8f0;">' + who + '</b>' +
+      '<span style="color:' + tone.color + ';">' + escapeHtml(l.action) + '</span>' +
+      '<span style="color:#666;font-size:11px;">' + fmtTime(l.created_at) + '</span>' +
+      '<span style="color:#555;font-size:11px;">' + escapeHtml(l.created_at || '') + '</span>' +
+      '</div>' +
+      '<div style="color:#94a3b8;font-size:12px;margin-top:4px;word-break:break-word;">' + escapeHtml(l.detail || '') + '</div>' +
+      '</div></div>';
+  }).join('');
   if (reset) el.innerHTML = html; else el.innerHTML += html;
   document.getElementById('log-more').style.display = (logPage * 50 < d.total) ? 'inline-block' : 'none';
 }
@@ -1345,13 +1394,23 @@ async function loadSecLogs() {
     if (!data.logs || data.logs.length === 0) { el.innerHTML = '<p class="empty">暂无记录</p>'; return; }
     el.innerHTML = '';
     for (const log of data.logs) {
+      const risk = log.intent === '疑似扫描'
+        ? { color: '#f87171', bg: 'rgba(248,113,113,.10)', hint: '命中扫描特征（.php / wp-admin / shell 等）' }
+        : log.intent === '异常路径'
+          ? { color: '#fbbf24', bg: 'rgba(251,191,36,.08)', hint: '超长或畸形路径，可能为探测行为' }
+          : { color: '#94a3b8', bg: 'rgba(148,163,184,.06)', hint: '访问了不存在的页面' };
+      const dev = uaSummary(log.ua);
       const div = document.createElement('div');
-      div.className = 'list-item';
-      const badge = log.intent === '疑似扫描' ? '<span style="color:#f87171;font-weight:700;">' + log.intent + '</span>' : '<span style="color:#fbbf24;">' + log.intent + '</span>';
+      div.style.cssText = 'border-left:3px solid ' + risk.color + ';background:' + risk.bg + ';padding:10px 12px;border-radius:8px;margin-bottom:10px;';
       div.innerHTML =
-        '<div class="title">' + badge + ' <code style="color:#8ab4ff;">' + log.path + '</code>' + (log.handled ? ' <span style="color:#34d399;">已处理</span>' : '') + '</div>' +
-        '<div class="meta">IP: ' + log.ip + ' · ' + log.created_at + (log.referer ? ' · 来源: ' + log.referer : '') + '</div>' +
-        '<div class="content" style="font-size:12px;color:#999;">UA: ' + log.ua + '</div>' +
+        '<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px;">' +
+        '<b style="color:' + risk.color + ';">' + escapeHtml(log.intent || '普通404') + '</b>' +
+        '<code style="color:#8ab4ff;word-break:break-all;">' + escapeHtml(log.path) + '</code>' +
+        (log.handled ? '<span style="color:#34d399;font-size:11px;">已处理</span>' : '<span style="color:#fbbf24;font-size:11px;">待处理</span>') +
+        '<span style="margin-left:auto;color:#888;font-size:11px;">' + fmtTime(log.created_at) + '</span>' +
+        '</div>' +
+        '<div style="color:#b6c2d0;font-size:12px;margin-top:6px;">' + escapeHtml(dev) + ' · IP <code style="color:#e2e8f0;">' + escapeHtml(log.ip) + '</code>' + (log.referer ? ' · 来源 ' + escapeHtml(log.referer) : '') + '</div>' +
+        '<div style="color:#6b7a8f;font-size:11px;margin-top:3px;">' + escapeHtml(risk.hint) + ' · ' + escapeHtml(log.created_at || '') + '</div>' +
         '<div style="margin-top:8px;display:flex;gap:6px;align-items:center;">' +
         (log.handled
           ? '<button class="btn-warn" onclick="markSecLog(' + log.id + ',0)">重新打开</button>'
