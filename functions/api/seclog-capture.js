@@ -9,6 +9,12 @@ export async function onRequest(context) {
   // 跳过 API 与静态资源扩展（与 _middleware 过滤口径一致，防噪声）
   const skipPrefixes = ['/api/', '/images/', '/img/', '/css/', '/js/', '/fonts/', '/favicon', '/robots.txt', '/sitemap'];
   const skipExts = ['.js', '.css', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.ico', '.woff', '.woff2', '.ttf', '.mp3', '.mp4', '.txt', '.xml', '.webmanifest', '.json', '.map'];
+  // 根路径与首页：Cloudflare 部署切换窗口期静态文件短暂 miss 会落到这里，
+  // 属部署噪声而非异常访问，一律不记录。
+  const isRootNoise = path === '/' || path === '/index.html' || path === '/index.htm';
+  if (isRootNoise) {
+    return new Response('Not Found', { status: 404 });
+  }
   if (skipPrefixes.some(p => path.startsWith(p)) || skipExts.some(e => path.toLowerCase().endsWith(e))) {
     return new Response('Not Found', { status: 404 });
   }
@@ -40,8 +46,7 @@ export async function onRequest(context) {
     '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>404 - 页面不存在</title></head>' +
     '<body style="margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#141622;color:#f3f4f6;font-family:system-ui,-apple-system,sans-serif;">' +
     '<div style="text-align:center;"><div style="font-size:72px;font-weight:800;background:linear-gradient(135deg,#667eea,#764ba2);-webkit-background-clip:text;background-clip:text;color:transparent;">404</div>' +
-    '<p style="color:#94a3b8;margin:12px 0 4px;">这里什么都没有，也许你在找别的东西</p>' +
-    '<p style="color:#64748b;font-size:13px;">该访问已记录在安全日志中</p>' +
+    '<p style="color:#94a3b8;margin:12px 0 4px;">页面走丢了，也许它在别处</p>' +
     '<a href="/" style="display:inline-block;margin-top:18px;padding:10px 24px;border-radius:10px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;text-decoration:none;font-size:14px;">回到首页</a>' +
     '</div></body></html>',
     { status: 404, headers: { 'Content-Type': 'text/html; charset=utf-8' } }
