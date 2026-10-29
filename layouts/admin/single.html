@@ -1,6 +1,6 @@
 {{ define "main" }}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
-<script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+<link rel="stylesheet" href="/css/easymde.min.css">
+<script src="/js/easymde.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -123,6 +123,11 @@
     .hamburger { display: none; }
   }
 </style>
+
+<!-- 自定义弹窗（替代原生 confirm/prompt/alert，风格与全站一致） -->
+<div id="admin-dialog-mask" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);align-items:center;justify-content:center;"></div>
+<div id="admin-dialog" style="display:none;position:fixed;z-index:2001;left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,90vw);background:#1c1f2e;border:1px solid rgba(255,255,255,.16);border-radius:16px;padding:22px 24px;color:#fff;box-shadow:0 12px 40px rgba(0,0,0,.55);"></div>
+<div id="admin-toast" style="display:none;position:fixed;z-index:2002;left:50%;top:24px;transform:translateX(-50%);background:rgba(0,0,0,.85);color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;box-shadow:0 4px 16px rgba(0,0,0,.35);"></div>
 
 <button class="hamburger" onclick="toggleSidebar()">☰</button>
 
@@ -376,6 +381,57 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
+/* ---- 自定义弹窗系统（替代原生 confirm/prompt/alert） ---- */
+function adminDialog(opts) {
+  return new Promise(function(resolve) {
+    var mask = document.getElementById('admin-dialog-mask');
+    var dlg = document.getElementById('admin-dialog');
+    var msgHtml = opts.message
+      ? '<p style="margin:0 0 16px;font-size:13px;color:#cbd5e1;line-height:1.7;white-space:pre-line;word-break:break-word;">' + escapeHtml(opts.message) + '</p>'
+      : '';
+    var inputHtml = opts.input
+      ? '<input id="admin-dlg-input" type="text" value="' + escapeHtml(opts.def || '') + '" placeholder="' + escapeHtml(opts.placeholder || '请输入') + '" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.06);color:#fff;font-size:14px;margin-bottom:16px;box-sizing:border-box;outline:none;">'
+      : '';
+    dlg.innerHTML = '<h3 style="margin:0 0 12px;font-size:16px;font-weight:600;">' + escapeHtml(opts.title || '提示') + '</h3>' +
+      msgHtml + inputHtml +
+      '<div style="display:flex;gap:10px;justify-content:flex-end;">' +
+      '<button id="admin-dlg-cancel" class="btn-warn">取消</button>' +
+      '<button id="admin-dlg-ok" class="' + (opts.danger ? 'btn-danger' : 'btn-ok') + '">' + escapeHtml(opts.confirmText || '确定') + '</button>' +
+      '</div>';
+    mask.style.display = 'flex';
+    dlg.style.display = 'block';
+    if (opts.input) {
+      var inp = document.getElementById('admin-dlg-input');
+      inp.focus();
+      inp.select();
+    }
+    function done(v) {
+      mask.style.display = 'none';
+      dlg.style.display = 'none';
+      document.removeEventListener('keydown', kf);
+      resolve(v);
+    }
+    document.getElementById('admin-dlg-cancel').onclick = function() { done(opts.input ? null : false); };
+    document.getElementById('admin-dlg-ok').onclick = function() { done(opts.input ? document.getElementById('admin-dlg-input').value : true); };
+    mask.onclick = function(e) { if (e.target === mask) done(opts.input ? null : false); };
+    var kf = function(e) {
+      if (e.key === 'Escape') { done(opts.input ? null : false); }
+      else if (e.key === 'Enter' && opts.input) { done(document.getElementById('admin-dlg-input').value); }
+    };
+    document.addEventListener('keydown', kf);
+  });
+}
+function adminConfirm(message, danger) { return adminDialog({ title: '请确认', message: message, danger: danger, confirmText: danger ? '确认执行' : '确定' }); }
+function adminPrompt(title, def, placeholder) { return adminDialog({ title: title, input: true, def: def || '', placeholder: placeholder || '请输入' }); }
+function adminAlert(message, title) { return adminDialog({ title: title || '提示', message: message, confirmText: '知道了' }); }
+function adminToast(message) {
+  var t = document.getElementById('admin-toast');
+  t.textContent = message;
+  t.style.display = 'block';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(function() { t.style.display = 'none'; }, 2600);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   if (window.EasyMDE) {
     mde = new EasyMDE({
@@ -492,7 +548,7 @@ async function loadGuestbook() {
 }
 
 async function deleteGb(id) {
-  if (!confirm('确定永久删除这条留言？')) return;
+  if (!(await adminConfirm('确定永久删除这条留言？', true))) return;
   await fetch('/api/admin/moderate-guestbook', {
     method: 'POST', headers: {'Content-Type':'application/json'},
     body: JSON.stringify({ id: id, action: 'delete' })
@@ -510,11 +566,11 @@ async function moderateGb(id, status) {
 
 async function batchGb(pass) {
   const ids = [...document.querySelectorAll('.gb-chk:checked')].map(c => parseInt(c.dataset.id));
-  if (!ids.length) { alert('请先勾选留言'); return; }
-  if (!confirm('确定批量' + (pass ? '通过' : '拒绝') + ' ' + ids.length + ' 条留言？')) return;
+  if (!ids.length) { adminToast('请先勾选留言'); return; }
+  if (!(await adminConfirm('确定批量' + (pass ? '通过' : '拒绝') + ' ' + ids.length + ' 条留言？'))) return;
   const res = await fetch('/api/admin/moderate-guestbook', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ ids, status: pass ? 'approved' : 'rejected' }) });
   const d = await res.json();
-  alert('已处理 ' + (d.count || 0) + ' 条');
+  adminToast('已处理 ' + (d.count || 0) + ' 条');
   loadGuestbook();
   loadDashboard();
 }
@@ -574,8 +630,8 @@ function renderFursuitAdmin() {
   `).join('');
 }
 
-function addFursuitItem() {
-  const url = prompt('图片地址（http开头 或 /api/report/view?key=...）：');
+async function addFursuitItem() {
+  const url = await adminPrompt('添加图片', '', '图片地址（http开头 或 /api/report/view?key=...）');
   if (!url) return;
   fursuitItems.push({ image_url: url.trim(), caption: '' });
   renderFursuitAdmin();
@@ -750,8 +806,8 @@ async function saveSiteSwitches() {
   document.getElementById('sw-result').textContent = d.error || '已保存';
 }
 
-function exportData(type) {
-  if (!confirm('确定导出' + (type === 'users' ? '用户' : type === 'guestbook' ? '留言' : type === 'reports' ? '返图' : '工单') + '数据 CSV？')) return;
+async function exportData(type) {
+  if (!(await adminConfirm('确定导出' + (type === 'users' ? '用户' : type === 'guestbook' ? '留言' : type === 'reports' ? '返图' : '工单') + '数据 CSV？'))) return;
   window.location.href = '/api/admin/export?type=' + type;
 }
 
@@ -785,19 +841,19 @@ async function moderate(id, pass, btn) {
   if (btn) { btn.disabled = true; btn.textContent = pass ? '通过中...' : '拒绝中...'; }
   try {
     const res = await fetch('/api/report/moderate', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id, status: pass ? 'approved' : 'rejected' }) });
-    if (!res.ok) { alert('操作失败: ' + res.status); }
-  } catch(e) { alert('网络错误: ' + e.message); }
+    if (!res.ok) { adminToast('操作失败: ' + res.status); }
+  } catch(e) { adminToast('网络错误: ' + e.message); }
   loadPendingReports();
   loadApprovedReports();
 }
 
 async function batchModerateReports(pass) {
   const ids = [...document.querySelectorAll('.rpt-chk:checked')].map(c => parseInt(c.dataset.id));
-  if (!ids.length) { alert('请先勾选返图'); return; }
-  if (!confirm('确定批量' + (pass ? '通过' : '拒绝') + ' ' + ids.length + ' 张返图？')) return;
+  if (!ids.length) { adminToast('请先勾选返图'); return; }
+  if (!(await adminConfirm('确定批量' + (pass ? '通过' : '拒绝') + ' ' + ids.length + ' 张返图？'))) return;
   const res = await fetch('/api/report/moderate', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ ids, status: pass ? 'approved' : 'rejected' }) });
   const d = await res.json();
-  alert('已处理 ' + (d.count || 0) + ' 张');
+  adminToast('已处理 ' + (d.count || 0) + ' 张');
   loadPendingReports();
   loadApprovedReports();
   loadDashboard();
@@ -817,7 +873,10 @@ async function loadApprovedReports() {
         <img src="/api/report/view?key=${escapeHtml(r.image_key)}" style="max-width:100px;border-radius:8px;margin-bottom:8px;" />
         <div class="content" style="font-size:13px;">${escapeHtml(r.caption) || '无配文'}</div>
         <input id="note-${r.id}" placeholder="站长备注" value="${escapeHtml(r.note || '')}" style="width:100%;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:#fff;font-size:12px;margin:4px 0;" />
-        <input id="type-${r.id}" placeholder="类型（如：站长返图/活动返图）" value="${escapeHtml(r.type === 'admin' ? '站长返图' : r.type || '用户返图')}" style="width:100%;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:#fff;font-size:12px;margin:4px 0;" />
+        <select id="type-${r.id}" style="width:100%;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:#fff;font-size:12px;margin:4px 0;">
+          <option value="user" ${r.type === 'admin' ? '' : 'selected'}>用户返图</option>
+          <option value="admin" ${r.type === 'admin' ? 'selected' : ''}>站长返图</option>
+        </select>
         <label style="font-size:12px;color:#ccc;margin:4px 0;display:inline-block;">
           <input type="checkbox" id="featured-${r.id}" ${r.featured ? 'checked' : ''} /> 精选
         </label>
@@ -832,9 +891,8 @@ async function editReport(id) {
   const note = document.getElementById('note-' + id).value;
   const type = document.getElementById('type-' + id).value;
   const featured = document.getElementById('featured-' + id).checked;
-  const typeMap = { '站长返图': 'admin', '用户返图': 'user' };
-  await fetch('/api/report/edit', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id, note, type: typeMap[type] || type, featured }) });
-  alert('已保存');
+  await fetch('/api/report/edit', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id, note, type, featured }) });
+  adminToast('已保存');
 }
 
 var ticketView = 'pending';
@@ -945,14 +1003,14 @@ async function replyTicket(id, close) {
     // 关闭前确认处理意见，避免误默认成“无需处理”
     const label = result === 'fixed' ? '已处理' : result === 'useful' ? '建议采纳' : result === 'malicious' ? '恶意工单' : '无需处理';
     const ptsText = points || '0';
-    if (!confirm('确定关闭工单 #' + id + ' 吗？\n\n处理意见：' + label + '\n积分调整：' + ptsText + '\n\n关闭后不可重复调分，请确认意见无误。')) return;
+    if (!(await adminConfirm('确定关闭工单 #' + id + ' 吗？\n\n处理意见：' + label + '\n积分调整：' + ptsText + '\n\n关闭后不可重复调分，请确认意见无误。'))) return;
   }
   const res = await fetch('/api/ticket/reply', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
   const data = await res.json();
-  if (data.error) { alert(data.error); return; }
+  if (data.error) { adminAlert(data.error); return; }
   if (close && data.points_adjust != null) {
     const v = data.points_adjust;
-    alert('工单已关闭，积分调整 ' + (v > 0 ? '+' : '') + v + (v === 0 ? '（无调整）' : ''));
+    adminToast('工单已关闭，积分调整 ' + (v > 0 ? '+' : '') + v + (v === 0 ? '（无调整）' : ''));
   }
   loadTickets();
 }
@@ -1012,7 +1070,7 @@ async function uploadCover(input) {
       if (data.ok) {
         window._coverUrl = data.url;
       } else {
-        alert(data.error || '上传失败');
+        adminToast(data.error || '上传失败');
       }
     };
     img.src = e.target.result;
@@ -1088,7 +1146,7 @@ async function loadPostsAdmin() {
 }
 
 async function delPost(id) {
-  if (!confirm('确定删除这篇文章？')) return;
+  if (!(await adminConfirm('确定删除这篇文章？', true))) return;
   await fetch('/api/blog/' + id, { method: 'DELETE' });
   loadPostsAdmin();
 }
@@ -1183,21 +1241,22 @@ function renderUsers(users) {
 
 async function givePts(userId) {
   const val = parseInt(document.getElementById('pts-' + userId).value);
-  if (!val) { alert('请输入分数'); return; }
-  const reason = prompt('备注原因：', '站长手动调整');
+  if (!val) { adminToast('请输入分数'); return; }
+  const reason = await adminPrompt('调整积分', '站长手动调整', '备注原因');
+  if (reason === null) return;
   const res = await fetch('/api/admin/users', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId, amount: val, reason }) });
   const d = await res.json();
-  if (d.error) { alert(d.error); return; }
+  if (d.error) { adminAlert(d.error); return; }
   loadUsers();
 }
 
 async function banUser(userId, ban, days) {
   if (ban) {
     const label = days === 0 ? '永久封禁' : '封禁 ' + days + ' 天';
-    if (!confirm('确定' + label + '该用户？')) return;
+    if (!(await adminConfirm('确定' + label + '该用户？', true))) return;
     await fetch('/api/admin/users', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId, action: 'ban', days: days }) });
   } else {
-    if (!confirm('确定解禁该用户？')) return;
+    if (!(await adminConfirm('确定解禁该用户？'))) return;
     await fetch('/api/admin/users', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId, action: 'unban' }) });
   }
   loadUsers();
@@ -1205,7 +1264,7 @@ async function banUser(userId, ban, days) {
 }
 
 async function setAdmin(userId, isAdmin) {
-  if (!confirm(isAdmin ? '确定设为管理员？' : '确定取消管理员？')) return;
+  if (!(await adminConfirm(isAdmin ? '确定设为管理员？' : '确定取消管理员？'))) return;
   await fetch('/api/admin/set-admin', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId, action: isAdmin ? 'set_admin' : 'remove_admin' }) });
   loadUsers();
 }
@@ -1213,8 +1272,8 @@ async function setAdmin(userId, isAdmin) {
 async function deleteUser(userId) {
   const u = userCache.find(x => x.id === userId);
   const username = u ? u.username : ('#' + userId);
-  if (!confirm('确定删除用户 @' + username + ' 吗？\n将永久清除该用户的返图、留言、工单、积分记录等全部内容，且不可恢复！')) return;
-  if (!confirm('再次确认：此操作不可撤销，真的要删除 @' + username + ' 吗？')) return;
+  if (!(await adminConfirm('确定删除用户 @' + username + ' 吗？\n将永久清除该用户的返图、留言、工单、积分记录等全部内容，且不可恢复！', true))) return;
+  if (!(await adminConfirm('再次确认：此操作不可撤销，真的要删除 @' + username + ' 吗？', true))) return;
   await fetch('/api/admin/users', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId, action: 'delete_user' }) });
   loadUsers();
 }
@@ -1222,17 +1281,17 @@ async function deleteUser(userId) {
 async function sendMsg(userId) {
   const u = userCache.find(x => x.id === userId);
   const username = u ? u.username : '';
-  const title = prompt('站内信标题：', '系统通知');
+  const title = await adminPrompt('发站内信', '系统通知', '站内信标题');
   if (!title) return;
-  const content = prompt('站内信内容：');
+  const content = await adminPrompt('发站内信给 @' + username, '', '站内信内容');
   if (!content) return;
   await fetch('/api/admin/users', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId, action: 'message', title, content }) });
-  alert('已发送给 @' + username);
+  adminToast('已发送给 @' + username);
 }
 
 async function saveStatus() {
   const status = document.getElementById('status-input').value.trim();
-  if (!status) { alert('请输入状态'); return; }
+  if (!status) { adminToast('请输入状态'); return; }
   await fetch('/api/about-status', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ status }) });
   document.getElementById('status-result').textContent = '已保存！';
 }
@@ -1292,7 +1351,7 @@ async function saveAboutCfg() {
 async function savePrivacyVer() {
   const version = document.getElementById('pv-ver').value.trim();
   const note = document.getElementById('pv-note').value.trim();
-  if (!version) { alert('请填版本号'); return; }
+  if (!version) { adminToast('请填版本号'); return; }
   const res = await fetch('/api/privacy-version', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ version, note }) });
   const data = await res.json();
   document.getElementById('pv-result').textContent = data.ok ? '已保存！所有用户下次访问会收到弹窗。' : '失败：' + (data.error || '');
@@ -1357,11 +1416,11 @@ async function toggleShopItem(id, active) {
   } catch (e) { document.getElementById('shop-admin-result').textContent = '操作失败'; }
 }
 async function editShopItem(id) {
-  const name = prompt('修改名称：');
+  const name = await adminPrompt('修改名称', '', '商品名称');
   if (name === null) return;
-  const cost = prompt('修改积分价格：');
+  const cost = await adminPrompt('修改积分价格', '', '积分价格');
   if (cost === null) return;
-  const desc = prompt('修改说明：');
+  const desc = await adminPrompt('修改说明', '', '说明（如何发货/联系方式）');
   if (desc === null) return;
   const res = await fetch('/api/shop/items', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id, name: name.trim(), cost: parseInt(cost) || 0, desc, active: 1 }) });
   const data = await res.json();
@@ -1369,7 +1428,7 @@ async function editShopItem(id) {
   await loadShopAdmin();
 }
 async function delShopItem(id) {
-  if (!confirm('确定删除该商品？')) return;
+  if (!(await adminConfirm('确定删除该商品？', true))) return;
   const res = await fetch('/api/shop/items?id=' + id, { method: 'DELETE' });
   const data = await res.json();
   document.getElementById('shop-admin-result').textContent = data.error || '已删除';

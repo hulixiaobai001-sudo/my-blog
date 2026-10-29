@@ -2,7 +2,7 @@
 export async function onRequestGet({ env }) {
   try {
     const { results } = await env.DB.prepare(
-      "SELECT r.id, r.image_key, r.caption, u.username FROM reports r JOIN users u ON r.user_id = u.id WHERE r.status = 'approved' AND (r.type = 'user' OR r.type IS NULL) ORDER BY RANDOM() LIMIT 1"
+      "SELECT r.id, r.image_key, r.caption, u.username FROM reports r JOIN users u ON r.user_id = u.id WHERE r.status = 'approved' AND (r.type IS NULL OR r.type != 'admin') ORDER BY RANDOM() LIMIT 1"
     ).all();
     if (!results || results.length === 0) {
       return new Response(JSON.stringify({ found: false }), { headers: { 'Content-Type': 'application/json; charset=utf-8' } });

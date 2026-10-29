@@ -23,7 +23,7 @@ export async function onRequestGet(context) {
       SELECT r.id, r.user_id, r.image_key, r.caption, r.created_at, r.note, r.featured, u.username,
       (SELECT COUNT(*) FROM report_likes l WHERE l.report_id = r.id) AS likes
       FROM reports r JOIN users u ON r.user_id = u.id
-      WHERE r.status = 'approved' AND (r.type = 'user' OR r.type IS NULL)
+      WHERE r.status = 'approved' AND (r.type IS NULL OR r.type != 'admin')
       ORDER BY r.id DESC
     `).all();
     const allAdmin = await env.DB.prepare(`

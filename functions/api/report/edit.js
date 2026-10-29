@@ -16,7 +16,13 @@ export async function onRequestPost(context) {
 
   try {
     if (note !== undefined) await env.DB.prepare('UPDATE reports SET note = ? WHERE id = ?').bind(sanitize(note, 500), id).run();
-    if (type !== undefined) await env.DB.prepare('UPDATE reports SET type = ? WHERE id = ?').bind(sanitize(type, 50), id).run();
+    // type 白名单：仅接受 'user' / 'admin'（兼容中文“用户返图/站长返图”），其他值一律忽略，防止把备注类文本写进 type 导致返图墙过滤丢失
+    if (type !== undefined) {
+      let realType = null;
+      if (type === 'user' || type === '用户返图' || type === '用户') realType = 'user';
+      else if (type === 'admin' || type === '站长返图' || type === '站长') realType = 'admin';
+      if (realType) await env.DB.prepare('UPDATE reports SET type = ? WHERE id = ?').bind(realType, id).run();
+    }
     if (featured !== undefined) await env.DB.prepare('UPDATE reports SET featured = ? WHERE id = ?').bind(featured ? 1 : 0, id).run();
     return Response.json({ ok: true });
   } catch(e) {

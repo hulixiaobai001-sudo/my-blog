@@ -563,7 +563,7 @@ document.addEventListener('DOMContentLoaded', function() {
   };
 
   window.notifyDelMsg = async function(id) {
-    if (!confirm('确定删除这条站内信？')) return;
+    if (!(await window.siteConfirm('确定删除这条站内信？'))) return;
     var r = await fetch('/api/messages', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ action: 'delete', id: id }) });
     var d = await r.json();
     if (d.error) { alert(d.error); return; }
@@ -769,6 +769,36 @@ window.showToast = function(msg, type) {
 // 兼容旧代码：替换 alert
 window.alert = function(msg) { window.showToast(String(msg), 'warning'); };
 
+// 全站自定义确认弹窗（替代原生 confirm，风格与全站一致）
+window.siteConfirm = function(msg) {
+  return new Promise(function(resolve) {
+    var old = document.getElementById('site-confirm-mask');
+    if (old) old.remove();
+    var mask = document.createElement('div');
+    mask.id = 'site-confirm-mask';
+    mask.style.cssText = 'position:fixed;inset:0;z-index:2100;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;';
+    mask.innerHTML =
+      '<div style="width:min(400px,88vw);background:#1c1f2e;border:1px solid rgba(255,255,255,.16);border-radius:16px;padding:22px 24px;color:#fff;box-shadow:0 12px 40px rgba(0,0,0,.55);">' +
+      '<div style="font-size:16px;font-weight:600;margin-bottom:12px;">请确认</div>' +
+      '<div style="font-size:13px;color:#cbd5e1;line-height:1.7;white-space:pre-line;margin-bottom:16px;">' + (window.escapeHtml ? window.escapeHtml(msg) : String(msg)) + '</div>' +
+      '<div style="display:flex;gap:10px;justify-content:flex-end;">' +
+      '<button id="site-confirm-cancel" style="padding:8px 18px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:#cbd5e1;cursor:pointer;font-size:13px;">取消</button>' +
+      '<button id="site-confirm-ok" style="padding:8px 18px;border-radius:10px;border:none;background:linear-gradient(135deg,#dc3545,#c0392b);color:#fff;cursor:pointer;font-size:13px;">确认删除</button>' +
+      '</div></div>';
+    document.body.appendChild(mask);
+    function done(v) {
+      mask.remove();
+      document.removeEventListener('keydown', kf);
+      resolve(v);
+    }
+    mask.querySelector('#site-confirm-cancel').onclick = function() { done(false); };
+    mask.querySelector('#site-confirm-ok').onclick = function() { done(true); };
+    mask.onclick = function(e) { if (e.target === mask) done(false); };
+    var kf = function(e) { if (e.key === 'Escape') done(false); };
+    document.addEventListener('keydown', kf);
+  });
+};
+
 // 隐私政策更新弹窗
 document.addEventListener('DOMContentLoaded', async function() {
   try {
@@ -801,7 +831,9 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 <script>
 // 全站文章搜索 + 未登录引导条
-(function() {
+// 注意：本脚本原先在 head 中同步执行时 document.body 为 null，
+// appendChild 直接抛错导致搜索按钮未注入；现整体挂到 DOMContentLoaded。
+document.addEventListener('DOMContentLoaded', function() {
   function esc(str) { return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
   // 搜索层
@@ -870,7 +902,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     document.body.appendChild(bar);
     setTimeout(function() { try { bar.style.transition = 'opacity .6s'; bar.style.opacity = '0'; setTimeout(function(){ bar.remove(); }, 600); } catch(e) {} }, 8000);
   }).catch(function() {});
-})();
+});
 </script>
 <script src="/js/smooth-nav.js"></script>
 <script>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>404 - 页面不存在</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: #141622; color: #f3f4f6; font-family: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
+  .card { text-align: center; padding: 24px; }
+  .num { font-size: 76px; font-weight: 800; line-height: 1;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .tip { color: #94a3b8; margin: 14px 0 4px; }
+  .sub { color: #64748b; font-size: 13px; }
+  a.back { display: inline-block; margin-top: 22px; padding: 10px 26px; border-radius: 10px;
+    background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; text-decoration: none; font-size: 14px; }
+  a.back:active { opacity: .85; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="num">404</div>
+  <p class="tip">页面走丢了，也许它在别处</p>
+  <p class="sub">狐狸小白工作室 · 白沁个人站</p>
+  <a class="back" href="/">回到首页</a>
+</div>
+<script>
+(function () {
+  var p = location.pathname;
+  if (!p || p === '/' || p === '/index.html' || /\.(js|css|png|jpg|jpeg|gif|svg|webp|ico|woff2?|ttf|mp3|mp4|txt|xml|json|map)(\?|$)/i.test(p) || /^\/(api|images|img|css|js|fonts|favicon)/.test(p)) return;
+  try {
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon('/api/seclog-capture?path=' + encodeURIComponent(p));
+    } else {
+      fetch('/api/seclog-capture?path=' + encodeURIComponent(p), { method: 'POST', keepalive: true });
+    }
+  } catch (e) {}
+})();
+</script>
+</body>
+</html>
