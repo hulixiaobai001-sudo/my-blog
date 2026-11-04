@@ -105,7 +105,8 @@
   <div class="pay-modal">
     <div class="m-title">支付宝扫码赞助</div>
     <div class="m-sub" id="pay-modal-sub">付款完成后请回到本页刷新额度</div>
-    <div class="m-qr" id="pay-modal-qr" style="display:none;"><img id="pay-modal-img" alt="支付二维码" /></div>
+    <div class="m-qr" id="pay-modal-qr" style="display:none;"><img id="pay-modal-img" alt="支付二维码" referrerpolicy="no-referrer" loading="eager" /></div>
+    <div class="m-sub" id="pay-modal-tip" style="display:none;"></div>
     <a class="m-link" id="pay-modal-link" href="#" target="_blank" rel="noopener">打开支付宝付款</a>
     <button class="m-close" id="pay-modal-close" type="button">关闭</button>
   </div>
@@ -173,10 +174,42 @@
     var link = document.getElementById('pay-modal-link');
     var box = document.getElementById('pay-modal-qr');
     var img = document.getElementById('pay-modal-img');
-    if (url) { link.href = url; link.style.display = ''; } else { link.style.display = 'none'; }
-    if (qr && /^(https?:|data:image)/.test(qr)) { img.src = qr; box.style.display = ''; } else { box.style.display = 'none'; }
+    var tip = document.getElementById('pay-modal-tip');
+    var mobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+    if (url) {
+      link.href = url;
+      link.style.display = '';
+      link.textContent = mobile ? '打开支付宝付款' : '复制付款链接（手机支付宝打开）';
+    } else { link.style.display = 'none'; }
+    if (qr && /^(https?:|data:image)/.test(qr)) {
+      img.onerror = function() {
+        box.style.display = 'none';
+        tip.textContent = '二维码加载失败，请复制下面的付款链接到手机支付宝打开';
+        tip.style.display = '';
+      };
+      img.src = qr;
+      box.style.display = '';
+    } else {
+      box.style.display = 'none';
+    }
+    if (!mobile) { tip.textContent = '电脑端无法直接唤起支付宝，请用手机支付宝扫描二维码'; tip.style.display = ''; }
     mask.style.display = 'flex';
   }
+  document.getElementById('pay-modal-link').addEventListener('click', function(e) {
+    var href = this.getAttribute('href') || '';
+    if (!/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) && /^alipays?:\/\//.test(href)) {
+      e.preventDefault();
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(href).then(function() {
+          var tip = document.getElementById('pay-modal-tip');
+          tip.textContent = '付款链接已复制，请在手机支付宝中打开';
+          tip.style.display = '';
+        });
+      } else {
+        window.prompt('复制下面链接到手机支付宝打开', href);
+      }
+    }
+  });
   document.getElementById('pay-modal-close').addEventListener('click', function() {
     document.getElementById('pay-mask').style.display = 'none';
   });
