@@ -1,0 +1,9 @@
+{
+  "name": "my-blog",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "opcpay": "^0.3.4"
+  }
+}

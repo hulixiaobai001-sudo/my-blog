@@ -55,22 +55,31 @@ async function loadItems() {
 }
 
 async function redeem(name, cost) {
-  if (!confirm('确定兑换「' + name + '」？需要 ' + cost + ' 分')) return;
+  if (!confirm('确定兑换「' + name + '」？需要 ' + cost + ' 额度')) return;
+  // 同一次操作的业务号：网络重试时复用，服务端据此防止重复扣减
+  var actionId = window.__redeemAction || ('web-' + Math.random().toString(36).slice(2, 12));
+  window.__redeemAction = actionId;
   const res = await fetch('/api/shop/redeem', {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ itemName: name })
+    body: JSON.stringify({ itemName: name, actionId: actionId })
   });
   const data = await res.json();
   const msg = document.getElementById('msg');
   if (data.ok) {
-    msg.textContent = '兑换成功，等待站长发货！';
+    window.__redeemAction = null;
+    msg.textContent = data.mode === 'paid' ? '兑换成功（已从赞助额度扣除），等待站长发货！' : '兑换成功，等待站长发货！';
     msg.style.color = '#2ecc71';
     loadPoints();
+  } else if (data.pending) {
+    msg.textContent = '核销处理中：' + (data.error || '请稍后刷新查看结果') + '（再次点击会沿用同一笔，不会重复扣减）';
+    msg.style.color = '#f0ad4e';
   } else {
     msg.textContent = data.error || '兑换失败';
     msg.style.color = '#e74c3c';
-    if (res.status === 401) {
+    if (data.needTopup) {
+      msg.innerHTML = (data.error || '额度不足') + ' <a href="/appreciate/" style="color:#8ab4ff;">用支付宝购买赞助额度 →</a>';
+    } else if (res.status === 401) {
       alert('请先登录后再兑换');
       setTimeout(function(){ location.href = '/login/'; }, 1500);
     } else if (data.error) {
@@ -86,10 +95,27 @@ async function loadPoints() {
     const data = await res.json();
     if (data.user) {
       el.textContent = '我的积分：' + data.user.points + ' 分 · LV' + (data.user.level || 1) + '（活跃度 ' + (data.user.activity || 0) + '）';
+      loadPayQuota(el);
     } else {
       el.textContent = '登录后查看积分并兑换';
     }
   } catch(e) { el.textContent = ''; }
+}
+
+// 赞助额度（支付宝购买，服务端 access 为唯一口径）
+async function loadPayQuota(el) {
+  try {
+    const r = await fetch('/api/pay/access');
+    const d = await r.json();
+    if (!d.configured || !d.access) return;
+    var n = d.access.remaining;
+    var unit = d.access.quotaUnit === 'COUNT' ? '次' : '点';
+    if (typeof n !== 'number') return;
+    el.textContent += ' · 赞助额度：' + n + ' ' + unit;
+    if (n <= 0) {
+      el.innerHTML += ' <a href="/appreciate/" style="color:#8ab4ff;">额度不足，去购买 →</a>';
+    }
+  } catch(e) {}
 }
 loadItems();
 loadPoints();

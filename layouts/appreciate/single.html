@@ -26,6 +26,31 @@
   .team-note { color: #777; font-size: 12px; text-align: center; margin-top: 14px; }
   .ap-doc-link { color: #8ab4ff; text-decoration: none; }
   .center { text-align: center; }
+
+  .pay-title { color: #fff; font-size: 17px; margin-bottom: 6px; }
+  .pay-sub { color: #999; font-size: 13px; line-height: 1.8; }
+  .pay-balance { margin-top: 14px; padding: 12px 14px; border-radius: 12px; background: rgba(91,154,255,.1); border: 1px solid rgba(91,154,255,.25); color: #cfe0ff; font-size: 14px; }
+  .pay-balance b { color: #fff; font-size: 18px; }
+  .pay-tiers { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; margin-top: 16px; }
+  .pay-tier { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); border-radius: 14px; padding: 14px; text-align: center; }
+  .pay-tier .t-name { color: #fff; font-size: 14px; margin-bottom: 6px; }
+  .pay-tier .t-price { color: #5b9aff; font-size: 20px; font-weight: 700; }
+  .pay-tier .t-price span { font-size: 13px; font-weight: 400; color: #8ab4ff; margin-left: 2px; }
+  .pay-tier .t-quota { color: #9fb0c9; font-size: 12px; margin: 4px 0 10px; }
+  .pay-btn { width: 100%; padding: 9px 0; border: 0; border-radius: 10px; background: linear-gradient(135deg,#5b9aff,#4a7dff); color: #fff; font-size: 13px; cursor: pointer; }
+  .pay-btn:disabled { background: rgba(255,255,255,.12); color: #889; cursor: not-allowed; }
+  .pay-tip { color: #777; font-size: 12px; line-height: 1.8; margin-top: 14px; }
+  .pay-tip a { color: #8ab4ff; text-decoration: none; }
+  .pay-msg { color: #ffcc80; font-size: 13px; margin-top: 10px; min-height: 18px; }
+
+  .pay-mask { position: fixed; inset: 0; background: rgba(0,0,0,.62); backdrop-filter: blur(6px); z-index: 9999; display: none; align-items: center; justify-content: center; padding: 20px; }
+  .pay-modal { width: 100%; max-width: 340px; background: rgba(24,26,32,.94); border: 1px solid rgba(255,255,255,.12); border-radius: 18px; padding: 20px; text-align: center; }
+  .pay-modal .m-title { color: #fff; font-size: 16px; margin-bottom: 8px; }
+  .pay-modal .m-sub { color: #9aa; font-size: 12px; line-height: 1.8; margin-bottom: 14px; }
+  .pay-modal .m-qr { background: #fff; padding: 10px; border-radius: 12px; display: inline-block; }
+  .pay-modal .m-qr img { width: 190px; height: 190px; display: block; }
+  .pay-modal .m-link { display: block; margin: 14px 0 6px; padding: 10px; border-radius: 10px; background: linear-gradient(135deg,#5b9aff,#4a7dff); color: #fff; text-decoration: none; font-size: 13px; }
+  .pay-modal .m-close { margin-top: 8px; background: none; border: 0; color: #889; font-size: 13px; cursor: pointer; }
 </style>
 
 <div class="ap-wrap">
@@ -39,7 +64,18 @@
       本站为<b>个人性质网站</b>，赞赏完全自愿、金额随意。所有赞赏将用于<b>服务器升级与日常运维</b>，让小站更稳定地陪伴大家。
     </div>
 
-    <div class="center">
+    <div class="pay-title">支付宝赞助</div>
+    <div class="pay-sub">由支付宝合作服务商提供收款。赞助后额度即时计入账户，可直接在积分商店兑换，用于抵扣大额商品。</div>
+    <div class="pay-balance" id="pay-balance">正在读取赞助额度…</div>
+    <div class="pay-tiers" id="pay-tiers"></div>
+    <div class="pay-msg" id="pay-msg"></div>
+    <div class="pay-tip">
+      说明：页面跳转、扫码、返回本站都<b>不代表已付款</b>；到账情况以上方额度为准，额度由支付宝侧统一记账。
+      未登录可先<a href="/login/">登录</a>再购买，额度与账号绑定。
+    </div>
+
+    <div class="center" style="margin-top:22px;border-top:1px solid rgba(255,255,255,.08);padding-top:18px;">
+      <div class="pay-sub" style="margin-bottom:10px;">也可以直接微信赞赏（金额随意，无额度）</div>
       <div class="qr-box">
         <img src="/images/donate.jpg" alt="赞赏二维码" />
         <div class="qr-label">微信赞赏码 · 金额随意</div>
@@ -65,28 +101,191 @@
   </div>
 </div>
 
+<div class="pay-mask" id="pay-mask">
+  <div class="pay-modal">
+    <div class="m-title">支付宝扫码赞助</div>
+    <div class="m-sub" id="pay-modal-sub">付款完成后请回到本页刷新额度</div>
+    <div class="m-qr" id="pay-modal-qr" style="display:none;"><img id="pay-modal-img" alt="支付二维码" /></div>
+    <a class="m-link" id="pay-modal-link" href="#" target="_blank" rel="noopener">打开支付宝付款</a>
+    <button class="m-close" id="pay-modal-close" type="button">关闭</button>
+  </div>
+</div>
+
 <script>
-(async function() {
-  try {
-    var res = await fetch('/api/team');
-    var data = await res.json();
-    var list = document.getElementById('team-list');
-    var note = document.getElementById('team-note');
-    var members = data.members || [];
-    if (members.length === 0) {
-      list.innerHTML = '<div style="color:#888;font-size:13px;">暂无成员</div>';
+(function() {
+  var esc = window.escapeHtml || function(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+    return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+  }); };
+
+  var state = { configured: false, purchasable: false, options: [], loggedIn: false, remaining: null, unit: '' };
+  var balanceEl = document.getElementById('pay-balance');
+  var tiersEl = document.getElementById('pay-tiers');
+  var msgEl = document.getElementById('pay-msg');
+
+  function setMsg(t, color) {
+    msgEl.textContent = t || '';
+    msgEl.style.color = color || '#ffcc80';
+  }
+
+  function randomAction() {
+    var s = '';
+    var chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    for (var i = 0; i < 12; i++) s += chars.charAt(Math.floor(Math.random() * chars.length));
+    return 'web-' + s;
+  }
+
+  function renderBalance() {
+    if (!state.configured) { balanceEl.innerHTML = '支付宝赞赏通道<b>配置中</b>，请先用微信赞赏码支持'; return; }
+    if (!state.loggedIn) { balanceEl.innerHTML = '登录后可购买赞助额度，额度与账号绑定'; return; }
+    if (state.purchasable === false) { balanceEl.innerHTML = '赞赏通道<b>暂停中</b>，请稍后再试或使用微信赞赏码'; return; }
+    var n = state.remaining == null ? '—' : state.remaining;
+    var unit = state.unit === 'POINT' ? '点' : (state.unit === 'COUNT' ? '次' : '');
+    var hint = (state.remaining === 0) ? '　额度不足，可在下方直接购买' : '';
+    balanceEl.innerHTML = '当前赞助额度：<b>' + esc(n) + '</b>' + esc(unit) + esc(hint);
+  }
+
+  function renderTiers() {
+    if (!state.options.length) {
+      tiersEl.innerHTML = '<div style="color:#888;font-size:13px;grid-column:1/-1;">暂无可购买的档位</div>';
       return;
     }
-    list.innerHTML = members.map(function(m) {
-      var avatar = m.avatar
-        ? '<img src="' + window.escapeHtml(m.avatar) + '" onerror="this.parentNode.innerHTML=window.escapeHtml(' + JSON.stringify(m.username) + ').charAt(0).toUpperCase()">'
-        : window.escapeHtml(m.username).charAt(0).toUpperCase();
-      return '<div class="team-member"><div class="avatar">' + avatar + '</div><div class="tname">' + window.escapeHtml(m.username) + '</div></div>';
-    }).join('');
-    if (data.full) {
-      note.textContent = '一期成员已满员，二期暂不开放';
+    var html = '';
+    for (var i = 0; i < state.options.length; i++) {
+      var o = state.options[i];
+      var unit = o.quotaUnit === 'POINT' ? '点' : (o.quotaUnit === 'COUNT' ? '次' : '');
+      var disabled = (!state.loggedIn || !state.purchasable) ? ' disabled' : '';
+      html += '<div class="pay-tier">'
+        + '<div class="t-name">' + esc(o.name) + '</div>'
+        + '<div class="t-price">¥' + esc(o.price) + '</div>'
+        + '<div class="t-quota">到账 ' + esc(o.quotaAmount == null ? '—' : o.quotaAmount) + esc(unit) + '</div>'
+        + '<button class="pay-btn" type="button" data-sku="' + esc(o.skuId) + '"' + disabled + '>支付宝购买</button>'
+        + '</div>';
     }
-  } catch(e) {}
+    tiersEl.innerHTML = html;
+    var btns = tiersEl.querySelectorAll('.pay-btn');
+    for (var k = 0; k < btns.length; k++) {
+      btns[k].addEventListener('click', function() { buy(this.getAttribute('data-sku'), this); });
+    }
+  }
+
+  function openModal(url, qr) {
+    var mask = document.getElementById('pay-mask');
+    var link = document.getElementById('pay-modal-link');
+    var box = document.getElementById('pay-modal-qr');
+    var img = document.getElementById('pay-modal-img');
+    if (url) { link.href = url; link.style.display = ''; } else { link.style.display = 'none'; }
+    if (qr && /^(https?:|data:image)/.test(qr)) { img.src = qr; box.style.display = ''; } else { box.style.display = 'none'; }
+    mask.style.display = 'flex';
+  }
+  document.getElementById('pay-modal-close').addEventListener('click', function() {
+    document.getElementById('pay-mask').style.display = 'none';
+  });
+
+  function buy(skuId, btn) {
+    if (!state.loggedIn) { setMsg('请先登录后再购买'); return; }
+    if (!state.purchasable) { setMsg('赞赏通道当前不可用'); return; }
+    var action = randomAction();
+    btn.disabled = true;
+    var old = btn.textContent;
+    btn.textContent = '正在创建…';
+    setMsg('');
+    fetch('/api/pay/purchase', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ skuId: skuId, actionId: action })
+    }).then(function(r) { return r.json().then(function(j) { return { ok: r.ok, j: j }; }); })
+      .then(function(res) {
+        var d = res.j || {};
+        if (d.purchaseUrl || d.qrCode) {
+          openModal(d.purchaseUrl, d.qrCode);
+          setMsg('已创建付款入口，付款后请回到本页点“刷新额度”', '#8ab4ff');
+        } else if (d.status === 'UNKNOWN') {
+          setMsg('下单请求未确认，请稍后重试（同一笔不会重复扣款）');
+        } else {
+          setMsg(d.error || '创建付款入口失败，请稍后再试');
+        }
+      })
+      .catch(function() { setMsg('网络异常，请稍后重试'); })
+      .then(function() { btn.disabled = false; btn.textContent = old; });
+  }
+
+  function loadAll() {
+    fetch('/api/pay/product').then(function(r) { return r.json(); }).then(function(d) {
+      state.configured = !!d.configured;
+      state.purchasable = !!d.purchasable;
+      state.options = d.options || [];
+      state.unit = d.quotaUnit || '';
+      renderTiers();
+      return fetch('/api/pay/access').then(function(r) { return r.json(); });
+    }).then(function(a) {
+      state.loggedIn = !!a.loggedIn;
+      if (a.access && typeof a.access.remaining === 'number') state.remaining = a.access.remaining;
+      if (a.access && a.access.quotaUnit) state.unit = a.access.quotaUnit;
+      renderBalance();
+      renderTiers();
+    }).catch(function() {
+      balanceEl.innerHTML = '额度读取失败，请稍后刷新';
+    });
+  }
+
+  // 从支付宝跳回：只查询，不把回跳当作付款成功
+  var qs = new URLSearchParams(location.search);
+  if (qs.get('pay') === 'return') {
+    var key = qs.get('key') || '';
+    setMsg('正在核对赞助结果…', '#8ab4ff');
+    fetch('/api/pay/status?key=' + encodeURIComponent(key))
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (!d.ok) { setMsg(d.error || '查询失败，请稍后刷新'); return; }
+        var rem = d.access && typeof d.access.remaining === 'number' ? d.access.remaining : null;
+        if (rem != null) { state.remaining = rem; state.unit = d.access.quotaUnit || state.unit; }
+        setMsg('已刷新，当前赞助额度以页面显示为准；若未到账请稍等片刻再刷新', '#8ab4ff');
+        renderBalance();
+      })
+      .catch(function() { setMsg('查询失败，请稍后刷新'); });
+  }
+
+  // 手动刷新额度
+  var refreshDone = false;
+  var refreshBtn = document.createElement('button');
+  refreshBtn.type = 'button';
+  refreshBtn.className = 'pay-btn';
+  refreshBtn.style.cssText = 'margin-top:10px;background:rgba(255,255,255,.1);';
+  refreshBtn.textContent = '刷新额度';
+  refreshBtn.addEventListener('click', function() {
+    if (refreshDone) return;
+    refreshDone = true;
+    fetch('/api/pay/access').then(function(r) { return r.json(); }).then(function(a) {
+      if (a.access && typeof a.access.remaining === 'number') state.remaining = a.access.remaining;
+      renderBalance();
+      setMsg('额度已刷新', '#8ab4ff');
+    }).catch(function() { setMsg('刷新失败，请稍后再试'); })
+      .then(function() { setTimeout(function() { refreshDone = false; }, 1500); });
+  });
+  balanceEl.parentNode.insertBefore(refreshBtn, balanceEl.nextSibling);
+
+  loadAll();
+
+  (async function() {
+    try {
+      var res = await fetch('/api/team');
+      var data = await res.json();
+      var list = document.getElementById('team-list');
+      var note = document.getElementById('team-note');
+      var members = data.members || [];
+      if (members.length === 0) {
+        list.innerHTML = '<div style="color:#888;font-size:13px;">暂无成员</div>';
+        return;
+      }
+      list.innerHTML = members.map(function(m) {
+        var avatar = m.avatar
+          ? '<img src="' + esc(m.avatar) + '" onerror="this.parentNode.textContent=' + JSON.stringify(String(m.username || '?').charAt(0).toUpperCase()) + '">'
+          : esc(String(m.username || '?').charAt(0).toUpperCase());
+        return '<div class="team-member"><div class="avatar">' + avatar + '</div><div class="tname">' + esc(m.username) + '</div></div>';
+      }).join('');
+      if (data.full) { note.textContent = '一期成员已满员，二期暂不开放'; }
+    } catch (e) {}
+  })();
 })();
 </script>
 {{ end }}

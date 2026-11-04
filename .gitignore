@@ -3,6 +3,11 @@ public/
 resources/
 .hugo_build.lock
 
+# npm 依赖与本地密钥（Cloudflare Pages 构建时自动安装依赖）
+node_modules/
+.env
+.env.*
+
 # 本地开发服务器日志
 hugo_server.log
 build.log
