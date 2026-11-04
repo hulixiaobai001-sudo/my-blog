@@ -439,7 +439,8 @@ document.addEventListener('DOMContentLoaded', () => {
       toolbar: ['bold','italic','heading','|','quote','unordered-list','ordered-list','|',{ name: 'upload-image', action: uploadImageToEditor, className: 'fa fa-picture-o', title: '上传图片插入正文' },'|','preview','guide']
     });
     // 未托管 FontAwesome，图标按钮用文字标签代替，避免工具栏只剩分隔线
-    setTimeout(labelEditorToolbar, 50);
+    setTimeout(labelEditorToolbar, 100);
+    setTimeout(labelEditorToolbar, 400);
   }
   checkAdmin();
 });
@@ -456,15 +457,19 @@ function labelEditorToolbar() {
     'Toggle Preview': '预览',
     'Toggle Guide': '?'
   };
-  var btns = document.querySelectorAll('.editor-toolbar button');
-  for (var i = 0; i < btns.length; i++) {
-    var t = btns[i].getAttribute('title') || '';
+  var nodes = document.querySelectorAll('.editor-toolbar a, .editor-toolbar button');
+  for (var i = 0; i < nodes.length; i++) {
+    var t = nodes[i].getAttribute('title') || '';
     if (map[t]) {
-      btns[i].innerHTML = '<span style="font-style:normal;font-family:inherit;font-size:13px;">' + map[t] + '</span>';
-      btns[i].style.width = 'auto';
-      btns[i].style.minWidth = '30px';
-      btns[i].style.padding = '4px 8px';
-      btns[i].style.fontFamily = 'inherit';
+      nodes[i].innerHTML = '<span style="font-style:normal;font-family:inherit;font-size:13px;color:#e5e7eb !important;">' + map[t] + '</span>';
+      nodes[i].style.width = 'auto';
+      nodes[i].style.minWidth = '30px';
+      nodes[i].style.height = '26px';
+      nodes[i].style.padding = '4px 8px';
+      nodes[i].style.margin = '2px';
+      nodes[i].style.lineHeight = '18px';
+      nodes[i].style.color = '#e5e7eb';
+      nodes[i].style.fontFamily = 'inherit';
     }
   }
 }
