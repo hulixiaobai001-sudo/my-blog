@@ -22,7 +22,7 @@ export async function onRequestPost(context) {
   try {
     return await handle(context);
   } catch (e) {
-    return json({ ok: false, error: '下单异常，请稍后重试', errMsg: String((e && (e.message || e.name)) || '').slice(0, 200) }, 500);
+    return json({ ok: false, error: '下单异常，请稍后重试' }, 500);
   }
 }
 
