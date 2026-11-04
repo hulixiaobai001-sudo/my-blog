@@ -107,7 +107,7 @@ async function loadMyMsgs() {
 }
 
 async function delMyMsg(id) {
-  if (!confirm('确定删除这条留言？')) return;
+  if (!(await siteConfirm('确定删除这条留言？', { danger: true, okText: '删除', title: '删除留言' }))) return;
   await fetch('/api/guestbook', {
     method: 'DELETE', headers: {'Content-Type':'application/json'},
     body: JSON.stringify({ id: id })
@@ -215,9 +215,9 @@ async function save() {
 }
 
 async function deleteAccount() {
-  if (!confirm('确定要注销账号吗？\n你的返图、留言、工单、积分等全部数据将被永久删除，且不可恢复！')) return;
-  if (!confirm('再次确认：此操作不可撤销，真的要注销吗？')) return;
-  const password = prompt('请输入登录密码确认注销：');
+  if (!(await siteConfirm('确定要注销账号吗？\n你的返图、留言、工单、积分等全部数据将被永久删除，且不可恢复！', { danger: true, okText: '继续注销', title: '注销账号' }))) return;
+  if (!(await siteConfirm('此操作不可撤销，真的要注销吗？', { danger: true, okText: '确认注销' }))) return;
+  const password = await sitePrompt('请输入登录密码确认注销：', '', '验证密码');
   if (!password) return;
   try {
     const res = await fetch('/api/auth/delete', {

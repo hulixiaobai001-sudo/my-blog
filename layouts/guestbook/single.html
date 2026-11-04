@@ -314,7 +314,7 @@ async function replyMsg(id) {
 }
 
 async function delMsg(id) {
-  if (!confirm('确定删除这条留言？')) return;
+  if (!(await siteConfirm('确定删除这条留言？', { danger: true, okText: '删除', title: '删除留言' }))) return;
   var res = await fetch('/api/guestbook', {
     method: 'DELETE', headers: {'Content-Type':'application/json'},
     body: JSON.stringify({ id: id })

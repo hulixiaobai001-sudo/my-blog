@@ -157,7 +157,7 @@ async function loadComments(postId) {
 }
 
 async function delComment(id) {
-  if (!confirm('确定删除这条评论？')) return;
+  if (!(await siteConfirm('确定删除这条评论？', { danger: true, okText: '删除', title: '删除评论' }))) return;
   const res = await fetch('/api/comments', { method: 'DELETE', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id }) });
   const data = await res.json();
   if (data.error) { alert(data.error); return; }

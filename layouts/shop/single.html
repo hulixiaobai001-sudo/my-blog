@@ -55,7 +55,7 @@ async function loadItems() {
 }
 
 async function redeem(name, cost) {
-  if (!confirm('确定兑换「' + name + '」？需要 ' + cost + ' 额度')) return;
+  if (!(await siteConfirm('确定兑换「' + name + '」？需要 ' + cost + ' 额度', { okText: '确认兑换' }))) return;
   // 同一次操作的业务号：网络重试时复用，服务端据此防止重复扣减
   var actionId = window.__redeemAction || ('web-' + Math.random().toString(36).slice(2, 12));
   window.__redeemAction = actionId;

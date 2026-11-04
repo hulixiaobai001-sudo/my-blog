@@ -264,7 +264,7 @@ async function toggleLike(id, btn) {
 }
 
 async function delReport(id) {
-  if (!confirm('确定删除这张返图？')) return;
+  if (!(await siteConfirm('确定删除这张返图？', { danger: true, okText: '删除', title: '删除返图' }))) return;
   await fetch('/api/report/delete', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id }) });
   loadGallery();
 }

@@ -769,34 +769,60 @@ window.showToast = function(msg, type) {
 // 兼容旧代码：替换 alert
 window.alert = function(msg) { window.showToast(String(msg), 'warning'); };
 
-// 全站自定义确认弹窗（替代原生 confirm，风格与全站一致）
-window.siteConfirm = function(msg) {
+// 全站自定义对话框（替代原生 confirm / prompt，风格与全站一致，z-index 高于支付弹窗）
+window.siteConfirm = function(msg, opts) {
+  opts = opts || {};
+  opts = typeof opts === 'string' ? { title: opts } : opts;
+  var okText = opts.okText || '确定';
+  var danger = !!opts.danger;
+  var title = opts.title || '请确认';
+  var input = !!opts.input;
+  var def = opts.def || '';
+  function esc(v) { return window.escapeHtml ? window.escapeHtml(v) : String(v == null ? '' : v); }
   return new Promise(function(resolve) {
-    var old = document.getElementById('site-confirm-mask');
+    var old = document.getElementById('site-dialog-mask');
     if (old) old.remove();
+    var style = document.getElementById('site-dialog-style');
+    if (!style) {
+      style = document.createElement('style');
+      style.id = 'site-dialog-style';
+      style.textContent = '@keyframes siteDlgIn{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}';
+      document.head.appendChild(style);
+    }
     var mask = document.createElement('div');
-    mask.id = 'site-confirm-mask';
-    mask.style.cssText = 'position:fixed;inset:0;z-index:2100;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;';
+    mask.id = 'site-dialog-mask';
+    mask.style.cssText = 'position:fixed;inset:0;z-index:2147483600;background:rgba(0,0,0,.62);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px;';
     mask.innerHTML =
-      '<div style="width:min(400px,88vw);background:#1c1f2e;border:1px solid rgba(255,255,255,.16);border-radius:16px;padding:22px 24px;color:#fff;box-shadow:0 12px 40px rgba(0,0,0,.55);">' +
-      '<div style="font-size:16px;font-weight:600;margin-bottom:12px;">请确认</div>' +
-      '<div style="font-size:13px;color:#cbd5e1;line-height:1.7;white-space:pre-line;margin-bottom:16px;">' + (window.escapeHtml ? window.escapeHtml(msg) : String(msg)) + '</div>' +
+      '<div style="width:min(420px,90vw);background:rgba(24,26,34,.96);border:1px solid rgba(255,255,255,.14);border-radius:18px;padding:22px 24px;color:#fff;box-shadow:0 16px 50px rgba(0,0,0,.6);animation:siteDlgIn .2s ease;">' +
+      '<div style="font-size:16px;font-weight:600;margin-bottom:10px;">' + esc(title) + '</div>' +
+      '<div style="font-size:13px;color:#cbd5e1;line-height:1.8;white-space:pre-line;margin-bottom:14px;">' + esc(msg) + '</div>' +
+      (input ? '<input id="site-dialog-input" autocomplete="off" style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:#fff;font-size:14px;margin-bottom:16px;outline:none;">' : '') +
       '<div style="display:flex;gap:10px;justify-content:flex-end;">' +
-      '<button id="site-confirm-cancel" style="padding:8px 18px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:#cbd5e1;cursor:pointer;font-size:13px;">取消</button>' +
-      '<button id="site-confirm-ok" style="padding:8px 18px;border-radius:10px;border:none;background:linear-gradient(135deg,#dc3545,#c0392b);color:#fff;cursor:pointer;font-size:13px;">确认删除</button>' +
+      '<button id="site-dialog-cancel" style="padding:9px 18px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:#cbd5e1;cursor:pointer;font-size:13px;">取消</button>' +
+      '<button id="site-dialog-ok" style="padding:9px 18px;border-radius:10px;border:none;' + (danger ? 'background:linear-gradient(135deg,#e05c5c,#c0392b);' : 'background:linear-gradient(135deg,#5b9aff,#3f6fd8);') + 'color:#fff;cursor:pointer;font-size:13px;">' + esc(okText) + '</button>' +
       '</div></div>';
     document.body.appendChild(mask);
+    var inputEl = mask.querySelector('#site-dialog-input');
+    if (inputEl) { inputEl.value = def; inputEl.focus(); inputEl.select(); }
     function done(v) {
       mask.remove();
       document.removeEventListener('keydown', kf);
       resolve(v);
     }
-    mask.querySelector('#site-confirm-cancel').onclick = function() { done(false); };
-    mask.querySelector('#site-confirm-ok').onclick = function() { done(true); };
-    mask.onclick = function(e) { if (e.target === mask) done(false); };
-    var kf = function(e) { if (e.key === 'Escape') done(false); };
+    function ok() { done(input ? (inputEl.value || '') : true); }
+    mask.querySelector('#site-dialog-cancel').onclick = function() { done(input ? null : false); };
+    mask.querySelector('#site-dialog-ok').onclick = ok;
+    mask.onclick = function(e) { if (e.target === mask) done(input ? null : false); };
+    var kf = function(e) {
+      if (e.key === 'Escape') { done(input ? null : false); }
+      else if (e.key === 'Enter' && input) { ok(); }
+    };
     document.addEventListener('keydown', kf);
   });
+};
+// 兼容旧调用：siteConfirm(msg) 仍返回 Promise<boolean>
+window.sitePrompt = function(msg, def, title) {
+  return window.siteConfirm(msg, { input: true, def: def || '', title: title || '请输入', okText: '确定' });
 };
 
 // 隐私政策更新弹窗

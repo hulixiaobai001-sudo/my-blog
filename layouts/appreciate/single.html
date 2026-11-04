@@ -323,7 +323,7 @@
     if (document.getElementById('pay-mask').style.display === 'flex') closeModal();
     if (document.getElementById('receipt-mask').style.display === 'flex') document.getElementById('receipt-mask').style.display = 'none';
   });
-  document.getElementById('pay-modal-link').addEventListener('click', function(e) {
+  document.getElementById('pay-modal-link').addEventListener('click', async function(e) {
     var href = this.getAttribute('href') || '';
     if (!/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) && /^alipays?:\/\//.test(href)) {
       e.preventDefault();
@@ -334,7 +334,7 @@
           tip.style.display = '';
         });
       } else {
-        window.prompt('复制下面链接到手机支付宝打开', href);
+        await sitePrompt('复制下面链接到手机支付宝打开', href, '付款链接');
       }
     }
   });
@@ -421,13 +421,13 @@
   });
 
   // 额度折算站内积分：1 点 = 5 积分，同一业务编号重试不重复扣
-  document.getElementById('pay-exchange').addEventListener('click', function() {
+  document.getElementById('pay-exchange').addEventListener('click', async function() {
     var btn = this;
     if (!state.loggedIn) { setMsg('请先登录再兑换'); return; }
     if (!(state.remaining > 0)) { setMsg('暂无可兑换的赞助额度'); return; }
     var amount = state.remaining;
     var gain = amount * 5;
-    if (!confirm('将 ' + amount + ' 点赞助额度兑换为 ' + gain + ' 站内积分？兑换后额度减少，不可撤回。')) return;
+    if (!(await siteConfirm('将 ' + amount + ' 点赞助额度兑换为 ' + gain + ' 站内积分？兑换后额度减少，不可撤回。', { okText: '确认兑换', title: '兑换确认' }))) return;
     btn.disabled = true;
     var old = btn.textContent;
     btn.textContent = '兑换中…';
@@ -515,14 +515,14 @@
   document.getElementById('receipt-mask').addEventListener('click', function(e) {
     if (e.target === this) this.style.display = 'none';
   });
-  document.getElementById('receipt-copy').addEventListener('click', function() {
+  document.getElementById('receipt-copy').addEventListener('click', async function() {
     if (!lastReceiptText) return;
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(lastReceiptText);
       this.textContent = '已复制';
       setTimeout(function() { document.getElementById('receipt-copy').textContent = '复制凭据'; }, 1500);
     } else {
-      window.prompt('复制凭据内容', lastReceiptText);
+      await sitePrompt('长按或 Ctrl+C 复制凭据内容：', lastReceiptText, '赞助凭据');
     }
   });
   document.getElementById('rec-refresh').addEventListener('click', loadReceipts);
