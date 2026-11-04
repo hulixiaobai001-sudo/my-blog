@@ -58,7 +58,8 @@
   .rec-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.06); }
   .rec-item .ri-main { color: #ddd; font-size: 13px; line-height: 1.7; }
   .rec-item .ri-main b { color: #fff; }
-  .rec-item .ri-sub { color: #777; font-size: 11px; word-break: break-all; }
+  .rec-item .ri-sub { color: #777; font-size: 11px; word-break: break-all; line-height: 1.6; }
+  .rec-item .ri-time { color: #555; font-size: 11px; margin-top: 2px; }
   .rec-item .ri-btn { flex: 0 0 auto; background: rgba(91,154,255,.16); border: 1px solid rgba(91,154,255,.35); color: #9fc4ff; border-radius: 9px; padding: 6px 10px; font-size: 12px; cursor: pointer; }
   .rec-empty { color: #888; font-size: 13px; padding: 6px 0; }
 
@@ -472,7 +473,8 @@
         var st = o.status === 'READY' ? '待付款' : (o.status === 'PAID' || o.status === 'SUCCEEDED' ? '已支付' : o.status);
         return '<div class="rec-item"><div class="ri-main"><b>' + esc2(o.tier || '赞助') + '</b> ¥' + esc2(o.price || '—')
           + ' · ' + esc2(o.quota) + ' 点 · ' + esc2(st)
-          + '<div class="ri-sub">' + esc2(o.key) + ' · ' + esc2(o.createdAt) + '</div></div>'
+          + '<div class="ri-sub">编号 ' + esc2(o.key) + '</div>'
+          + '<div class="ri-time">' + esc2(o.createdAt) + '</div></div>'
           + '<button class="ri-btn" type="button" data-key="' + esc2(o.key) + '">凭据</button></div>';
       }).join('');
       var btns = box.querySelectorAll('.ri-btn');
