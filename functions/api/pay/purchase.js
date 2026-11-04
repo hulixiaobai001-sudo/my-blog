@@ -19,6 +19,14 @@ function callbackFor(request, key) {
 // POST /api/pay/purchase —— 创建支付宝购买入口
 // 只返回购买入口，READY/扫码/跳回都不代表已付款；到账与否一律以后续 /access 为准。
 export async function onRequestPost(context) {
+  try {
+    return await handle(context);
+  } catch (e) {
+    return json({ ok: false, error: '下单异常', errMsg: String((e && (e.message || e.name)) || '').slice(0, 200) }, 500);
+  }
+}
+
+async function handle(context) {
   const { request, env } = context;
   if (!hasPay(env)) return json({ ok: false, error: '赞赏通道未配置' }, 503);
 
