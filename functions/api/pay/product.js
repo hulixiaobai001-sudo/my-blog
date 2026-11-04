@@ -67,8 +67,7 @@ export async function onRequestGet(context) {
       options: [],
       capabilityStatus: 'UNKNOWN',
       reason: '赞赏服务暂时不可用，请稍后再试',
-      errorCode: (e && e.code) || '',
-      errMsg: String((e && (e.message || e.name)) || '').slice(0, 120)
+      errorCode: (e && e.code) || ''
     }, 200);
   }
 }

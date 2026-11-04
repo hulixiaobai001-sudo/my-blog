@@ -22,7 +22,7 @@ export function payClient(env) {
     const init = {
       method: method || (body === undefined ? 'GET' : 'POST'),
       headers: { Authorization: 'Bearer ' + key, 'Content-Type': 'application/json' },
-      redirect: 'error'
+      redirect: 'follow'
     };
     if (body !== undefined) init.body = JSON.stringify(body);
     if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
