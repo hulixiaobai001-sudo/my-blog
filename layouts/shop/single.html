@@ -68,7 +68,7 @@ async function redeem(name, cost) {
   const msg = document.getElementById('msg');
   if (data.ok) {
     window.__redeemAction = null;
-    msg.textContent = data.mode === 'paid' ? '兑换成功（已从赞助额度扣除），等待站长发货！' : '兑换成功，等待站长发货！';
+    msg.textContent = data.mode === 'paid' ? '兑换成功（已从赞助额度扣除），等待站长发货！' : '兑换成功，已从站内积分扣除，等待站长发货！';
     msg.style.color = '#2ecc71';
     loadPoints();
   } else if (data.pending) {
@@ -111,9 +111,11 @@ async function loadPayQuota(el) {
     var n = d.access.remaining;
     var unit = d.access.quotaUnit === 'COUNT' ? '次' : '点';
     if (typeof n !== 'number') return;
-    el.textContent += ' · 赞助额度：' + n + ' ' + unit;
+    el.textContent += ' · 赞助额度：' + n + ' ' + unit + (n > 0 ? '（可兑 ' + (n * 5) + ' 积分）' : '');
     if (n <= 0) {
       el.innerHTML += ' <a href="/appreciate/" style="color:#8ab4ff;">额度不足，去购买 →</a>';
+    } else {
+      el.innerHTML += ' <a href="/appreciate/" style="color:#8ab4ff;">兑换积分 →</a>';
     }
   } catch(e) {}
 }

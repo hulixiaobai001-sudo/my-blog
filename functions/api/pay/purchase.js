@@ -1,4 +1,4 @@
-import { payClient, hasPay, getLoginUser, ensurePayTables, bizKey } from '../../_pay.js';
+import { payClient, hasPay, getLoginUser, getUserRole, isTestOption, ensurePayTables, bizKey } from '../../_pay.js';
 
 function json(body, status) {
   return new Response(JSON.stringify(body), {
@@ -58,6 +58,11 @@ async function handle(context) {
   const opt = (product.charging_options || []).find(o => o.sku_id === skuId);
   // 档位与价格只认服务端 /product 返回，不接受客户端传价格
   if (!opt) return json({ ok: false, error: '档位不存在或已下架' }, 400);
+  // 测试档位仅站内管理员/站长可用，不对外售卖
+  if (isTestOption(opt)) {
+    const role = await getUserRole(env, request);
+    if (!role.admin) return json({ ok: false, error: '该档位测试中，暂不开放' }, 403);
+  }
 
   await ensurePayTables(env);
 

@@ -129,7 +129,18 @@ export async function onRequestPost(context) {
   const costNum = item.cost;
   const cleanName = sanitize(itemName, 50);
 
-  // 1) 优先用支付宝购买的赞助额度（正式 consume 成功才交付）
+  // 1) 优先站内积分（原子条件扣减）：赞助额度可按 1:5 折算成积分，先用积分更划算
+  try {
+    await ensureRedeemTables(env);
+    const update = await env.DB.prepare('UPDATE users SET points = points - ? WHERE id = ? AND points >= ?').bind(costNum, userId, costNum).run();
+    if (update.meta.changes > 0) {
+      await env.DB.prepare('INSERT INTO points_log (user_id, amount, reason) VALUES (?, ?, ?)').bind(userId, -costNum, '兑换：' + cleanName).run();
+      await env.DB.prepare('INSERT INTO redemptions (user_id, item_name, cost) VALUES (?, ?, ?)').bind(userId, cleanName, costNum).run();
+      return json({ ok: true, mode: 'points' });
+    }
+  } catch (e) {}
+
+  // 2) 积分不足时用支付宝购买的赞助额度直接抵扣（正式 consume 成功才交付）
   if (hasPay(env)) {
     const r = await payWithQuota(env, userId, costNum, cleanName, actionId);
     if (r.mode === 'paid') return json({ ok: true, mode: 'paid', redemptionId: r.redemptionId || 0, resumed: !!r.resumed });
@@ -137,17 +148,5 @@ export async function onRequestPost(context) {
     if (r.mode === 'failed') return json({ ok: false, error: r.message }, 409);
   }
 
-  // 2) 额度不足或未开通：走原有站内积分（原子条件扣减）
-  try {
-    await ensureRedeemTables(env);
-    const update = await env.DB.prepare('UPDATE users SET points = points - ? WHERE id = ? AND points >= ?').bind(costNum, userId, costNum).run();
-    if (update.meta.changes === 0) {
-      return json({ error: '积分不足，可前往赞赏页用支付宝购买赞助额度', needTopup: true }, 400);
-    }
-    await env.DB.prepare('INSERT INTO points_log (user_id, amount, reason) VALUES (?, ?, ?)').bind(userId, -costNum, '兑换：' + cleanName).run();
-    await env.DB.prepare('INSERT INTO redemptions (user_id, item_name, cost) VALUES (?, ?, ?)').bind(userId, cleanName, costNum).run();
-  } catch (e) {
-    return json({ error: '服务器内部错误' }, 500);
-  }
-  return json({ ok: true, mode: 'points' });
+  return json({ error: '积分不足，可前往赞赏页购买赞助额度，或在赞赏页把额度按 1:5 兑换成积分', needTopup: true }, 400);
 }

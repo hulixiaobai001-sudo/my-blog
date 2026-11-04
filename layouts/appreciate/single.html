@@ -42,13 +42,34 @@
   .pay-tip { color: #777; font-size: 12px; line-height: 1.8; margin-top: 14px; }
   .pay-tip a { color: #8ab4ff; text-decoration: none; }
   .pay-msg { color: #ffcc80; font-size: 13px; margin-top: 10px; min-height: 18px; }
+  .pay-actions { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+  .pay-actions .pay-btn { flex: 1 1 160px; }
+  .pay-actions .pay-btn.ghost { background: rgba(255,255,255,.1); }
+  .pay-rate { color: #8ab4ff; font-size: 12px; margin-top: 8px; line-height: 1.8; }
+  .tier-gift { color: #ffd166; font-size: 12px; margin: 6px 0 2px; line-height: 1.7; }
+  .tier-tag { display: inline-block; font-size: 11px; color: #ffd166; border: 1px solid rgba(255,209,102,.4); border-radius: 8px; padding: 1px 6px; margin-bottom: 6px; }
+  .gift-box { margin-top: 18px; padding: 14px; border-radius: 14px; background: rgba(255,209,102,.08); border: 1px solid rgba(255,209,102,.22); }
+  .gift-box .g-title { color: #ffd166; font-size: 14px; margin-bottom: 8px; }
+  .gift-box .g-text { color: #cfc3a8; font-size: 12px; line-height: 1.9; }
+  .gift-link { display: inline-block; margin-top: 10px; padding: 8px 14px; border-radius: 10px; background: linear-gradient(135deg,#ffb74d,#f6a623); color: #231a05; font-size: 13px; font-weight: 600; text-decoration: none; }
+  .rec-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .rec-head .r-title { color: #fff; font-size: 16px; }
+  .rec-head .r-refresh { background: none; border: 1px solid rgba(255,255,255,.2); color: #bbb; border-radius: 8px; padding: 4px 10px; font-size: 12px; cursor: pointer; }
+  .rec-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.06); }
+  .rec-item .ri-main { color: #ddd; font-size: 13px; line-height: 1.7; }
+  .rec-item .ri-main b { color: #fff; }
+  .rec-item .ri-sub { color: #777; font-size: 11px; word-break: break-all; }
+  .rec-item .ri-btn { flex: 0 0 auto; background: rgba(91,154,255,.16); border: 1px solid rgba(91,154,255,.35); color: #9fc4ff; border-radius: 9px; padding: 6px 10px; font-size: 12px; cursor: pointer; }
+  .rec-empty { color: #888; font-size: 13px; padding: 6px 0; }
 
-  .pay-mask { position: fixed; inset: 0; background: rgba(0,0,0,.62); backdrop-filter: blur(6px); z-index: 9999; display: none; align-items: center; justify-content: center; padding: 20px; }
+  .pay-mask { position: fixed; inset: 0; background: rgba(0,0,0,.62); backdrop-filter: blur(6px); z-index: 2147483000; display: none; align-items: center; justify-content: center; padding: 20px; isolation: isolate; }
   .pay-modal { width: 100%; max-width: 340px; background: rgba(24,26,32,.94); border: 1px solid rgba(255,255,255,.12); border-radius: 18px; padding: 20px; text-align: center; }
   .pay-modal .m-title { color: #fff; font-size: 16px; margin-bottom: 8px; }
   .pay-modal .m-sub { color: #9aa; font-size: 12px; line-height: 1.8; margin-bottom: 14px; }
   .pay-modal .m-qr { background: #fff; padding: 10px; border-radius: 12px; display: inline-block; }
-  .pay-modal .m-qr img { width: 190px; height: 190px; display: block; }
+  .pay-modal .m-qr img { width: 190px; height: 190px; display: block; background: #fff; }
+  .pay-modal .m-tip2 { color: #9aa; font-size: 12px; line-height: 1.8; margin-top: 8px; }
+  .pay-modal .m-copy { display: block; width: 100%; margin-top: 8px; padding: 8px; border-radius: 9px; background: rgba(255,255,255,.1); border: 0; color: #cfd8e3; font-size: 12px; cursor: pointer; }
   .pay-modal .m-link { display: block; margin: 14px 0 6px; padding: 10px; border-radius: 10px; background: linear-gradient(135deg,#5b9aff,#4a7dff); color: #fff; text-decoration: none; font-size: 13px; }
   .pay-modal .m-close { margin-top: 8px; background: none; border: 0; color: #889; font-size: 13px; cursor: pointer; }
 </style>
@@ -67,8 +88,21 @@
     <div class="pay-title">支付宝赞助</div>
     <div class="pay-sub">由支付宝合作服务商提供收款。赞助后额度即时计入账户，可直接在积分商店兑换，用于抵扣大额商品。</div>
     <div class="pay-balance" id="pay-balance">正在读取赞助额度…</div>
+    <div class="pay-actions">
+      <button class="pay-btn ghost" id="pay-refresh" type="button">刷新额度</button>
+      <button class="pay-btn" id="pay-exchange" type="button" disabled>兑换为站内积分</button>
+    </div>
+    <div class="pay-rate" id="pay-rate">赞助额度按 1 点 = 5 点站内积分折算；兑换后额度相应减少，站内积分立即到账。</div>
     <div class="pay-tiers" id="pay-tiers"></div>
     <div class="pay-msg" id="pay-msg"></div>
+    <div class="gift-box">
+      <div class="g-title">赞赏礼包 · 三档对应三种礼包</div>
+      <div class="g-text">
+        普通赞助赠<b>基础赞赏礼包</b>，中级赞助赠<b>进阶赞赏礼包</b>，高级赞助赠<b>定制赞赏礼包</b>。
+        礼包以中奖卡形式发放，可在官方礼品兑换处输入卡号核销，也可通过扩列联系站长兑换；具体礼包内容以兑换处页面与站长说明为准。
+      </div>
+      <a class="gift-link" href="https://baiqin.online" target="_blank" rel="noopener">打开官方礼品兑换处 · baiqin.online</a>
+    </div>
     <div class="pay-tip">
       说明：页面跳转、扫码、返回本站都<b>不代表已付款</b>；到账情况以上方额度为准，额度由支付宝侧统一记账。
       未登录可先<a href="/login/">登录</a>再购买，额度与账号绑定。
@@ -95,6 +129,15 @@
   </div>
 
   <div class="ap-card">
+    <div class="rec-head">
+      <div class="r-title">我的赞助凭据</div>
+      <button class="r-refresh" id="rec-refresh" type="button">刷新</button>
+    </div>
+    <div id="receipt-list"><div class="rec-empty">登录后可查看最近 10 笔赞助记录</div></div>
+    <div class="pay-rate" style="margin-top:10px;">凭据仅用于核对下单与到账情况，可凭编号联系站长处理礼包或异常；是否到账仍以赞助额度为准。</div>
+  </div>
+
+  <div class="ap-card">
     <div style="text-align:center;color:#fff;font-size:16px;margin-bottom:6px;">一期合作成员</div>
     <div class="team-list" id="team-list"></div>
     <div class="team-note" id="team-note">一期成员招募中，已注册用户自动加入，满员后二期暂不开放</div>
@@ -109,6 +152,15 @@
     <div class="m-sub" id="pay-modal-tip" style="display:none;"></div>
     <a class="m-link" id="pay-modal-link" href="#" target="_blank" rel="noopener">打开支付宝付款</a>
     <button class="m-close" id="pay-modal-close" type="button">关闭</button>
+  </div>
+</div>
+
+<div class="pay-mask" id="receipt-mask">
+  <div class="pay-modal">
+    <div class="m-title">赞助凭据</div>
+    <div class="m-sub" id="receipt-body" style="text-align:left;color:#cfd8e3;">正在读取…</div>
+    <button class="m-copy" id="receipt-copy" type="button">复制凭据</button>
+    <button class="m-close" id="receipt-close" type="button">关闭</button>
   </div>
 </div>
 
@@ -142,7 +194,25 @@
     var n = state.remaining == null ? '—' : state.remaining;
     var unit = state.unit === 'POINT' ? '点' : (state.unit === 'COUNT' ? '次' : '');
     var hint = (state.remaining === 0) ? '　额度不足，可在下方直接购买' : '';
-    balanceEl.innerHTML = '当前赞助额度：<b>' + esc(n) + '</b>' + esc(unit) + esc(hint);
+    var conv = (state.remaining > 0) ? '　可兑 ' + (state.remaining * 5) + ' 站内积分' : '';
+    balanceEl.innerHTML = '当前赞助额度：<b>' + esc(n) + '</b>' + esc(unit) + esc(conv) + esc(hint);
+    renderExchange();
+  }
+
+  function renderExchange() {
+    var btn = document.getElementById('pay-exchange');
+    if (!btn) return;
+    var ok = state.loggedIn && state.configured && state.purchasable !== false && state.remaining > 0;
+    btn.disabled = !ok;
+    btn.textContent = ok ? ('全部兑换（+' + (state.remaining * 5) + ' 积分）') : '兑换为站内积分';
+  }
+
+  function giftFor(o) {
+    var n = String(o.name || '');
+    var p = parseFloat(o.price || '0');
+    if (/高级/.test(n) || (!isNaN(p) && p >= 100)) return '定制赞赏礼包';
+    if (/中级/.test(n) || (!isNaN(p) && p >= 50)) return '进阶赞赏礼包';
+    return '基础赞赏礼包';
   }
 
   function renderTiers() {
@@ -156,9 +226,11 @@
       var unit = o.quotaUnit === 'POINT' ? '点' : (o.quotaUnit === 'COUNT' ? '次' : '');
       var disabled = (!state.loggedIn || !state.purchasable) ? ' disabled' : '';
       html += '<div class="pay-tier">'
+        + (o.testTier ? '<div class="tier-tag">测试档位 · 仅站内可见</div>' : '')
         + '<div class="t-name">' + esc(o.name) + '</div>'
         + '<div class="t-price">¥' + esc(o.price) + '</div>'
-        + '<div class="t-quota">到账 ' + esc(o.quotaAmount == null ? '—' : o.quotaAmount) + esc(unit) + '</div>'
+        + '<div class="t-quota">到账 ' + esc(o.quotaAmount == null ? '—' : o.quotaAmount) + esc(unit) + '（≈ ' + esc((o.quotaAmount || 0) * 5) + ' 站内积分）</div>'
+        + '<div class="tier-gift">赠 ' + esc(giftFor(o)) + '</div>'
         + '<button class="pay-btn" type="button" data-sku="' + esc(o.skuId) + '"' + disabled + '>支付宝购买</button>'
         + '</div>';
     }
@@ -169,7 +241,51 @@
     }
   }
 
+  var qrTimer = null;
+  function resetModal() {
+    var box = document.getElementById('pay-modal-qr');
+    var img = document.getElementById('pay-modal-img');
+    var tip = document.getElementById('pay-modal-tip');
+    if (qrTimer) { clearTimeout(qrTimer); qrTimer = null; }
+    img.onload = null; img.onerror = null;
+    img.removeAttribute('src');
+    box.style.display = 'none'; box.onclick = null;
+    tip.style.display = 'none'; tip.textContent = '';
+    document.getElementById('pay-modal-link').style.display = 'none';
+  }
+
+  // 支付宝二维码是透明底 PNG：暗色弹窗下先合成到纯白底，避免看起来像“没加载出来”
+  function paintQr(url, img, tip) {
+    var done = false;
+    function fallback(msg) {
+      if (done) return; done = true;
+      img.src = url;
+      if (msg) { tip.textContent = msg; tip.style.display = ''; }
+    }
+    var im = new Image();
+    im.crossOrigin = 'anonymous';
+    im.onload = function() {
+      try {
+        var c = document.createElement('canvas');
+        c.width = im.naturalWidth || 256;
+        c.height = im.naturalHeight || 256;
+        var ctx = c.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, c.width, c.height);
+        ctx.drawImage(im, 0, 0);
+        img.src = c.toDataURL('image/png');
+        done = true;
+      } catch (e) { fallback(''); }
+    };
+    im.onerror = function() { fallback('二维码加载失败，请复制下面的付款链接到手机支付宝打开'); };
+    im.src = url;
+    qrTimer = setTimeout(function() {
+      if (!done) fallback('二维码加载较慢，可直接复制下面的付款链接到手机支付宝打开');
+    }, 8000);
+  }
+
   function openModal(url, qr) {
+    resetModal();
     var mask = document.getElementById('pay-mask');
     var link = document.getElementById('pay-modal-link');
     var box = document.getElementById('pay-modal-qr');
@@ -180,21 +296,32 @@
       link.href = url;
       link.style.display = '';
       link.textContent = mobile ? '打开支付宝付款' : '复制付款链接（手机支付宝打开）';
-    } else { link.style.display = 'none'; }
-    if (qr && /^(https?:|data:image)/.test(qr)) {
-      img.onerror = function() {
-        box.style.display = 'none';
-        tip.textContent = '二维码加载失败，请复制下面的付款链接到手机支付宝打开';
-        tip.style.display = '';
-      };
-      img.src = qr;
-      box.style.display = '';
-    } else {
-      box.style.display = 'none';
     }
-    if (!mobile) { tip.textContent = '电脑端无法直接唤起支付宝，请用手机支付宝扫描二维码'; tip.style.display = ''; }
+    if (qr && /^(https?:|data:image)/.test(qr)) {
+      box.style.display = '';
+      box.onclick = function() { window.open(qr, '_blank'); };
+      paintQr(qr, img, tip);
+    }
+    if (!mobile) {
+      tip.textContent = '电脑端无法直接唤起支付宝：用手机扫上面的二维码，或复制付款链接到手机支付宝打开';
+      tip.style.display = '';
+    }
     mask.style.display = 'flex';
   }
+
+  function closeModal() {
+    resetModal();
+    document.getElementById('pay-mask').style.display = 'none';
+  }
+
+  document.getElementById('pay-mask').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Escape') return;
+    if (document.getElementById('pay-mask').style.display === 'flex') closeModal();
+    if (document.getElementById('receipt-mask').style.display === 'flex') document.getElementById('receipt-mask').style.display = 'none';
+  });
   document.getElementById('pay-modal-link').addEventListener('click', function(e) {
     var href = this.getAttribute('href') || '';
     if (!/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) && /^alipays?:\/\//.test(href)) {
@@ -210,9 +337,7 @@
       }
     }
   });
-  document.getElementById('pay-modal-close').addEventListener('click', function() {
-    document.getElementById('pay-mask').style.display = 'none';
-  });
+  document.getElementById('pay-modal-close').addEventListener('click', closeModal);
 
   function buy(skuId, btn) {
     if (!state.loggedIn) { setMsg('请先登录后再购买'); return; }
@@ -278,26 +403,130 @@
       .catch(function() { setMsg('查询失败，请稍后刷新'); });
   }
 
-  // 手动刷新额度
-  var refreshDone = false;
-  var refreshBtn = document.createElement('button');
-  refreshBtn.type = 'button';
-  refreshBtn.className = 'pay-btn';
-  refreshBtn.style.cssText = 'margin-top:10px;background:rgba(255,255,255,.1);';
-  refreshBtn.textContent = '刷新额度';
-  refreshBtn.addEventListener('click', function() {
-    if (refreshDone) return;
-    refreshDone = true;
-    fetch('/api/pay/access').then(function(r) { return r.json(); }).then(function(a) {
+  function refreshAccess(silent) {
+    return fetch('/api/pay/access').then(function(r) { return r.json(); }).then(function(a) {
+      state.loggedIn = !!a.loggedIn;
       if (a.access && typeof a.access.remaining === 'number') state.remaining = a.access.remaining;
+      if (a.access && a.access.quotaUnit) state.unit = a.access.quotaUnit;
       renderBalance();
-      setMsg('额度已刷新', '#8ab4ff');
-    }).catch(function() { setMsg('刷新失败，请稍后再试'); })
-      .then(function() { setTimeout(function() { refreshDone = false; }, 1500); });
+      if (!silent) setMsg('额度已刷新', '#8ab4ff');
+    }).catch(function() { if (!silent) setMsg('刷新失败，请稍后再试'); });
+  }
+
+  document.getElementById('pay-refresh').addEventListener('click', function() {
+    this.disabled = true;
+    var self = this;
+    refreshAccess(false).then(function() { setTimeout(function() { self.disabled = false; }, 1200); });
   });
-  balanceEl.parentNode.insertBefore(refreshBtn, balanceEl.nextSibling);
+
+  // 额度折算站内积分：1 点 = 5 积分，同一业务编号重试不重复扣
+  document.getElementById('pay-exchange').addEventListener('click', function() {
+    var btn = this;
+    if (!state.loggedIn) { setMsg('请先登录再兑换'); return; }
+    if (!(state.remaining > 0)) { setMsg('暂无可兑换的赞助额度'); return; }
+    var amount = state.remaining;
+    var gain = amount * 5;
+    if (!confirm('将 ' + amount + ' 点赞助额度兑换为 ' + gain + ' 站内积分？兑换后额度减少，不可撤回。')) return;
+    btn.disabled = true;
+    var old = btn.textContent;
+    btn.textContent = '兑换中…';
+    setMsg('');
+    var action = 'exch-' + Math.random().toString(36).slice(2, 12);
+    fetch('/api/pay/exchange', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount: amount, actionId: action })
+    }).then(function(r) { return r.json().then(function(j) { return { s: r.status, j: j }; }); })
+      .then(function(res) {
+        var d = res.j || {};
+        if (d.ok) {
+          setMsg('已兑换 ' + d.points + ' 站内积分，当前共 ' + (d.totalPoints == null ? '—' : d.totalPoints) + ' 积分', '#2ecc71');
+          refreshAccess(true);
+          loadReceipts();
+        } else if (d.pending) {
+          setMsg(d.error || '兑换处理中，请稍后刷新');
+        } else {
+          setMsg(d.error || '兑换失败，请稍后重试');
+        }
+      })
+      .catch(function() { setMsg('网络异常，请稍后重试'); })
+      .then(function() { btn.disabled = false; btn.textContent = old; renderExchange(); });
+  });
+
+  // 我的赞助凭据
+  var receiptData = [];
+  function esc2(s) { return esc(String(s == null ? '' : s)); }
+  function loadReceipts() {
+    var box = document.getElementById('receipt-list');
+    fetch('/api/pay/orders').then(function(r) { return r.json(); }).then(function(d) {
+      receiptData = d.orders || [];
+      if (!d.ok && !receiptData.length) {
+        box.innerHTML = '<div class="rec-empty">' + esc2(d.error || '登录后可查看赞助记录') + '</div>';
+        return;
+      }
+      if (!receiptData.length) {
+        box.innerHTML = '<div class="rec-empty">暂无赞助记录，购买后会在这里生成凭据</div>';
+        return;
+      }
+      box.innerHTML = receiptData.map(function(o) {
+        var st = o.status === 'READY' ? '待付款' : (o.status === 'PAID' || o.status === 'SUCCEEDED' ? '已支付' : o.status);
+        return '<div class="rec-item"><div class="ri-main"><b>' + esc2(o.tier || '赞助') + '</b> ¥' + esc2(o.price || '—')
+          + ' · ' + esc2(o.quota) + ' 点 · ' + esc2(st)
+          + '<div class="ri-sub">' + esc2(o.key) + ' · ' + esc2(o.createdAt) + '</div></div>'
+          + '<button class="ri-btn" type="button" data-key="' + esc2(o.key) + '">凭据</button></div>';
+      }).join('');
+      var btns = box.querySelectorAll('.ri-btn');
+      for (var i = 0; i < btns.length; i++) {
+        btns[i].addEventListener('click', function() { showReceipt(this.getAttribute('data-key')); });
+      }
+    }).catch(function() { box.innerHTML = '<div class="rec-empty">读取失败，请稍后刷新</div>'; });
+  }
+
+  var lastReceiptText = '';
+  function showReceipt(key) {
+    var mask = document.getElementById('receipt-mask');
+    var body = document.getElementById('receipt-body');
+    body.textContent = '正在读取凭据…';
+    mask.style.display = 'flex';
+    fetch('/api/pay/receipt?key=' + encodeURIComponent(key)).then(function(r) { return r.json(); }).then(function(d) {
+      if (!d.ok) { body.textContent = d.error || '读取失败'; lastReceiptText = ''; return; }
+      var rc = d.receipt || {};
+      var lines = [
+        '凭据编号：' + rc.key,
+        '赞助档位：' + (rc.tier || '—'),
+        '支付金额：¥' + (rc.price || '—'),
+        '到账额度：' + (rc.quota || 0) + (rc.unit === 'POINT' ? ' 点' : ''),
+        '下单时间：' + (rc.createdAt || '—'),
+        '订单状态：' + (rc.status || '—'),
+        '支付查询：' + (rc.payStatus || '未查询到'),
+        '',
+        '说明：本凭据仅证明下单记录，是否到账以页面赞助额度为准。'
+      ];
+      lastReceiptText = lines.join('\n');
+      body.innerHTML = lines.map(function(l, i) { return l ? esc2(l) : '&nbsp;'; }).join('<br>');
+    }).catch(function() { body.textContent = '网络异常，请稍后重试'; lastReceiptText = ''; });
+  }
+
+  document.getElementById('receipt-close').addEventListener('click', function() {
+    document.getElementById('receipt-mask').style.display = 'none';
+  });
+  document.getElementById('receipt-mask').addEventListener('click', function(e) {
+    if (e.target === this) this.style.display = 'none';
+  });
+  document.getElementById('receipt-copy').addEventListener('click', function() {
+    if (!lastReceiptText) return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(lastReceiptText);
+      this.textContent = '已复制';
+      setTimeout(function() { document.getElementById('receipt-copy').textContent = '复制凭据'; }, 1500);
+    } else {
+      window.prompt('复制凭据内容', lastReceiptText);
+    }
+  });
+  document.getElementById('rec-refresh').addEventListener('click', loadReceipts);
 
   loadAll();
+  loadReceipts();
 
   (async function() {
     try {

@@ -103,6 +103,30 @@ export async function getLoginUser(env, request) {
   }
 }
 
+// 站点身份：站内管理员/站长可见测试档位，普通访客不可见
+export async function getUserRole(env, request) {
+  const user = await getLoginUser(env, request);
+  if (!user) return { userId: 0, role: 'guest', admin: false };
+  try {
+    const row = await env.DB.prepare('SELECT role, is_admin FROM users WHERE id = ?').bind(user.userId).first();
+    const role = (row && row.role) || 'user';
+    const admin = (row && row.is_admin === 1) || role === 'admin' || role === 'super_admin';
+    return { userId: user.userId, role, admin };
+  } catch (e) {
+    return { userId: user.userId, role: 'user', admin: false };
+  }
+}
+
+// 测试档位：只给站内管理员/站长看，访客与他人一律不展示
+export const TEST_SKUS = ['S0806000212894413'];
+
+export function isTestOption(o) {
+  const sku = String((o && o.sku_id) || '');
+  if (TEST_SKUS.indexOf(sku) >= 0) return true;
+  const p = parseFloat((o && o.price) || '');
+  return !isNaN(p) && p < 1;
+}
+
 // access 结果归一：只认服务端返回，不自己算余额
 export function normalizeAccess(a) {
   if (!a || typeof a !== 'object') return null;
