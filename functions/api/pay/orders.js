@@ -15,7 +15,8 @@ export async function onRequestGet(context) {
 
   await ensurePayTables(env);
   try {
-    const rs = await env.DB.prepare(`SELECT idempotency_key, display_name, amount, quota_amount, quota_unit, status, created_at
+    const rs = await env.DB.prepare(`SELECT idempotency_key, display_name, amount, quota_amount, quota_unit, status,
+      datetime(created_at, '+8 hours') AS created_at
       FROM pay_orders WHERE user_id = ? ORDER BY id DESC LIMIT 10`).bind(user.userId).all();
     const list = (rs.results || []).map(r => ({
       key: r.idempotency_key,

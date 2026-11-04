@@ -20,7 +20,7 @@ export async function onRequestGet(context) {
   if (!key) return json({ ok: false, error: '缺少凭据编号' }, 400);
 
   await ensurePayTables(env);
-  const order = await env.DB.prepare('SELECT * FROM pay_orders WHERE user_id = ? AND idempotency_key = ?')
+  const order = await env.DB.prepare(`SELECT *, datetime(created_at, '+8 hours') AS created_at FROM pay_orders WHERE user_id = ? AND idempotency_key = ?`)
     .bind(user.userId, key).first();
   if (!order) return json({ ok: false, error: '未找到该笔赞助记录' }, 404);
 
