@@ -438,9 +438,36 @@ document.addEventListener('DOMContentLoaded', () => {
       element: document.getElementById('blog-content'),
       toolbar: ['bold','italic','heading','|','quote','unordered-list','ordered-list','|',{ name: 'upload-image', action: uploadImageToEditor, className: 'fa fa-picture-o', title: '上传图片插入正文' },'|','preview','guide']
     });
+    // 未托管 FontAwesome，图标按钮用文字标签代替，避免工具栏只剩分隔线
+    setTimeout(labelEditorToolbar, 50);
   }
   checkAdmin();
 });
+
+function labelEditorToolbar() {
+  var map = {
+    'Bold': '<b>B</b>',
+    'Italic': '<i>I</i>',
+    'Heading': 'H',
+    'Quote': '❝',
+    'Unordered List': '•',
+    'Ordered List': '1.',
+    'Upload Image': '图',
+    'Toggle Preview': '预览',
+    'Toggle Guide': '?'
+  };
+  var btns = document.querySelectorAll('.editor-toolbar button');
+  for (var i = 0; i < btns.length; i++) {
+    var t = btns[i].getAttribute('title') || '';
+    if (map[t]) {
+      btns[i].innerHTML = '<span style="font-style:normal;font-family:inherit;font-size:13px;">' + map[t] + '</span>';
+      btns[i].style.width = 'auto';
+      btns[i].style.minWidth = '30px';
+      btns[i].style.padding = '4px 8px';
+      btns[i].style.fontFamily = 'inherit';
+    }
+  }
+}
 
 function uploadImageToEditor() {
   const input = document.createElement('input');
