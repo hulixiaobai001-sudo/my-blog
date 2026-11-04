@@ -1,6 +1,4 @@
 {{ define "main" }}
-<link rel="stylesheet" href="/css/easymde.min.css">
-<script src="/js/easymde.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -95,14 +93,13 @@
   .stat-box2 .lab2 { color: #888; font-size: 12px; margin-top: 6px; }
   .result-msg { margin-top: 10px; font-size: 13px; color: #8ab4ff; }
 
-  .EasyMDEContainer .CodeMirror, .EasyMDEContainer .editor-toolbar, .EasyMDEContainer .editor-preview {
-    background: rgba(255,255,255,.06) !important;
-    color: #f3f4f6 !important;
-    border: 1px solid rgba(255,255,255,.12) !important;
+  #md-toolbar { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+  #md-toolbar button {
+    padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 13px;
+    border: 1px solid rgba(255,255,255,.15); background: rgba(255,255,255,.06);
+    color: #e5e7eb;
   }
-  .EasyMDEContainer .CodeMirror-code { color: #f3f4f6 !important; }
-  .EasyMDEContainer .editor-toolbar button { color: #cbd5e1 !important; }
-  .EasyMDEContainer .editor-toolbar button:hover { background: rgba(255,255,255,.1) !important; }
+  #md-toolbar button:hover { background: rgba(102,126,234,.25); border-color: rgba(102,126,234,.5); }
 
   .hamburger {
     display: none; position: fixed; top: 14px; left: 14px; z-index: 100;
@@ -195,7 +192,18 @@
           <input type="file" id="cover-input" accept="image/*" style="display:none;" onchange="uploadCover(this)">
           <img id="cover-preview" style="display:none;margin-top:10px;max-width:200px;border-radius:10px;">
         </div>
-        <textarea id="blog-content" placeholder="正文内容..."></textarea>
+        <div id="md-toolbar">
+          <button type="button" onclick="mdWrap('**','**','粗体文本')" title="粗体">B</button>
+          <button type="button" onclick="mdWrap('*','*','斜体文本')" title="斜体"><i>I</i></button>
+          <button type="button" onclick="mdLine('\n## ')" title="二级标题">H2</button>
+          <button type="button" onclick="mdLine('\n&gt; ')" title="引用">❝</button>
+          <button type="button" onclick="mdLine('\n- ')" title="无序列表">• 列表</button>
+          <button type="button" onclick="mdLine('\n1. ')" title="有序列表">1. 列表</button>
+          <button type="button" onclick="mdInsertLink()" title="插入链接">🔗 链接</button>
+          <button type="button" onclick="uploadImageToEditor()" title="上传图片">🖼 图片</button>
+          <button type="button" onclick="mdLine('\n---\n')" title="分割线">― 分割</button>
+        </div>
+        <textarea id="blog-content" placeholder="正文内容（支持 Markdown 语法：**粗体**、## 标题、- 列表、![图片](url) 等）" style="min-height:420px;line-height:1.8;font-size:14px;"></textarea>
         <div style="display:flex;gap:10px;margin-top:8px;">
           <button class="btn-primary" onclick="publishBlog('blog')">发布文章</button>
           <button class="btn-primary" onclick="publishBlog('notice')">发公告</button>
@@ -370,7 +378,6 @@
 </div>
 
 <script>
-let mde = null;
 let isSuperAdmin = false;
 let currentAdminId = 0;
 let userCache = [];
@@ -433,45 +440,48 @@ function adminToast(message) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  if (window.EasyMDE) {
-    mde = new EasyMDE({
-      element: document.getElementById('blog-content'),
-      toolbar: ['bold','italic','heading','|','quote','unordered-list','ordered-list','|',{ name: 'upload-image', action: uploadImageToEditor, className: 'fa fa-picture-o', title: '上传图片插入正文' },'|','preview','guide']
-    });
-    // 未托管 FontAwesome，图标按钮用文字标签代替，避免工具栏只剩分隔线
-    setTimeout(labelEditorToolbar, 100);
-    setTimeout(labelEditorToolbar, 400);
-  }
   checkAdmin();
 });
 
-function labelEditorToolbar() {
-  var map = {
-    'Bold': '<b>B</b>',
-    'Italic': '<i>I</i>',
-    'Heading': 'H',
-    'Quote': '❝',
-    'Unordered List': '•',
-    'Ordered List': '1.',
-    'Upload Image': '图',
-    'Toggle Preview': '预览',
-    'Toggle Guide': '?'
-  };
-  var nodes = document.querySelectorAll('.editor-toolbar a, .editor-toolbar button');
-  for (var i = 0; i < nodes.length; i++) {
-    var t = nodes[i].getAttribute('title') || '';
-    if (map[t]) {
-      nodes[i].innerHTML = '<span style="font-style:normal;font-family:inherit;font-size:13px;color:#e5e7eb !important;">' + map[t] + '</span>';
-      nodes[i].style.width = 'auto';
-      nodes[i].style.minWidth = '30px';
-      nodes[i].style.height = '26px';
-      nodes[i].style.padding = '4px 8px';
-      nodes[i].style.margin = '2px';
-      nodes[i].style.lineHeight = '18px';
-      nodes[i].style.color = '#e5e7eb';
-      nodes[i].style.fontFamily = 'inherit';
-    }
-  }
+// 简易 Markdown 工具栏：直接在原生 textarea 光标处插入
+function mdEl() { return document.getElementById('blog-content'); }
+function mdInsert(text) {
+  var ta = mdEl();
+  var s = ta.selectionStart || 0, e = ta.selectionEnd || 0;
+  ta.value = ta.value.slice(0, s) + text + ta.value.slice(e);
+  var pos = s + text.length;
+  ta.focus();
+  ta.setSelectionRange(pos, pos);
+}
+function mdWrap(before, after, placeholder) {
+  var ta = mdEl();
+  var s = ta.selectionStart || 0, e = ta.selectionEnd || 0;
+  var sel = ta.value.slice(s, e) || placeholder;
+  ta.value = ta.value.slice(0, s) + before + sel + after + ta.value.slice(e);
+  ta.focus();
+  ta.setSelectionRange(s + before.length, s + before.length + sel.length);
+}
+function mdLine(prefix) {
+  var ta = mdEl();
+  var s = ta.selectionStart || 0;
+  // 找到光标所在行行首
+  var lineStart = ta.value.lastIndexOf('\n', s - 1) + 1;
+  var insert = (lineStart === 0 ? '' : '\n') + prefix;
+  ta.value = ta.value.slice(0, s) + insert + ta.value.slice(s);
+  var pos = s + insert.length;
+  ta.focus();
+  ta.setSelectionRange(pos, pos);
+}
+async function mdInsertLink() {
+  var url = await adminPrompt('插入链接', '', 'https://...');
+  if (!url) return;
+  var ta = mdEl();
+  var s = ta.selectionStart || 0, e = ta.selectionEnd || 0;
+  var text = ta.value.slice(s, e) || '链接文字';
+  var md = '[' + text + '](' + url + ')';
+  ta.value = ta.value.slice(0, s) + md + ta.value.slice(e);
+  ta.focus();
+  ta.setSelectionRange(s + md.length, s + md.length);
 }
 
 function uploadImageToEditor() {
@@ -489,9 +499,7 @@ function uploadImageToEditor() {
       const data = await res.json();
       if (data.error) { document.getElementById('blog-result').textContent = data.error; return; }
       document.getElementById('blog-result').textContent = '图片已插入正文';
-      if (mde) {
-        mde.codemirror.replaceSelection('\n![](' + data.url + ')\n');
-      }
+      mdInsert('\n![](' + data.url + ')\n');
     };
     reader.readAsDataURL(file);
   };
@@ -1050,9 +1058,7 @@ async function replyTicket(id, close) {
 async function publishBlog(type) {
   // 公告与文章共用同一组输入元素（页面只有一套标题/正文/结果控件）
   const title = document.getElementById('blog-title').value;
-  let content;
-  if (type === 'blog' && mde) { content = mde.value(); }
-  else { content = document.getElementById('blog-content').value; }
+  const content = document.getElementById('blog-content').value;
   const category = type === 'blog' ? document.getElementById('blog-category').value : '';
   const result = document.getElementById('blog-result');
   if (!title || !content) { result.textContent = '标题和内容不能为空'; return; }
@@ -1064,8 +1070,7 @@ async function publishBlog(type) {
   if (res.ok) {
     result.textContent = '发布成功！';
     document.getElementById('blog-title').value = '';
-    if (type === 'blog' && mde) mde.value('');
-    else document.getElementById('blog-content').value = '';
+    document.getElementById('blog-content').value = '';
     window._coverUrl = '';
     document.getElementById('cover-preview').style.display = 'none';
     document.getElementById('cover-input').value = '';
