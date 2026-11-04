@@ -11,11 +11,11 @@
 const BASE = 'https://ai6666.com/opcpay/api/pay/v1';
 
 export function hasPay(env) {
-  return !!(env && env.opcpay_api_key);
+  return !!(env && String(env.opcpay_api_key || '').trim());
 }
 
 export function payClient(env) {
-  const key = env && env.opcpay_api_key;
+  const key = String((env && env.opcpay_api_key) || '').trim();
   if (!key) return null;
 
   async function request(path, body, method) {
